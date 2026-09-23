@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>S1 Hero Focus</title>
+<meta name="description" content="Motion proof for S1-hero: caustic light on sand focuses, by real refraction through an engineered water surface, into AKASH GOJURU as top-metal layout on a die.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- non-blocking font load (C-21): text paints at once in the fallback, then swaps -->
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Martian+Mono:wdth,wght@75..112.5,300..600&family=Newsreader:opsz,wght@6..72,300..500&display=swap">
+<style>
+:root{
+  --floor-0:#0E1312; --floor-1:#161C1A; --floor-2:#222A27; --line:#2E3733; --line-strong:#737E83;
+  --light:#E8EEF0; --sand:#A7B5BB; --dim:#85939A; --ink:#0A1016;
+  --sea:#3D9DF2; --sea-glow:rgba(61,157,242,.35);
+  --e-out:cubic-bezier(0.16,1,0.3,1); --e-in:cubic-bezier(0.7,0,0.84,0);
+  --t-tap:80ms; --t-fast:120ms; --t-ui:240ms; --t-close:200ms;
+  --bar-h:56px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--floor-0);color:var(--light)}
+body{font-family:"Newsreader",Georgia,serif;overflow-x:hidden}
+.mono{font-family:"Martian Mono",ui-monospace,monospace;font-variation-settings:"wdth" 87.5}
+a{color:inherit}
+#gl{position:fixed;inset:0;width:100vw;height:100vh;display:block;opacity:0;transition:opacity 400ms var(--e-out),filter var(--t-ui) var(--e-out)}
+#gl.on{opacity:1}
+body.irq #gl{filter:brightness(.32) saturate(.5)}
+body.irq-closing #gl{transition:filter var(--t-close) var(--e-in)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- always-reachable chrome (02-ux): desktop top bar, phone bottom bar ---------- */
+.bar{position:fixed;left:0;right:0;top:0;height:var(--bar-h);z-index:20;display:flex;align-items:center;justify-content:space-between;padding:0 16px;
+  background:rgba(14,19,18,.86);transition:opacity var(--t-fast),visibility 0s}
+.bar .word{font:400 18px/1 "Newsreader",serif;text-decoration:none}
+.pill{display:flex;border-radius:2px;overflow:hidden}
+.pill a,.pill button{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border:0;background:var(--sea);color:var(--ink);cursor:pointer;text-decoration:none;
+  font:500 12px/1 "Martian Mono",monospace;font-variation-settings:"wdth" 87.5;letter-spacing:.08em;text-transform:uppercase;transition:filter var(--t-fast),transform var(--t-tap)}
+.pill > * + *{border-left:1px solid rgba(10,16,22,.35)}
+.pill a:hover,.pill button:hover{filter:brightness(1.08)}
+.pill a:active,.pill button:active{transform:translateY(1px)}
+:focus-visible{outline:2px solid var(--light);outline-offset:3px}
+.bbar{display:none}
+body.irq .bar,body.irq .bbar{visibility:hidden;opacity:0}
+@media (max-width:767px){
+  .bar{display:none}
+  .bbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;gap:8px;align-items:center;padding:6px 12px calc(6px + env(safe-area-inset-bottom));
+    min-height:calc(var(--bar-h) + env(safe-area-inset-bottom));background:var(--floor-1);border-top:1px solid var(--line)}
+  .bbar .chip{flex:0 0 144px;min-height:44px;display:flex;align-items:center;gap:6px;padding:0 10px;background:transparent;border:1px solid var(--line-strong);color:var(--light);border-radius:2px;
+    font:500 12px/1 "Martian Mono",monospace;letter-spacing:.04em}
+  .bbar .res,.bbar .con{min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:2px;border:0;cursor:pointer;text-decoration:none;
+    font:500 12px/1 "Martian Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
+  .bbar .res{flex:0 0 88px;background:var(--sea);color:var(--ink)}
+  .bbar .con{flex:1 1 96px;background:var(--floor-2);color:var(--light);border:1px solid var(--line-strong)}
+}
+
+/* ---------- S1: the ink plate (h1, role, project index, ADV_IND) ---------- */
+#S1-hero{position:relative;height:160vh}
+.plate{position:sticky;top:calc(100vh - 16px);transform:translateY(-100%);margin-left:16px;width:min(520px,calc(100vw - 32px));
+  background:var(--floor-0);padding:24px 26px 20px;z-index:5;display:flex;flex-direction:column}
+.plate h1{font-family:"Newsreader",serif;font-variation-settings:"opsz" 72;font-weight:360;font-size:clamp(48px,4.4vw,64px);line-height:.92;letter-spacing:-.025em;margin:0}
+.plate .role{margin:10px 0 0;font-size:17px;line-height:1.35;color:var(--sand)}
+.plate .index{list-style:none;padding:0;margin:16px 0 0;border-top:1px solid var(--line)}
+.plate .index a{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);text-decoration:none;
+  font:400 13px/1.35 "Martian Mono",monospace;font-variation-settings:"wdth" 100;transition:color var(--t-fast)}
+.plate .index a span{color:var(--dim)}
+.plate .index a:hover{color:var(--sea)}
+.adv{order:10;margin-top:14px;font-size:10.5px;line-height:1.55;color:var(--dim);white-space:pre-wrap;min-height:1.55em}
+.adv b{color:var(--light);font-weight:500}
+.adv .ch{display:inline-block;width:7px;height:7px;margin-right:4px;background:#2f3a3c;vertical-align:1px}
+.adv .ch.hot{background:var(--light)}
+@media (max-width:767px){
+  #S1-hero{height:150vh}
+  .plate{top:calc(100vh - var(--bar-h) - 12px);margin-left:12px;width:calc(100vw - 24px);padding:16px 16px 14px}
+  .plate h1{font-size:36px}
+  .plate .role{font-size:15px}
+  .plate .index a{display:block;font-size:12px;padding:6px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .plate .index a span::before{content:" · "}
+  .adv{order:-1;margin:0 0 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+
+/* S2 stub (shows the hand-off: headline in by P 0.70) */
+#S2-about{position:relative;min-height:120vh;padding:6vh 16px 30vh;z-index:4}
+#S2-about .inner{max-width:560px;margin-left:max(16px,6vw);background:var(--floor-0);padding:24px}
+#S2-about h2{font-variation-settings:"opsz" 60;font-weight:340;font-size:clamp(34px,4.8vw,72px);line-height:.98;letter-spacing:-.02em;margin:0 0 18px}
+#S2-about p{font-size:18px;line-height:1.5;color:var(--sand);margin:0 0 12px}
+
+/* ---------- proof HUD (desktop only; not part of the design) ---------- */
+.hud{position:fixed;right:16px;top:64px;z-index:10;background:var(--floor-1);border:1px solid var(--line);padding:10px 12px;font-size:10px;line-height:1.6;color:var(--dim);max-width:340px}
+.hud pre{margin:0;font:inherit;white-space:pre-wrap}
+.hud:not(.open) pre,.hud:not(.open) .row{display:none}
+.hud summary{cursor:pointer;color:var(--light)}
+.hud .row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.hud button{background:transparent;color:var(--light);border:1px solid var(--line-strong);font:inherit;padding:5px 7px;cursor:pointer;border-radius:2px}
+.hud button[aria-pressed="true"]{border-color:var(--sea);color:var(--sea)}
+@media (max-width:899px){ .hud{display:none} body.showhud .hud{display:block;left:12px;right:12px;bottom:auto;top:12px;max-width:none} }
+#frameDbg{position:fixed;inset:0;z-index:9;pointer-events:none;display:none}
+body.dbg #frameDbg{display:block}
+
+/* ---------- Surface Interrupt (02-ux): dialog, close ✕, back button, inert, focus trap, history ---------- */
+.panel{position:fixed;left:0;right:0;bottom:0;z-index:30;max-height:92vh;overflow:auto;background:var(--floor-1);border-top:1px solid var(--line);
+  padding:20px max(16px,6vw) calc(28px + env(safe-area-inset-bottom));transform:translateY(102%);visibility:hidden;
+  transition:transform var(--t-ui) var(--e-out),visibility 0s linear var(--t-ui)}
+body.irq .panel{transform:none;visibility:visible;transition:transform var(--t-ui) var(--e-out),visibility 0s}
+body.irq-closing .panel{transition:transform var(--t-close) var(--e-in),visibility 0s linear var(--t-close)}
+.panel .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+.panel .ctx{font-size:10.5px;color:var(--dim)}
+.panel .x{width:44px;height:44px;flex:0 0 44px;display:grid;place-items:center;background:var(--floor-2);border:1px solid var(--line-strong);color:var(--light);border-radius:2px;font:400 20px/1 "Martian Mono",monospace;cursor:pointer}
+.panel h2{margin:0;font-variation-settings:"opsz" 60;font-weight:360;font-size:40px;letter-spacing:-.02em}
+.panel .role{margin:6px 0 0;color:var(--sand)}
+.panel ul{padding:0;list-style:none;margin:14px 0;font-size:17px;line-height:1.5}
+.panel li span{color:var(--sand)}
+.panel .links{display:flex;gap:10px;flex-wrap:wrap}
+.panel .links a,.panel .back{min-height:44px;display:inline-flex;align-items:center;text-decoration:none;padding:0 14px;border-radius:2px;
+  font:500 12px/1 "Martian Mono",monospace;letter-spacing:.08em;text-transform:uppercase;background:var(--floor-2);color:var(--light);border:1px solid var(--line-strong);cursor:pointer}
+.panel .links a.primary{background:var(--sea);color:var(--ink);border-color:var(--sea)}
+.panel .back{margin-top:16px}
+@media (prefers-reduced-motion:reduce){ .panel,body.irq .panel,body.irq-closing .panel,#gl{transition:none !important} }
+body.rm .panel,body.rm #gl{transition:none !important}
+.static-frame{position:fixed;inset:0;display:grid;place-items:center}
+.static-frame canvas{width:min(90vw,90vh);height:auto}
+</style>
+</head>
+<body>
+<canvas id="gl" aria-hidden="true"></canvas>
+<p class="sr" id="sceneDesc">Decorative scene: caustic light on the sea floor focuses into the name Akash Gojuru, drawn as top-metal layout on a chip die.</p>
+
+<header class="bar" id="bar">
+  <a class="word" href="#top">Akash Gojuru</a>
+  <nav class="pill" aria-label="Fast path"><a href="RESUME_IBM_1.pdf" target="_blank" rel="noopener">Resume ↗</a><button type="button" class="irqOpen" aria-haspopup="dialog" aria-controls="irqPanel">Contact</button></nav>
+</header>
+<nav class="bbar" id="bbar" aria-label="Fast path">
+  <button class="chip" type="button" aria-label="Sections, 1 of 7, Top">≡ 1/7 Top ▴</button>
+  <a class="res" href="RESUME_IBM_1.pdf" target="_blank" rel="noopener">Resume ↗</a>
+  <button class="con irqOpen" type="button" aria-haspopup="dialog" aria-controls="irqPanel">Contact</button>
+</nav>
+
+<main id="main">
+  <section id="S1-hero" aria-labelledby="h1">
+    <div class="plate" id="plate">
+      <div class="adv mono" id="adv" aria-hidden="true"></div>
+      <h1 id="h1">Akash Gojuru</h1>
+      <p class="role">Computer Engineering, Iowa State. Heading into ASIC design; seeking hardware and chip-design internships.</p>
+      <!-- [SLOT: grad-term] e.g. "Graduating <term>" — omitted from the DOM while empty -->
+      <ul class="index" aria-label="What he built">
+        <li><a href="#link-layer">BLE Link Layer <span>senior design, in progress</span></a></li>
+        <li><a href="#risc-v">RISC-V 5-stage pipeline <span>hazard debug, review, docs</span></a></li>
+        <li><a href="#wisard">WiSARD <span>RAM-based classifier</span></a></li>
+        <li><a href="#cybot">CyBot <span>autonomous robot</span></a></li>
+      </ul>
+    </div>
+  </section>
+  <section id="S2-about" aria-labelledby="s2h">
+    <div class="inner">
+      <h2 id="s2h">Light through water.<br>Light through a mask.</h2>
+      <p>Passionate about digital hardware design, embedded systems, and computer vision. Seeking hardware engineering and chip design internships.</p>
+      <p class="mono" style="font-size:11px">[proof ends here: S2 stub only, to show the hand-off. Headline in view by P 0.70.]</p>
+    </div>
+  </section>
+</main>
+
+<svg id="frameDbg" aria-hidden="true"></svg>
+
+<div class="hud mono" id="hud">
+  <div class="sum" role="button" tabindex="0" id="hudToggle" style="cursor:pointer;color:var(--light)">proof controls ▾</div>
+  <pre id="hudText">starting…</pre>
+  <div class="row">
+    <button id="tReduced" aria-pressed="false">reduced motion</button>
+    <button id="tTier">tier: auto</button>
+    <button id="tPrec">slope: f32</button>
+    <button id="tDbg" aria-pressed="false">framing overlay</button>
+  </div>
+  <div class="row">
+    <button id="tTests">run tests</button>
+  </div>
+</div>
+
+<div class="panel" id="irqPanel" role="dialog" aria-modal="true" aria-labelledby="irqTitle">
+  <div class="top"><div class="ctx mono" id="irqCtx">context saved @ S1-hero</div><button class="x" id="irqX" type="button" aria-label="Close summary">✕</button></div>
+  <h2 id="irqTitle" tabindex="-1">Akash Gojuru</h2>
+  <p class="role">Computer Engineering, Iowa State. Heading into ASIC design; seeking hardware and chip-design internships.</p>
+  <!-- [SLOT: grad-term] omitted while empty -->
+  <ul>
+    <li>BLE Link Layer, open-source BLE microcontroller <span>(senior design, in progress)</span></li>
+    <li>RISC-V 5-stage pipelined processor <span>(design review, hazard debugging, docs; partner led RTL)</span></li>
+    <li>WiSARD weightless neural network <span>(RAM-based classifier)</span></li>
+    <li>CyBot Roomba, CPRE 2880 <span>(autonomous navigation from bump, IR and PING data)</span></li>
+  </ul>
+  <div class="links">
+    <a class="primary" href="RESUME_IBM_1.pdf" target="_blank" rel="noopener">Open resume (PDF) ↗</a>
+    <a href="mailto:gojuru18@iastate.edu">Email</a>
+    <a href="https://linkedin.com/in/akash-gojuru" target="_blank" rel="noopener">LinkedIn ↗</a>
+    <a href="https://github.com/Gakshith" target="_blank" rel="noopener">GitHub ↗</a>
+  </div>
+  <button class="back" id="irqBack" type="button">Back to where you were</button>
+</div>
+
+<!-- ============ engineered-caustic solver (Worker). Production bakes this offline. ============ -->
+<script id="solver" type="text/plain">
+/* Goal-based caustic design (after Yue et al. 2014 and Ferraro's "Magic Windows").
+   Forward model: vertical sunlight refracts through surface h by exact Snell and lands on the sand at y(x);
+   the caustic I is the splatted density of landing points (the same physics the GPU pass runs).
+   Update: lap(dh)(x) = step * [ log I(y(x)) - log T(y(x)) ], solved by periodic FFT, coarse-to-fine over a
+   blurred target (sigma 8 -> 0 texels). a = tau^2/(D(1-1/eta)) makes small-angle displacement (texels) == grad h. */
+function fft1(re,im,off,stride,n,inv){
+  for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;
+    if(i<j){const a=off+i*stride,b=off+j*stride;let t=re[a];re[a]=re[b];re[b]=t;t=im[a];im[a]=im[b];im[b]=t;}}
+  for(let len=2;len<=n;len<<=1){const ang=(inv?2:-2)*Math.PI/len,wr=Math.cos(ang),wi=Math.sin(ang);
+    for(let i=0;i<n;i+=len){let cr=1,ci=0;
+      for(let k=0;k<len/2;k++){const a=off+(i+k)*stride,b=off+(i+k+len/2)*stride;
+        const xr=re[b]*cr-im[b]*ci,xi=re[b]*ci+im[b]*cr;re[b]=re[a]-xr;im[b]=im[a]-xi;re[a]+=xr;im[a]+=xi;
+        const t=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=t;}}}
+}
+self.onmessage=(e)=>{
+  const {N,target,D,eta,tau}=e.data; const t0=performance.now(), NN=N*N;
+  const fft2=(re,im,inv)=>{for(let y=0;y<N;y++)fft1(re,im,y*N,1,N,inv);for(let x=0;x<N;x++)fft1(re,im,x,N,N,inv);};
+  const blur3=(a)=>{const t=new Float64Array(NN),o=new Float64Array(NN);
+    for(let y=0;y<N;y++)for(let x=0;x<N;x++){const r=y*N;t[r+x]=(a[r+(x+N-1)%N]+2*a[r+x]+a[r+(x+1)%N])/4;}
+    for(let y=0;y<N;y++)for(let x=0;x<N;x++)o[y*N+x]=(t[((y+N-1)%N)*N+x]+2*t[y*N+x]+t[((y+1)%N)*N+x])/4;return o;};
+  const gblur=(src,s)=>{if(s<=0)return Float64Array.from(src);const re=Float64Array.from(src),im=new Float64Array(NN);fft2(re,im,false);
+    for(let ky=0;ky<N;ky++)for(let kx=0;kx<N;kx++){const fx=(kx<=N/2?kx:kx-N)/N,fy=(ky<=N/2?ky:ky-N)/N,g=Math.exp(-2*Math.PI*Math.PI*s*s*(fx*fx+fy*fy));re[ky*N+kx]*=g;im[ky*N+kx]*=g;}
+    fft2(re,im,true);for(let i=0;i<NN;i++)re[i]/=NN;return re;};
+  const bil=(A,px,py)=>{const x0=Math.floor(px),y0=Math.floor(py),fx=px-x0,fy=py-y0,X0=((x0%N)+N)%N,Y0=((y0%N)+N)%N,X1=(X0+1)%N,Y1=(Y0+1)%N;
+    return A[Y0*N+X0]*(1-fx)*(1-fy)+A[Y0*N+X1]*fx*(1-fy)+A[Y1*N+X0]*(1-fx)*fy+A[Y1*N+X1]*fx*fy;};
+  let m=0;for(let i=0;i<NN;i++)m+=target[i];m/=NN;const Tn=new Float64Array(NN);for(let i=0;i<NN;i++)Tn[i]=target[i]/m;
+  const h=new Float64Array(NN),re=new Float64Array(NN),im=new Float64Array(NN),PX=new Float64Array(NN),PY=new Float64Array(NN);
+  const cosT=new Float64Array(N);for(let k=0;k<N;k++)cosT[k]=2*Math.cos(2*Math.PI*k/N);
+  const a=tau*tau/(D*(1-1/eta)),r=1/eta,errs=[];let I;
+  const forward=()=>{I=new Float64Array(NN);
+    for(let y=0;y<N;y++)for(let x=0;x<N;x++){const i=y*N+x;
+      const gx=(h[y*N+(x+1)%N]-h[y*N+(x+N-1)%N])*.5,gy=(h[((y+1)%N)*N+x]-h[((y+N-1)%N)*N+x])*.5;
+      const sx=a*gx/tau,sy=a*gy/tau,nl=Math.hypot(sx,sy,1),nx=-sx/nl,ny=-sy/nl,nz=1/nl;
+      const k=1-r*r*(1-nz*nz),ct=Math.sqrt(Math.max(k,0)),f=r*nz-ct,tx=f*nx,ty=f*ny,tz=-r+f*nz;
+      const px=x+tx*(D/-tz)/tau,py=y+ty*(D/-tz)/tau;PX[i]=px;PY[i]=py;
+      const x0=Math.floor(px),y0=Math.floor(py),fx=px-x0,fy=py-y0,X0=((x0%N)+N)%N,Y0=((y0%N)+N)%N,X1=(X0+1)%N,Y1=(Y0+1)%N;
+      I[Y0*N+X0]+=(1-fx)*(1-fy);I[Y0*N+X1]+=fx*(1-fy);I[Y1*N+X0]+=(1-fx)*fy;I[Y1*N+X1]+=fx*fy;}
+    I=blur3(I);};
+  const sched=[[8,3,0.6],[4,3,0.6],[2,5,0.6],[1.5,8,0.5]], total=sched.reduce((s,v)=>s+v[1],0); let done=0;
+  for(const [sig,its,step] of sched){
+    const T=blur3(gblur(Tn,sig));
+    for(let it=0;it<its;it++){
+      forward();
+      let err=0;for(let i=0;i<NN;i++)err+=Math.abs(Tn[i]-I[i]);errs.push(+(err/NN).toFixed(3));
+      for(let i=0;i<NN;i++){const res=Math.log(bil(I,PX[i],PY[i])+0.1)-Math.log(bil(T,PX[i],PY[i])+0.1);re[i]=Math.max(-2,Math.min(2,res))*step;im[i]=0;}
+      fft2(re,im,false);
+      for(let ky=0;ky<N;ky++)for(let kx=0;kx<N;kx++){const i=ky*N+kx,l=cosT[kx]+cosT[ky]-4;if(l===0){re[i]=im[i]=0}else{re[i]/=l;im[i]/=l;}}
+      fft2(re,im,true);for(let i=0;i<NN;i++)h[i]+=re[i]/NN;
+      done++; self.postMessage({progress:done/total,err:errs.at(-1)});
+    }
+  }
+  forward();let err=0;for(let i=0;i<NN;i++)err+=Math.abs(Tn[i]-I[i]);errs.push(+(err/NN).toFixed(3));
+  const out=new Float32Array(NN);for(let i=0;i<NN;i++)out[i]=h[i];
+  self.postMessage({done:true,h:out,a,errs,ms:Math.round(performance.now()-t0)},[out.buffer]);
+};
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js"}}</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+/* =====================================================================================
+   0. config
+   ===================================================================================== */
+const qs=new URLSearchParams(location.search);
+const mqRM=matchMedia('(prefers-reduced-motion: reduce)');
+const coarse=matchMedia('(pointer:coarse)').matches;
+const S={ reduced: mqRM.matches||qs.has('reduced'), tierPref: qs.get('tier')||'auto', prec:'f32' };
+if(qs.has('hud')) document.body.classList.add('showhud');
+const N=512;                // solve / target resolution over one tile
+const TAU=2/N;              // texel size (world); a tile spans [-1,1]
+const DEPTH=2.0, ETA=1.333;
+const EXT=1.25;             // caustic RTs cover [-EXT,EXT]: a tile plus the margin its light can reach
+const isPhone=()=>innerWidth<768;
+const PIN=()=>isPhone()?1.0:1.2;   // S1 choreography runs over 120vh desktop / 100vh phone (C-01)
+
+/* ---- canonical glyph set (04-art, "Glyph set (canonical)"): rectangles [x,y,w,h] in tracks, y down, 8x12 box ---- */
+const GLYPHS={"grid":[8,12],"units":"tracks","stem":1.5,"bar":1,"via":2,"letterGap":2,"lineGap":4,"lines":["AKASH","GOJURU"],"glyphs":{"A":{"r":[[0,0,1.5,12],[6.5,0,1.5,12],[0,0,8,1],[0,6,8,1]],"v":[[0.75,12],[7.25,12]]},"K":{"r":[[0,0,1.5,12],[1.5,5.5,3.5,1],[4,3.5,1,5],[4,3.5,4,1],[6.5,0,1.5,4.5],[4,7.5,4,1],[6.5,7.5,1.5,4.5]],"v":[[0.75,0],[0.75,12],[7.25,0],[7.25,12]]},"S":{"r":[[0,0,8,1],[6.5,0,1.5,2.5],[0,0,1.5,6.5],[0,5.5,8,1],[6.5,5.5,1.5,6.5],[0,11,8,1],[0,9.5,1.5,2.5]],"v":[[7.25,2.5],[0.75,9.5]]},"H":{"r":[[0,0,1.5,12],[6.5,0,1.5,12],[0,5.5,8,1]],"v":[[0.75,0],[0.75,12],[7.25,0],[7.25,12]]},"G":{"r":[[0,0,8,1],[6.5,0,1.5,2.5],[0,0,1.5,12],[0,11,8,1],[6.5,6,1.5,6],[4,6,4,1]],"v":[[7.25,2.5],[4,6.5]]},"O":{"r":[[0,0,1.5,12],[6.5,0,1.5,12],[0,0,8,1],[0,11,8,1]],"v":[]},"J":{"r":[[2.5,0,5.5,1],[6.5,0,1.5,12],[0,11,8,1],[0,8,1.5,4]],"v":[[2.5,0.5],[0.75,8]]},"U":{"r":[[0,0,1.5,12],[6.5,0,1.5,12],[0,11,8,1]],"v":[[0.75,0],[7.25,0]]},"R":{"r":[[0,0,1.5,12],[0,0,8,1],[6.5,0,1.5,6.5],[0,5.5,8,1],[4,5.5,1,3.5],[4,8,4,1],[6.5,8,1.5,4]],"v":[[0.75,12],[7.25,12]]}}};
+
+/* =====================================================================================
+   1. the target: AKASH / GOJURU as top-metal art on a die (C-03 luminances, C-04 glyphs)
+   ===================================================================================== */
+const DIE={d0:Math.round(N*0.05)};  DIE.d1=N-DIE.d0;
+const LUM={trace:1.0, pad:0.35, seal:0.30, strap:0.20, fill:0.20, core:0.02};   // margin = the die's own mean (see below)
+function makeTarget(){
+  const T=new Float32Array(N*N), letters=new Uint8Array(N*N), straps=new Uint8Array(N*N), fillM=new Uint8Array(N*N), padM=new Uint8Array(N*N);
+  const rect=(arr,x0,y0,x1,y1,v=1)=>{x0=Math.max(0,Math.round(x0));y0=Math.max(0,Math.round(y0));x1=Math.min(N,Math.round(x1));y1=Math.min(N,Math.round(y1));
+    for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++)arr[y*N+x]=Math.max(arr[y*N+x],v);};
+  const {d0,d1}=DIE, W=d1-d0;
+  // letters from the canonical JSON
+  const tk=6.5, G=GLYPHS, lw=w=>(w.length*G.grid[0]+(w.length-1)*G.letterGap)*tk;
+  const blockH=(2*G.grid[1]+G.lineGap)*tk, y0=(N-blockH)/2;
+  const bbox={x0:1e9,y0:1e9,x1:-1e9,y1:-1e9};
+  G.lines.forEach((w,li)=>{ const x0=(N-lw(w))/2, yy=y0+li*(G.grid[1]+G.lineGap)*tk;
+    [...w].forEach((ch,i)=>{ const gx=x0+i*(G.grid[0]+G.letterGap)*tk, g=G.glyphs[ch];
+      g.r.forEach(([x,y,ww,hh])=>rect(letters,gx+x*tk,yy+y*tk,gx+(x+ww)*tk,yy+(y+hh)*tk));
+      g.v.forEach(([cx,cy])=>{ const vx=Math.min(Math.max(cx,1),G.grid[0]-1), vy=Math.min(Math.max(cy,1),G.grid[1]-1);
+        rect(letters,gx+(vx-1)*tk,yy+(vy-1)*tk,gx+(vx+1)*tk,yy+(vy+1)*tk); });
+    });
+    bbox.x0=Math.min(bbox.x0,x0); bbox.x1=Math.max(bbox.x1,x0+lw(w)); });
+  bbox.y0=y0; bbox.y1=y0+blockH;
+  // seal ring (on the die edge) and the pad ring = the reef
+  const ring=(o,w,arr,v)=>{rect(arr,d0+o,d0+o,d1-o,d0+o+w,v);rect(arr,d0+o,d1-o-w,d1-o,d1-o,v);rect(arr,d0+o,d0+o,d0+o+w,d1-o,v);rect(arr,d1-o-w,d0+o,d1-o,d1-o,v);};
+  const seal=new Uint8Array(N*N); ring(0,3,seal,1); ring(6,2,seal,1);
+  const pads=15, pw=(W-60)/pads, ps=Math.round(pw*0.5), po=d0+30, pe=d0+11;
+  for(let i=0;i<pads;i++){ const p=po+i*pw+(pw-ps)/2;
+    rect(padM,p,pe,p+ps,pe+ps); rect(padM,p,d1-pe-ps,p+ps,d1-pe); rect(padM,pe,p,pe+ps,p+ps); rect(padM,d1-pe-ps,p,d1-pe,p+ps); }
+  // top-metal straps from the lettering out to reef pads (Manhattan, 1 track)
+  const padC=(side,i)=>{const p=po+i*pw+pw/2; return side==='N'?[p,pe+ps]:side==='S'?[p,d1-pe-ps]:side==='W'?[pe+ps,p]:[d1-pe-ps,p];};
+  const mid=(bbox.y0+bbox.y1)/2, sw=tk;
+  const strap=(pts)=>{for(let k=1;k<pts.length;k++){const [ax,ay]=pts[k-1],[bx,by]=pts[k];rect(straps,Math.min(ax,bx)-sw/2,Math.min(ay,by)-sw/2,Math.max(ax,bx)+sw/2,Math.max(ay,by)+sw/2);}};
+  const n2=padC('N',2), n12=padC('N',12), s7=padC('S',7), e10=padC('E',10), w4=padC('W',4);
+  strap([[bbox.x0,bbox.y0+6*tk],[n2[0],bbox.y0+6*tk],n2]);
+  strap([[bbox.x1,bbox.y0+5.5*tk],[n12[0],bbox.y0+5.5*tk],n12]);
+  strap([[(bbox.x0+bbox.x1)/2+3*tk,bbox.y1],[(bbox.x0+bbox.x1)/2+3*tk,s7[1]-sw],[s7[0],s7[1]-sw],s7]);
+  strap([[bbox.x1,bbox.y1-5.5*tk],[e10[0],bbox.y1-5.5*tk],[e10[0],e10[1]],e10]);
+  strap([[bbox.x0,bbox.y1-6*tk],[w4[0],bbox.y1-6*tk],[w4[0],w4[1]],w4]);
+  // dummy fill: 7px squares on a 24px pitch, 20px keep-out from letters and straps ("fill is where the light goes")
+  const keepD=20, near=(x,y)=>{for(let dy=-keepD;dy<=keepD;dy+=2)for(let dx=-keepD;dx<=keepD;dx+=2){const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=N||Y>=N)continue;const j=Y*N+X;if(letters[j]||straps[j])return true;}return false;};
+  for(let y=d0+36;y<d1-40;y+=24)for(let x=d0+36;x<d1-40;x+=24){ if(!near(x+3,y+3)) rect(fillM,x,y,x+7,y+7); }
+  // compose: die interior = core, then features; margin (tile outside the die) = the die's own mean,
+  // so the die conserves its own light and the margin meets the open sea at I = 1 with no seam
+  let sum=0,n=0;
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){ const i=y*N+x; const inDie=x>=d0&&x<d1&&y>=d0&&y<d1;
+    let v=LUM.core; if(fillM[i])v=LUM.fill; if(straps[i])v=Math.max(v,LUM.strap); if(seal[i])v=Math.max(v,LUM.seal); if(padM[i])v=Math.max(v,LUM.pad); if(letters[i])v=LUM.trace;
+    T[i]=inDie?v:-1; if(inDie){sum+=v;n++;} }
+  const dieMean=sum/n; for(let i=0;i<N*N;i++) if(T[i]<0) T[i]=dieMean*.85;   // the reef draws a little from the margin; .85 lands it at I≈1
+  // core mask for the acceptance test: inner core, 4px clear of any feature
+  const core=new Uint8Array(N*N), feat=(j)=>letters[j]||straps[j]||fillM[j]||padM[j]||seal[j];
+  for(let y=d0+40;y<d1-40;y++)for(let x=d0+40;x<d1-40;x++){let ok=true;for(let dy=-4;dy<=4&&ok;dy++)for(let dx=-4;dx<=4;dx++){if(feat((y+dy)*N+x+dx)){ok=false;break;}} if(ok)core[y*N+x]=1;}
+  return {T,letters,straps,fillM,padM,core,bbox,dieMean};
+}
+const target=makeTarget();
+
+/* =====================================================================================
+   2. ADV_IND preloader: a real legacy advertising PDU; each line prints on a REAL milestone (02-ux)
+   ===================================================================================== */
+const adv=document.getElementById('adv');
+function crc24(bytes){ let st=0; for(let i=0;i<24;i++) if(0x555555&(1<<i)) st|=1<<(23-i);
+  for(const b of bytes){ let cur=b; for(let j=0;j<8;j++){ const nb=(st^cur)&1; cur>>=1; st>>=1; if(nb){ st|=1<<23; st^=0x5a6000; } } }
+  let out=0; for(let i=0;i<24;i++) if(st&(1<<i)) out|=1<<(23-i); return out; }
+const nm=[...'Akash Gojuru'].map(c=>c.charCodeAt(0)), advA=[0x3A,0x1F,0x62,0x0B,0x9D,0xC7];
+const advData=[0x02,0x01,0x06, nm.length+1,0x09,...nm], hdr=[0x40, advA.length+advData.length], pdu=[...hdr,...advA,...advData], crc=crc24(pdu);
+const hex=a=>a.map(b=>b.toString(16).padStart(2,'0').toUpperCase()).join(' ');
+const ADV=[
+  `<b>ADV_IND</b>  ch <span class="ch" data-c="0"></span>37 <span class="ch" data-c="1"></span>38 <span class="ch" data-c="2"></span>39`,
+  `hdr ${hex(hdr)}  type=ADV_IND TxAdd=1 len=${hdr[1]}`,
+  `AdvA ${[...advA].reverse().map(b=>b.toString(16).padStart(2,'0').toUpperCase()).join(':')}  (random static)`,
+  `AdvData ${hex(advData.slice(0,3))} | ${hex(advData.slice(3))}`,
+  `  Complete Local Name <b>"Akash Gojuru"</b>  ${advData.length}/31 bytes · CRC ${crc.toString(16).toUpperCase().padStart(6,'0')}`,
+];
+const PHONE_ADV=[`<b>ADV_IND</b> ch37/38/39 · scanning`,`<b>ADV_IND</b> hdr 40 17 · TxAdd=1`,`<b>ADV_IND</b> AdvA (random static)`,`<b>ADV_IND</b> AdvData Flags · Name`,`<b>ADV_IND</b> "Akash Gojuru" ${advData.length}/31 B`];
+let advShown=0, advTimer=null, hop=0, advArmed=false;
+function advTo(k){ // milestone k reached: print lines up to k (typed at 6 ms/char unless reduced; a pending line completes when the next lands)
+  advShown=Math.max(advShown,k); if(!advArmed||advShown===0) return;
+  if(isPhone()){ adv.innerHTML=PHONE_ADV[Math.min(advShown,PHONE_ADV.length)-1]; return; }
+  adv.innerHTML=ADV.slice(0,advShown).join('\n');
+}
+const advStart=setTimeout(()=>{ advArmed=true; advTo(Math.max(1,advShown)); advTimer=setInterval(()=>{ adv.querySelectorAll('.ch').forEach(el=>el.classList.toggle('hot',+el.dataset.c===hop%3)); hop++; }, S.reduced?1e9:340); }, 300); // only if not ready by 300 ms
+function advConnect(ms){
+  clearTimeout(advStart); clearInterval(advTimer);
+  if(!advArmed){ adv.innerHTML=''; return; }                    // ready within 300 ms: the panel never shows
+  advTo(ADV.length);
+  adv.innerHTML=(isPhone()?'':adv.innerHTML+'\n')+`<b>CONNECT_IND</b> · surface ready (${ms} ms)`;
+  setTimeout(()=>{ adv.innerHTML=`<b>CONNECT_IND</b> · "Akash Gojuru"`; measure(); }, 1200);   // collapse to one line
+}
+
+/* =====================================================================================
+   3. renderer + scenes
+   ===================================================================================== */
+const canvas=document.getElementById('gl');
+let renderer=null;
+try{ renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance'}); }catch(e){ renderer=null; }
+const hudText=document.getElementById('hudText');
+let P=0, forcedP=null, fShown=0, t=0, ready=false, paused=false, needsRender=true, tier=null, lastStaticKey='';
+const clamp01=x=>Math.min(1,Math.max(0,x)), range=(p,a,b)=>clamp01((p-a)/(b-a));
+const ease=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;          // power3.inOut
+const smooth=x=>x*x*(3-2*x);
+
+if(!renderer){ // no-WebGL: the final focused frame as a still (production: the baked AVIF)
+  const c=document.createElement('canvas'); c.width=c.height=N; const g=c.getContext('2d'), im=g.createImageData(N,N);
+  for(let i=0;i<N*N;i++){const v=Math.min(255,target.T[i]*255);im.data.set([v*.9,v*.96,v,255],i*4);} g.putImageData(im,0,0);
+  const f=document.createElement('div'); f.className='static-frame'; f.appendChild(c); document.body.prepend(f); advConnect(0);
+}
+
+let measure=()=>{};
+if(renderer){
+  renderer.setClearColor(new THREE.Color('#0E1312'),1);
+  advTo(2);                                               // milestone: GPU context created
+  const floatRT=renderer.extensions.has('EXT_color_buffer_float');
+
+  /* ---------- engineered slope texture (rg = world slope, b = wide trace mask for the residual calm) ---------- */
+  const engData=new Float32Array(N*N*4);
+  { const wide=new Float32Array(N*N), r=7; // box-blurred letters+straps mask
+    const src=new Float32Array(N*N); for(let i=0;i<N*N;i++) src[i]=(target.letters[i]||target.straps[i])?1:0;
+    const tmp=new Float32Array(N*N);
+    for(let y=0;y<N;y++){let s=0;for(let x=-r;x<=r;x++)s+=src[y*N+Math.min(N-1,Math.max(0,x))];for(let x=0;x<N;x++){tmp[y*N+x]=s/(2*r+1);s+=src[y*N+Math.min(N-1,x+r+1)]-src[y*N+Math.max(0,x-r)];}}
+    for(let x=0;x<N;x++){let s=0;for(let y=-r;y<=r;y++)s+=tmp[Math.min(N-1,Math.max(0,y))*N+x];for(let y=0;y<N;y++){wide[y*N+x]=s/(2*r+1);s+=tmp[Math.min(N-1,y+r+1)*N+x]-tmp[Math.max(0,y-r)*N+x];}}
+    for(let j=0;j<N;j++)for(let x=0;x<N;x++){ engData[(j*N+x)*4+2]=wide[(N-1-j)*N+x]; engData[(j*N+x)*4+3]=src[(N-1-j)*N+x]; } }
+  const engTex=new THREE.DataTexture(engData,N,N,THREE.RGBAFormat,THREE.FloatType);
+  engTex.minFilter=engTex.magFilter=THREE.NearestFilter; engTex.wrapS=engTex.wrapT=THREE.RepeatWrapping; engTex.needsUpdate=true;
+  const engLo=new Float32Array((N/2)*(N/2)*4);                  // box-downsampled for the low tier's 256² mesh
+  const engTexLo=new THREE.DataTexture(engLo,N/2,N/2,THREE.RGBAFormat,THREE.FloatType); engTexLo.minFilter=engTexLo.magFilter=THREE.NearestFilter; engTexLo.wrapS=engTexLo.wrapT=THREE.RepeatWrapping;
+
+  /* ---------- caustic pass: refract a grid mesh by exact Snell, intensity = area ratio (Wallace) ---------- */
+  const causticVS=`
+    precision highp float;
+    uniform sampler2D tEng; uniform float uTime,uEng,uWave,uResid,uEta,uDepth,uExt,uHasEng;
+    varying vec2 vOld; varying vec2 vNew;
+    // swell periodic over the tile (period 2): k = PI*(m,n), so the sea tiles seamlessly
+    vec2 waveGrad(vec2 p,float t){
+      vec2 g=vec2(0.);
+      vec3 w[7];
+      w[0]=vec3(3.,1.,.0120); w[1]=vec3(-1.,5.,.0068); w[2]=vec3(-5.,-3.,.0052); w[3]=vec3(7.,2.,.0040);
+      w[4]=vec3(3.,9.,.0031); w[5]=vec3(-11.,4.,.0024); w[6]=vec3(2.,-15.,.0017);
+      for(int i=0;i<7;i++){ vec2 k=3.14159265*w[i].xy; float kl=length(k); float om=sqrt(9.8*kl)*0.16;
+        g+=k*(w[i].z*cos(dot(k,p)-om*t+float(i)*1.7)); }
+      return g;
+    }
+    void main(){
+      vec2 p=uv*2.-1.;
+      vec4 e=uHasEng>.5?texture2D(tEng,uv):vec4(0.);
+      float calm=1.-smoothstep(.02,.22,e.b);              // residual swell stays off the traces: corners never bend
+      vec2 g=e.rg*uEng + waveGrad(p,uTime)*(uWave+uResid*calm);
+      vec3 n=normalize(vec3(-g,1.));
+      vec3 r=refract(vec3(0.,0.,-1.),n,1./uEta);
+      vec2 hit=p+r.xy*(uDepth/-r.z);
+      vOld=p; vNew=hit;
+      gl_Position=vec4(hit/uExt,0.,1.);
+    }`;
+  const causticFS=`
+    precision highp float;
+    varying vec2 vOld; varying vec2 vNew;
+    void main(){
+      vec2 ox=dFdx(vOld), oy=dFdy(vOld), nx=dFdx(vNew), ny=dFdy(vNew);
+      float a0=abs(ox.x*oy.y-ox.y*oy.x), a1=abs(nx.x*ny.y-nx.y*ny.x);
+      float I=a0/(max(a1,a0*.015)+1e-8);                  // capped at ~66x; +1e-8 so mediump can't make NaN (C-08)
+      gl_FragColor=vec4(I,I,I,1.);
+    }`;
+  const causticScene=new THREE.Scene(), seaScene=new THREE.Scene(), cCam=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+  // (R+1)² vertices with uv = i/R: the mesh covers the tile edge to edge, so neighbouring tiles meet with no gap (no seam)
+  const mkGrid=(R)=>{ const M=R+1, uv=new Float32Array(M*M*2), pos=new Float32Array(M*M*3);
+    for(let j=0;j<M;j++)for(let i=0;i<M;i++){const k=j*M+i;uv[k*2]=i/R;uv[k*2+1]=j/R;}
+    const idx=new Uint32Array((M-1)*(M-1)*6);let q=0;
+    for(let j=0;j<M-1;j++)for(let i=0;i<M-1;i++){const a=j*M+i,b=a+1,c=a+M,d=c+1;idx.set([a,b,c,b,d,c],q);q+=6;}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('uv',new THREE.BufferAttribute(uv,2));g.setIndex(new THREE.BufferAttribute(idx,1));return g;};
+  const mkMat=(hasEng)=>new THREE.ShaderMaterial({vertexShader:causticVS,fragmentShader:causticFS,
+    uniforms:{tEng:{value:engTex},uTime:{value:0},uEng:{value:0},uWave:{value:1},uResid:{value:0},uEta:{value:ETA},uDepth:{value:DEPTH},uExt:{value:EXT},uHasEng:{value:hasEng?1:0}},
+    blending:THREE.CustomBlending,blendSrc:THREE.OneFactor,blendDst:THREE.OneFactor,blendEquation:THREE.AddEquation,depthTest:false,depthWrite:false,side:THREE.DoubleSide});
+  const dieMesh=new THREE.Mesh(undefined,mkMat(true)); dieMesh.frustumCulled=false; causticScene.add(dieMesh);
+  const seaMesh=new THREE.Mesh(undefined,mkMat(false)); seaMesh.frustumCulled=false; seaScene.add(seaMesh);
+  let dieRT=null, seaRT=null;
+  const TIERS={
+    high:{dieMesh:512, dieRT:1280, seaMesh:256, seaRT:640, disp:1, bloom:2, dpr:2},
+    low: {dieMesh:256, dieRT:640,  seaMesh:128, seaRT:320, disp:0, bloom:1, dpr:1.5},
+  };
+  function applyTier(name){
+    tier=name; const T=TIERS[name];
+    dieMesh.geometry?.dispose(); seaMesh.geometry?.dispose(); dieRT?.dispose(); seaRT?.dispose();
+    dieMesh.geometry=mkGrid(T.dieMesh); seaMesh.geometry=mkGrid(T.seaMesh);
+    dieMesh.material.uniforms.tEng.value=T.dieMesh===N?engTex:engTexLo;
+    const opt={type:THREE.HalfFloatType,format:THREE.RGBAFormat,depthBuffer:false,magFilter:THREE.LinearFilter};
+    dieRT=new THREE.WebGLRenderTarget(T.dieRT,T.dieRT,{...opt,minFilter:THREE.LinearMipmapLinearFilter,generateMipmaps:true});
+    seaRT=new THREE.WebGLRenderTarget(T.seaRT,T.seaRT,{...opt,minFilter:THREE.LinearFilter,generateMipmaps:false});
+    floorMat.uniforms.tDie.value=dieRT.texture; floorMat.uniforms.tSea.value=seaRT.texture;
+    floorMat.uniforms.uDisp.value=T.disp; floorMat.uniforms.uBloomLv.value=T.bloom;
+    renderer.setPixelRatio(Math.min(devicePixelRatio,T.dpr)); renderer.setSize(innerWidth,innerHeight,false);
+    lastStaticKey=''; needsRender=true;
+  }
+
+  /* ---------- the floor: tiled caustic (die tile at the origin, periodic sea everywhere else) ---------- */
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(35,innerWidth/innerHeight,0.05,80); cam.up.set(0,0,-1);
+  const hexL=h=>new THREE.Color(h);                   // sRGB hex -> linear
+  const d0u=DIE.d0/N, d1u=DIE.d1/N;
+  var floorMat=new THREE.ShaderMaterial({
+    uniforms:{tDie:{value:null},tSea:{value:null},uExt:{value:EXT},
+      cSun:{value:hexL('#BAC4C2')},cShade:{value:hexL('#6E7E80')},cLight:{value:hexL('#E6F4FF')},cFloor:{value:hexL('#0E1312')},cCool:{value:new THREE.Color(0.74,0.93,0.88)},
+      uAmb:{value:.35},uExp:{value:1.6},uSun:{value:DEPTH*0.0093*0.5},uBloom:{value:0},uBloomLv:{value:2},uDisp:{value:1},uF:{value:0},uRise:{value:0},
+      cM1:{value:hexL('#D08A62')},cM2:{value:hexL('#A597DD')},cM3:{value:hexL('#86C4A8')},cAl:{value:hexL('#C3C9CC')},uDie:{value:new THREE.Vector2(d0u,d1u)}},
+    vertexShader:`varying vec2 vP; void main(){ vP=position.xy; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
+    fragmentShader:`
+      precision highp float;
+      uniform sampler2D tDie,tSea; uniform float uExt,uAmb,uExp,uBloom,uBloomLv,uDisp,uF,uRise,uSun;
+      uniform vec3 cSun,cShade,cLight,cFloor,cCool,cM1,cM2,cM3,cAl; uniform vec2 uDie;
+      varying vec2 vP;
+      float hash(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
+      float noise(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f);
+        return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y); }
+      // light reaching floor point p: sum the light every neighbouring source tile throws here (each RT covers its tile + margin)
+      float foldI(vec2 p){
+        vec2 tl=floor((p+1.)*.5), u=p-2.*tl; float acc=0.;
+        for(int i=-1;i<=1;i++)for(int j=-1;j<=1;j++){
+          vec2 o=vec2(float(i),float(j)), q=u-2.*o;
+          if(abs(q.x)<=uExt && abs(q.y)<=uExt){
+            vec2 uv=q/(2.*uExt)+.5;
+            if(tl+o==vec2(0.)){   // the sun is a 0.53° disc, not a point: its image blurs the caustic by ~D·0.0093 (a 7-tap disc)
+              float r=uSun/(2.*uExt); float s=texture2D(tDie,uv).r*2.;
+              for(int k=0;k<6;k++){ float a=float(k)*1.0472; s+=texture2D(tDie,uv+r*vec2(cos(a),sin(a))).r; }
+              acc+=s/8.;
+            } else acc+=texture2D(tSea,uv).r;
+          }
+        }
+        return acc;
+      }
+      // procedural metal layout (C-07): vector-sharp at any zoom, averaged to coverage when stripes go sub-pixel
+      float band(float x,float c,float hw){ float fw=fwidth(x); return 1.-smoothstep(hw-fw,hw+fw,abs(x-c)); }
+      float stripes(float x,float pitch,float hw){ float fw=fwidth(x); float d=abs(fract(x/pitch+.5)-.5)*pitch;
+        float s=1.-smoothstep(hw-fw,hw+fw,d); return mix(s,2.*hw/pitch,smoothstep(.25*pitch,.5*pitch,fw)); }
+      float inRect(vec2 c,vec4 r){ vec2 fw=fwidth(c); vec2 a=smoothstep(r.xy-fw,r.xy+fw,c)*(1.-smoothstep(r.zw-fw,r.zw+fw,c)); return a.x*a.y; }
+      vec4 metalLayout(vec2 c){ // c = die-canvas coords [0,1], y down
+        vec4 o=vec4(0.); float W=uDie.y-uDie.x; float px=1./1024.;
+        vec4 B[3]; B[0]=vec4(.10,.10,.40,.34); B[1]=vec4(.33,.38,.67,.64); B[2]=vec4(.72,.30,.90,.70);
+        for(int i=0;i<3;i++){ vec4 r=uDie.xxxx+B[i]*W; float m=inRect(c,r);
+          float m1=stripes(c.y-r.y,10.*px,1.*px)*m, m2=stripes(c.x-r.x-4.*px,18.*px,1.*px)*m;
+          float ol=m*(1.-inRect(c,r+vec4(2.,2.,-2.,-2.)*px));
+          o.rgb=mix(o.rgb,cM1,m1*.9); o.a=max(o.a,m1*.9); o.rgb=mix(o.rgb,cM2,m2*.8); o.a=max(o.a,m2*.8); o.rgb=mix(o.rgb,cAl,ol); o.a=max(o.a,ol); }
+        float lo=uDie.x+.08*W, hi=uDie.x+.92*W;
+        float g3=0.; g3=max(g3,band(c.y,uDie.x+.36*W,1.5*px)); g3=max(g3,band(c.y,uDie.x+.70*W,1.5*px)); g3=max(g3,band(c.y,uDie.x+.82*W,1.5*px));
+        g3*=step(lo,c.x)*step(c.x,hi);
+        float v3=max(band(c.x,uDie.x+.30*W,1.5*px),band(c.x,uDie.x+.62*W,1.5*px))*step(lo,c.y)*step(c.y,hi);
+        g3=max(g3,v3); o.rgb=mix(o.rgb,cM3,g3*.9); o.a=max(o.a,g3*.9);
+        return o;
+      }
+      void main(){
+        vec2 p=vP;
+        float rip=sin(p.x*38.+p.y*9.+noise(p*6.)*5.)*.5+.5, grain=hash(floor(p*700.));
+        vec3 alb=mix(cShade,cSun,.5+.22*rip*noise(p*3.+2.)+.14*grain);
+        float I=foldI(p);
+        vec3 c=vec3(I);
+        bool inDie=max(abs(p.x),abs(p.y))<=uExt;
+        if(uDisp>0. && inDie && uF>0.){                     // dispersion: 3 offset samples of one RT along the light gradient (C-08)
+          vec2 duv=vec2(1./512.);
+          vec2 uvd=p/(2.*uExt)+.5;
+          float gx=textureLod(tDie,uvd+vec2(duv.x,0.),2.).r-textureLod(tDie,uvd-vec2(duv.x,0.),2.).r;
+          float gy=textureLod(tDie,uvd+vec2(0.,duv.y),2.).r-textureLod(tDie,uvd-vec2(0.,duv.y),2.).r;
+          vec2 dir=normalize(vec2(gx,gy)+1e-6)*.0035*uF;
+          c=vec3(foldI(p+dir),I,foldI(p-dir));
+        }
+        vec3 glow=vec3(0.);
+        if(inDie){ vec2 uvd=p/(2.*uExt)+.5; glow=vec3(textureLod(tDie,uvd,3.).r*.10); if(uBloomLv>1.5) glow+=vec3(textureLod(tDie,uvd,5.).r*.07); }
+        vec3 col=alb*(uAmb*cCool + c*cLight) + glow*cLight*uBloom;
+        col=pow(1.-exp(-col*uExp),vec3(1.3));               // exposure (auto: stops down as the light focuses) + toe
+        vec2 dc=vec2((p.x+1.)*.5,(1.-p.y)*.5);
+        if(uRise>0. && max(abs(p.x),abs(p.y))<1.){ vec4 lay=metalLayout(dc); lay.a*=1.-smoothstep(1.2,2.5,I);   // top metal (the lit name) sits above the lower layers
+          col=mix(col,lay.rgb,lay.a*.35*uRise); }
+        col=mix(col,cFloor,smoothstep(5.,9.,length(p)));    // far field fades to the unlit floor, far outside any frame
+        gl_FragColor=vec4(pow(col,vec3(1./2.2)),1.);
+      }`
+  });
+  floorMat.extensions={derivatives:true};
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(20,20),floorMat); floor.rotation.x=-Math.PI/2; scene.add(floor);
+
+  /* ---------- readback pass for the acceptance tests (die tile [-1,1] -> 512² float) ---------- */
+  const rbScene=new THREE.Scene(), rbMat=new THREE.ShaderMaterial({uniforms:{tDie:{value:null},uExt:{value:EXT}},
+    vertexShader:`varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.,1.); }`,
+    fragmentShader:`uniform sampler2D tDie; uniform float uExt; varying vec2 vUv; void main(){ vec2 p=vUv*2.-1.; gl_FragColor=vec4(textureLod(tDie,p/(2.*uExt)+.5,0.).r,0.,0.,1.); }`});
+  rbScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),rbMat));
+  const rbRT=floatRT?new THREE.WebGLRenderTarget(N,N,{type:THREE.FloatType,depthBuffer:false}):null;
+  function readDie(){ if(!rbRT) return null; rbMat.uniforms.tDie.value=dieRT.texture; renderer.setRenderTarget(rbRT); renderer.render(rbScene,cCam);
+    const buf=new Float32Array(N*N*4); renderer.readRenderTargetPixels(rbRT,0,0,N,N,buf); renderer.setRenderTarget(null);
+    const I=new Float32Array(N*N); for(let r=0;r<N;r++)for(let x=0;x<N;x++) I[(N-1-r)*N+x]=buf[(r*N+x)*4]; return I; }   // -> canvas rows (y down)
+
+  /* ---------- slope field precision (C-09): what the build would ship ---------- */
+  let H=null, Hmeta=null;
+  const PREC=['f32','f16','h16','h8'];
+  function buildSlopes(mode){
+    if(!H) return; const {a}=Hmeta; let src=H;
+    if(mode==='h16'||mode==='h8'){ let mn=1e9,mx=-1e9; for(const v of H){mn=Math.min(mn,v);mx=Math.max(mx,v);} const L=mode==='h16'?65535:255;
+      src=new Float32Array(N*N); for(let i=0;i<N*N;i++) src[i]=mn+Math.round((H[i]-mn)/(mx-mn)*L)/L*(mx-mn); }
+    const q=mode==='f16'?(v=>THREE.DataUtils.fromHalfFloat(THREE.DataUtils.toHalfFloat(v))):(v=>v);
+    const Hh=(x,y)=>src[((y+N)%N)*N+((x+N)%N)];
+    for(let j=0;j<N;j++)for(let x=0;x<N;x++){ const y=N-1-j, i=(j*N+x)*4;
+      engData[i]=q(a*(Hh(x+1,y)-Hh(x-1,y))*.5/TAU); engData[i+1]=q(a*(Hh(x,y-1)-Hh(x,y+1))*.5/TAU); }
+    const M=N/2; for(let j=0;j<M;j++)for(let x=0;x<M;x++)for(let c=0;c<4;c++){ let s=0; for(let dy=0;dy<2;dy++)for(let dx=0;dx<2;dx++) s+=engData[((2*j+dy)*N+2*x+dx)*4+c]; engLo[(j*M+x)*4+c]=s/4; }
+    engTex.needsUpdate=true; engTexLo.needsUpdate=true; lastStaticKey=''; needsRender=true;
+  }
+
+  /* ---------- solve (production: baked offline, shipped as an RG16F slope field) ---------- */
+  const worker=new Worker(URL.createObjectURL(new Blob([document.getElementById('solver').textContent],{type:'text/javascript'})));
+  let solveInfo=null;
+  worker.onmessage=(e)=>{
+    if(!e.data.done){ const pr=e.data.progress; advTo(pr<.4?3:pr<.8?4:5); hudText.textContent=`solving surface… ${Math.round(pr*100)}% · err ${e.data.err}`; return; }
+    const {h,a,ms,errs}=e.data; H=h; Hmeta={a}; solveInfo={ms,errs}; buildSlopes(S.prec);
+    chooseTier().then(()=>{ ready=true; needsRender=true; advConnect(ms); });
+  };
+  advTo(3);                                               // milestone: heightfield requested
+  worker.postMessage({N,target:target.T,D:DEPTH,eta:ETA,tau:TAU});
+
+  /* ---------- tier choice (C-08): coarse pointers default to low; others run a 10-frame warm-up while ADV_IND shows ---------- */
+  function renderCaustics(){ renderer.setRenderTarget(dieRT); renderer.clear(); renderer.render(causticScene,cCam);
+    renderer.setRenderTarget(seaRT); renderer.clear(); renderer.render(seaScene,cCam); renderer.setRenderTarget(null); }
+  let warm=null;
+  async function chooseTier(){
+    if(S.tierPref!=='auto'){ applyTier(S.tierPref); warm={pref:S.tierPref}; return; }
+    if(coarse){ applyTier('low'); warm={coarse:true}; return; }
+    applyTier('high'); const px=new Uint8Array(4); const tmp=new THREE.WebGLRenderTarget(1,1);
+    const sync=()=>{ renderer.setRenderTarget(tmp); renderer.clear(); renderer.readRenderTargetPixels(tmp,0,0,1,1,px); renderer.setRenderTarget(null); };
+    const med=(arr)=>{arr.splice(0,2); arr.sort((a,b)=>a-b); return arr[arr.length>>1];};
+    const base=[], full=[];                                  // subtract the bare GPU round-trip so only the caustic pass is counted
+    for(let i=0;i<12;i++){ let t0=performance.now(); sync(); base.push(performance.now()-t0);
+      t0=performance.now(); renderCaustics(); sync(); full.push(performance.now()-t0); await new Promise(r=>requestAnimationFrame(r)); }
+    tmp.dispose(); const mb=med(base), mf=med(full), med_=Math.max(0,mf-mb);
+    warm={ms:+med_.toFixed(2),roundTrip:+mb.toFixed(2)}; if(med_>6) applyTier('low');
+  }
+  applyTier(coarse?'low':'high');
+
+  /* =====================================================================================
+     4. composition (C-02): the free region is measured from the real DOM; the camera distance is FIT so the
+        projected letter bbox (+6% margin) lies inside it; a lens shift (setViewOffset) places the die there.
+     ===================================================================================== */
+  const plateEl=document.getElementById('plate'), barEl=document.getElementById('bar'), bbarEl=document.getElementById('bbar');
+  const toWorld=(X,Y)=>[X/N*2-1, Y/N*2-1];               // canvas texel -> world (x, z); canvas top = north = -z
+  const LB=target.bbox, letterBox=[toWorld(LB.x0,LB.y0),toWorld(LB.x1,LB.y1)];
+  const dieBox=[toWorld(DIE.d0-4,DIE.d0-4),toWorld(DIE.d1+4,DIE.d1+4)];
+  let comp=null, compT=null;
+  function freeRegion(){
+    const Wv=innerWidth,Hv=innerHeight, pad=16;
+    const top=isPhone()?0:barEl.getBoundingClientRect().bottom, bottom=isPhone()?bbarEl.getBoundingClientRect().top:Hv;
+    // the plate's PINNED rect (independent of the current scroll): bottom-left, above the phone bar
+    const plateTop=(isPhone()?bottom-12:Hv-16)-plateEl.offsetHeight, plateRight=(isPhone()?12:16)+plateEl.offsetWidth;
+    const regions=[{name:'above plate',x0:0,y0:top,x1:Wv,y1:plateTop-pad},{name:'right of plate',x0:plateRight+pad,y0:top,x1:Wv,y1:bottom}]
+      .filter(g=>g.x1-g.x0>140&&g.y1-g.y0>140);
+    return regions;
+  }
+  const v3=new THREE.Vector3();
+  function poseCam(c,dist,tilt){
+    cam.aspect=innerWidth/innerHeight;
+    cam.position.set(0,dist*Math.cos(tilt),dist*Math.sin(tilt)); cam.lookAt(0,0,0);
+    cam.setViewOffset(innerWidth,innerHeight,-(c.cx-innerWidth/2),-(c.cy-innerHeight/2),innerWidth,innerHeight);
+    cam.updateMatrixWorld(); cam.updateProjectionMatrix();
+  }
+  function projBox(box){ const [[x0,z0],[x1,z1]]=box; let r={x0:1e9,y0:1e9,x1:-1e9,y1:-1e9};
+    for(const [x,z] of [[x0,z0],[x1,z0],[x0,z1],[x1,z1]]){ v3.set(x,0,z).project(cam);
+      const X=(v3.x+1)/2*innerWidth, Y=(1-v3.y)/2*innerHeight; r.x0=Math.min(r.x0,X);r.x1=Math.max(r.x1,X);r.y0=Math.min(r.y0,Y);r.y1=Math.max(r.y1,Y);} return r; }
+  function fits(r,g,m){ const mx=(g.x1-g.x0)*m, my=(g.y1-g.y0)*m; return r.x0>=g.x0+mx&&r.x1<=g.x1-mx&&r.y0>=g.y0+my&&r.y1<=g.y1-my; }
+  function fitDist(c,g,box,tilts,m){ let lo=.2,hi=80; for(let it=0;it<40;it++){ const mid=(lo+hi)/2; let ok=true;
+      for(const tl of tilts){ poseCam(c,mid,tl); if(!fits(projBox(box),g,m)){ok=false;break;} } if(ok)hi=mid; else lo=mid; } return hi; }
+  const TILT=THREE.MathUtils.degToRad(28);
+  measure=function(){
+    const regs=freeRegion(); if(!regs.length) return;
+    let best=null;
+    for(const g of regs){ const c={cx:(g.x0+g.x1)/2, cy:(g.y0+g.y1)/2};
+      const near=fitDist(c,g,letterBox,[0,TILT*.5],.06), far=Math.max(near,fitDist(c,g,dieBox,[0],.04));
+      if(!best||far<best.far) best={g,cx:c.cx,cy:c.cy,near,far}; }
+    compT=best; if(!comp) comp={...best}; needsRender=true;
+  };
+  addEventListener('resize',()=>{ renderer.setSize(innerWidth,innerHeight,false); measure(); comp={...compT}; });
+  measure(); document.fonts&&document.fonts.ready.then(()=>{measure(); comp={...compT};});
+
+  function camFor(Pv){
+    const pf=S.reduced?1:range(Pv,.05,.45), f=ease(pf);
+    const tilt=S.reduced?0:TILT*(1-f);
+    const rise=S.reduced?1:ease(range(Pv,.55,1));
+    const dist=THREE.MathUtils.lerp(comp.near,comp.far,rise);
+    poseCam(comp,dist,tilt);
+    return {pf,f,rise};
+  }
+
+  /* =====================================================================================
+     5. loop. Scroll is the master clock; the time only drives the swell, which stills with f and stops by P = 1.
+     ===================================================================================== */
+  let last=performance.now(), fps=60, fpsAcc=0, fpsN=0;
+  function tick(now){
+    requestAnimationFrame(tick);
+    const dt=Math.min(.05,(now-last)/1000); last=now;
+    if(paused||!comp) return;
+    // ease composition changes (e.g. ADV_IND collapsing) instead of jumping
+    const k=Math.min(1,dt*6); for(const key of ['cx','cy','near','far']) comp[key]+= (compT[key]-comp[key])*k;
+    const {f:fTarget,rise}=camFor(P);
+    fShown+=((ready?fTarget:0)-fShown)*(S.reduced?1:Math.min(1,dt*10));    // if the surface lands mid-scroll, ease in (~250 ms), never snap
+    const f=fShown;
+    const stop=1-smooth(range(P,.9,1));                                   // the whole sea comes to rest over P 0.9-1.0 (C-20)
+    const lagoonWave=S.reduced?0:Math.pow(1-f,1.6);                       // inside the reef: stills first
+    const seaWave=S.reduced?0:Math.pow(1-f,0.7)*stop;                     // outside the reef: calms more slowly, then stops
+    const resid=S.reduced?0:.03*f*(1-range(P,.7,.9));                     // ~3% residual, off the traces, gone by P 0.9 (C-20)
+    const moving=!S.reduced && (lagoonWave>1e-4||seaWave>1e-4||resid>1e-4);
+    if(moving) t+=dt*(.35+.65*(1-f))*Math.max(stop,.0001);
+    const amb=THREE.MathUtils.lerp(.35,.02,f), expo=THREE.MathUtils.lerp(1.6,.42,smooth(f));   // sunlit sand -> stopped-down exposure
+    const key=`${f.toFixed(4)}|${tier}|${S.prec}`;
+    const staticNow=!moving && key===lastStaticKey;
+    if(staticNow && !needsRender) return;                                  // idle: 0 frames when nothing changes
+    const du=dieMesh.material.uniforms, su=seaMesh.material.uniforms;
+    du.uTime.value=su.uTime.value=t; du.uEng.value=ready?f:0; du.uWave.value=lagoonWave; du.uResid.value=resid;
+    su.uWave.value=seaWave; su.uResid.value=resid;
+    const fu=floorMat.uniforms; fu.uAmb.value=amb; fu.uExp.value=expo; fu.uBloom.value=f; fu.uF.value=f; fu.uRise.value=S.reduced?1:range(P,.72,1);
+    if(!staticNow){ renderCaustics(); lastStaticKey=moving?'':key; }      // frozen RT once still (C-20)
+    renderer.render(scene,cam); needsRender=false;
+    fpsAcc+=dt; fpsN++; if(fpsAcc>.5){ fps=Math.round(fpsN/fpsAcc); fpsAcc=0; fpsN=0; hud(f,moving); }
+  }
+  function hud(f,moving){
+    const T=TIERS[tier]||{};
+    hudText.textContent=`P ${P.toFixed(2)} · f ${f.toFixed(2)} · ${fps} fps · caustic ${moving?'live':'frozen'}\n`+
+      `tier ${tier}${warm?(warm.ms!=null?` (warm-up ${warm.ms} ms/caustic)`:warm.coarse?' (coarse pointer)':' (forced)'):''} · die mesh ${T.dieMesh}² · RT ${T.dieRT}²\n`+
+      (solveInfo?`solve ${solveInfo.ms} ms · err ${solveInfo.errs[0]}→${solveInfo.errs.at(-1)} · slope ${S.prec}\n`:'')+(testOut||'');
+  }
+  requestAnimationFrame(tick);
+  requestAnimationFrame(()=>canvas.classList.add('on'));
+
+  /* =====================================================================================
+     6. acceptance tests (C-02 framing, C-03 contrast, C-09 precision)
+     ===================================================================================== */
+  let testOut='';
+  function renderStaticFocus(){ const du=dieMesh.material.uniforms; const keep={e:du.uEng.value,w:du.uWave.value,r:du.uResid.value};
+    du.uEng.value=1; du.uWave.value=0; du.uResid.value=0; renderer.setRenderTarget(dieRT); renderer.clear(); renderer.render(causticScene,cCam); renderer.setRenderTarget(null);
+    const I=readDie(); du.uEng.value=keep.e; du.uWave.value=keep.w; du.uResid.value=keep.r; lastStaticKey=''; needsRender=true; return I; }
+  function contrastTest(){
+    const I=renderStaticFocus(); if(!I) return {error:'EXT_color_buffer_float unavailable'};
+    const mean=(M)=>{let s=0,n=0;for(let i=0;i<N*N;i++)if(M[i]){s+=I[i];n++;}return s/n;};
+    const L=mean(target.letters), F=mean(target.fillM), C=mean(target.core);
+    const alb=.52, disp=x=>Math.pow(1-Math.exp(-(alb*(.02+x))*.42),1.3);
+    const dmean=(M)=>{let s=0,n=0;for(let i=0;i<N*N;i++)if(M[i]){s+=disp(I[i]);n++;}return s/n;};
+    const dL=dmean(target.letters), dF=dmean(target.fillM), dC=dmean(target.core);
+    return {I_letters:+L.toFixed(2),I_fill:+F.toFixed(2),I_core:+C.toFixed(3),LF:+(L/F).toFixed(2),LC:+(L/C).toFixed(1),
+      display_LF:+(dL/dF).toFixed(2),display_LC:+(dL/dC).toFixed(1),pass:L/F>=3&&L/C>=8};
+  }
+  function precisionTest(){
+    const keep=S.prec, res={}; buildSlopes('f32'); const ref=renderStaticFocus(); if(!ref) return {error:'no float readback'};
+    let m=0; for(const v of ref) m+=v; m/=ref.length;
+    // compare at display scale: 4x4 box-downsampled (a screen pixel covers ~4 solve texels at the hold)
+    const down=(A)=>{const M=N/4,o=new Float32Array(M*M);for(let y=0;y<N;y++)for(let x=0;x<N;x++)o[(y>>2)*M+(x>>2)]+=A[y*N+x]/16;return o;};
+    const rd=down(ref);
+    for(const mode of ['f16','h16','h8']){ buildSlopes(mode); const I=down(renderStaticFocus()); let s=0,bad=0; for(let i=0;i<I.length;i++){const d=I[i]-rd[i]; s+=d*d; if(Math.abs(d)>.1*Math.max(rd[i],m*.25)) bad++;}
+      res[mode]=`${(Math.sqrt(s/I.length)/m*100).toFixed(1)}% rms, ${(bad/I.length*100).toFixed(1)}% px off >10%`; }
+    buildSlopes(keep); return res;
+  }
+  function framingTest(){
+    const out={viewport:`${innerWidth}×${innerHeight}`, region:null, checks:[]};
+    comp={...compT}; const g=comp.g; out.region=`${g.name} [${g.x0|0},${g.y0|0}]–[${g.x1|0},${g.y1|0}]`;
+    for(const Pv of [.30,.45,.50,.55]){ camFor(Pv); const r=projBox(letterBox); out.checks.push({P:Pv,what:'letters',bbox:[r.x0|0,r.y0|0,r.x1|0,r.y1|0],inside:fits(r,g,0)}); }
+    camFor(1); const r=projBox(dieBox); out.checks.push({P:1,what:'die',bbox:[r.x0|0,r.y0|0,r.x1|0,r.y1|0],inside:fits(r,g,0)});
+    out.pass=out.checks.every(c=>c.inside); camFor(P); drawFrameDbg(); needsRender=true; return out;
+  }
+  function drawFrameDbg(){
+    const svg=document.getElementById('frameDbg'); if(!compT) return; const g=compT.g; camFor(.5); const r=projBox(letterBox); camFor(1); const d=projBox(dieBox); camFor(P);
+    svg.setAttribute('viewBox',`0 0 ${innerWidth} ${innerHeight}`);
+    svg.innerHTML=`<rect x="${g.x0}" y="${g.y0}" width="${g.x1-g.x0}" height="${g.y1-g.y0}" fill="none" stroke="#3D9DF2" stroke-dasharray="6 4"/>`+
+      `<rect x="${r.x0}" y="${r.y0}" width="${r.x1-r.x0}" height="${r.y1-r.y0}" fill="none" stroke="#E6F4FF" stroke-width="1.5"/>`+
+      `<rect x="${d.x0}" y="${d.y0}" width="${d.x1-d.x0}" height="${d.y1-d.y0}" fill="none" stroke="#85939A" stroke-dasharray="2 3"/>`;
+  }
+  window.__proof={S,get P(){return P},get f(){return fShown},get ready(){return ready},get tier(){return tier},get warm(){return warm},get solve(){return solveInfo},
+    setP:v=>{forcedP=v; if(v!=null)P=v; needsRender=true;}, framingTest, contrastTest, precisionTest,
+    setPrec:m=>{S.prec=m; buildSlopes(m); document.getElementById('tPrec').textContent='slope: '+m;},
+    setTier:n=>applyTier(n), markDirty:()=>{needsRender=true;}, frameDbg:(on)=>{document.body.classList.toggle('dbg',on); drawFrameDbg();}};
+  document.getElementById('tTests').addEventListener('click',()=>{ const c=contrastTest(), fr=framingTest(), pr=precisionTest();
+    testOut=`contrast L/F ${c.LF} L/C ${c.LC} → ${c.pass?'PASS':'FAIL'}\nframing ${fr.viewport} → ${fr.pass?'PASS':'FAIL'}\nslope vs f32: f16 ${pr.f16} · h16 ${pr.h16} · h8 ${pr.h8}`; hud(fShown,false); });
+  document.getElementById('tTier').addEventListener('click',e=>{ const n=tier==='high'?'low':'high'; applyTier(n); e.currentTarget.textContent='tier: '+n; });
+  document.getElementById('tPrec').addEventListener('click',()=>{ const n=PREC[(PREC.indexOf(S.prec)+1)%PREC.length]; __proof.setPrec(n); });
+  document.getElementById('tDbg').addEventListener('click',e=>{ const on=e.currentTarget.getAttribute('aria-pressed')!=='true'; e.currentTarget.setAttribute('aria-pressed',on); __proof.frameDbg(on); });
+}
+
+/* =====================================================================================
+   7. scroll: Lenis + ScrollTrigger on one clock; native scroll under reduced motion (watched live)
+   ===================================================================================== */
+let lenis=null;
+const hudEl=document.getElementById('hud'); if(qs.has('hud')) hudEl.classList.add('open');
+document.getElementById('hudToggle').addEventListener('click',()=>hudEl.classList.toggle('open'));
+gsap.registerPlugin(ScrollTrigger);
+ScrollTrigger.create({start:0,end:()=>innerHeight*PIN(),onUpdate:self=>{ if(forcedP===null) P=self.progress; needsRender=true; }});
+gsap.ticker.add(time=>{ if(lenis) lenis.raf(time*1000); }); gsap.ticker.lagSmoothing(0);
+function setLenis(){
+  if(!S.reduced && !lenis && window.Lenis && !coarse){ lenis=new Lenis({lerp:.1}); lenis.on('scroll',ScrollTrigger.update); }
+  if(S.reduced && lenis){ lenis.destroy(); lenis=null; }
+  document.body.classList.toggle('rm',S.reduced); needsRender=true;
+}
+setLenis();
+mqRM.addEventListener('change',e=>{ S.reduced=e.matches; setLenis(); syncRM(); });
+const rmBtn=document.getElementById('tReduced'); const syncRM=()=>rmBtn.setAttribute('aria-pressed',S.reduced); syncRM();
+rmBtn.addEventListener('click',()=>{ S.reduced=!S.reduced; setLenis(); syncRM(); });
+
+/* =====================================================================================
+   8. Surface Interrupt: pre-empt, save context, serve, return. ✕, "Back", Esc and the Back button all return.
+   ===================================================================================== */
+const panel=document.getElementById('irqPanel'), outside=[document.getElementById('main'),document.getElementById('bar'),document.getElementById('bbar'),document.getElementById('hud')];
+let saved=null, opener=null;
+function openIRQ(e){
+  if(document.body.classList.contains('irq')) return;
+  opener=e&&e.currentTarget instanceof HTMLElement?e.currentTarget:document.querySelector(isPhone()?'#bbar .con':'#bar .irqOpen');
+  saved={y:scrollY,P};
+  document.getElementById('irqCtx').textContent=`context saved @ S1-hero · ${Math.round(P*100)}% · scene frozen`;
+  paused=true; lenis&&lenis.stop();
+  outside.forEach(el=>el.inert=true);
+  document.body.classList.remove('irq-closing'); document.body.classList.add('irq');
+  history.pushState({irq:1},'');
+  requestAnimationFrame(()=>document.getElementById('irqTitle').focus());
+}
+function closeIRQ(fromPop){
+  if(!document.body.classList.contains('irq')) return;
+  if(!fromPop){ history.back(); return; }                     // popstate does the real close, so Back and ✕ share one path
+  document.body.classList.add('irq-closing'); document.body.classList.remove('irq');
+  outside.forEach(el=>el.inert=false);
+  lenis&&lenis.start(); if(saved)(lenis?lenis.scrollTo(saved.y,{immediate:true}):scrollTo(0,saved.y));
+  paused=false; needsRender=true; (opener||document.body).focus();
+  setTimeout(()=>document.body.classList.remove('irq-closing'),220);
+}
+addEventListener('popstate',()=>closeIRQ(true));
+document.querySelectorAll('.irqOpen').forEach(b=>b.addEventListener('click',openIRQ));
+document.getElementById('irqX').addEventListener('click',()=>closeIRQ(false));
+document.getElementById('irqBack').addEventListener('click',()=>closeIRQ(false));
+addEventListener('keydown',e=>{
+  if(e.key==='Escape') closeIRQ(false);
+  if((e.key==='r'||e.key==='R')&&!e.metaKey&&!e.ctrlKey&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName)) openIRQ();
+  if(e.key==='Tab'&&document.body.classList.contains('irq')){        // focus trap
+    const f=[...panel.querySelectorAll('a,button,[tabindex="-1"]')].filter(x=>x.offsetParent!==null); const first=f[0], lastEl=f[f.length-1];
+    if(e.shiftKey&&document.activeElement===first){lastEl.focus();e.preventDefault();} else if(!e.shiftKey&&document.activeElement===lastEl){first.focus();e.preventDefault();}
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sun Print Style Tile</title>
+<meta name="description" content="Style tile for concept B, Caustic Lithography, after the critique round: cool palette with the sea-blue accent, the canonical glyph set, the exposure with measured contrast, photomask grammar, and the S4 panel.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Martian+Mono:wdth,wght@75..112.5,100..800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --floor-0:#0E1312; --floor-1:#161C1A; --floor-2:#222A27; --floor-deep:#0A0E0D;
+  --exposure:#9CC8E8; --exposure-amt:0;
+  --line:#2E3733; --line-strong:#737E83;
+  --sand-sun:#BAC4C2; --sand-shade:#6E7E80; --caustic:#E6F4FF;
+  --light:#E8EEF0; --sand:#A7B5BB; --dim:#85939A; --ink:#0A1016;
+  --sea:#3D9DF2;
+  --m1-copper:#D08A62; --m2-violet:#A597DD; --m3-oxide:#86C4A8; --m5-al:#C3C9CC;
+  --block:var(--m5-al);
+
+  --f-serif:"Newsreader","Iowan Old Style",Georgia,serif;
+  --f-mono:"Martian Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --t-display-xl:clamp(48px,4.4vw,64px);
+  --t-display-l:clamp(34px,4.8vw,72px);
+  --t-display-m:clamp(26px,2.8vw,40px);
+  --t-lede:clamp(19px,1.5vw,22px);
+  --t-body:18px; --t-nav:16px; --t-small:15px; --t-tag:12px; --t-data:13px;
+
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px;
+  --s-7:48px; --s-8:64px; --s-9:96px; --s-10:128px; --s-11:192px;
+  --gutter:24px; --margin:clamp(16px,4.4vw,64px); --scribe:32px; --bottombar:56px;
+  --r-0:0; --r-pill:999px;
+  --b-hair:1px solid var(--line); --b-ui:1px solid var(--line-strong); --b-block:2px solid var(--block);
+  --focus:0 0 0 2px var(--ink);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--floor-0);-webkit-text-size-adjust:100%}
+body{background:var(--floor-0);color:var(--light);font-family:var(--f-serif);font-size:var(--t-body);line-height:1.55;overflow-x:hidden}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--sea);outline-offset:2px;box-shadow:var(--focus)}
+.nav{font-family:var(--f-serif);font-size:var(--t-nav);font-weight:450;letter-spacing:.01em;line-height:1;font-variation-settings:"opsz" 16}
+.tag{font-family:var(--f-mono);font-variation-settings:"wdth" 87.5;font-weight:500;font-size:var(--t-tag);letter-spacing:.08em;text-transform:uppercase;line-height:1}
+.data{font-family:var(--f-mono);font-variation-settings:"wdth" 100;font-size:var(--t-data);font-variant-numeric:tabular-nums;line-height:1.5}
+.gds{font-family:var(--f-mono);font-variation-settings:"wdth" 75;font-size:11px;letter-spacing:.06em;line-height:1}
+.small{font-size:var(--t-small);line-height:1.5;color:var(--dim)}
+.it{font-style:italic}
+.grain{pointer-events:none;position:fixed;inset:0;z-index:50;opacity:.03;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='256' height='256'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1.4 0'/></filter><rect width='256' height='256' filter='url(%23n)'/></svg>")}
+
+/* ---------- pinned bar (desktop) ---------- */
+.bar{position:fixed;top:0;left:0;right:0;height:56px;z-index:40;display:flex;align-items:center;justify-content:space-between;
+  padding:0 var(--margin);background:rgba(14,19,18,.86)}
+.bar .word{font-size:20px;font-weight:500;letter-spacing:-.005em;text-decoration:none}
+.pill{display:flex;align-items:stretch;border-radius:var(--r-pill);overflow:hidden;height:44px}
+.pill a{display:flex;align-items:center;padding:0 18px;text-decoration:none}
+.pill .res{background:var(--sea);color:var(--ink)}
+.pill .con{background:var(--floor-1);color:var(--light);border-left:1px solid var(--sea)}
+.pill a.res:hover{background:#63B1F5}
+.pill a.con:hover{background:var(--floor-2)}
+
+/* ---------- phone bottom bar (02-ux) ---------- */
+.pbar{display:none}
+@media (max-width:767px){
+  .bar .pill{display:none}
+  .bar{height:52px}
+  body{padding-bottom:calc(var(--bottombar) + env(safe-area-inset-bottom))}
+  .pbar{display:grid;grid-template-columns:1fr 88px 96px;gap:8px;position:fixed;left:0;right:0;bottom:0;z-index:40;
+    padding:6px var(--margin) calc(6px + env(safe-area-inset-bottom));background:rgba(14,19,18,.94);border-top:var(--b-hair)}
+  .pbar > *{height:44px;display:flex;align-items:center;justify-content:center;text-decoration:none;border:var(--b-ui);background:var(--floor-1);white-space:nowrap;overflow:hidden}
+  .pbar .pmap{justify-content:flex-start;gap:8px;padding:0 10px;cursor:pointer}
+  .pbar .pmap .data{color:var(--dim)}
+  .pbar .pres{background:var(--sea);color:var(--ink);border-color:var(--sea)}
+}
+
+/* ---------- hero ---------- */
+.hero{position:relative;height:100vh;min-height:680px;overflow:hidden;background:var(--sand-sun)}
+#gl,#still{position:absolute;inset:0;width:100%;height:100%;display:block}
+#still{display:none}
+.plate{position:absolute;left:var(--margin);bottom:var(--margin);width:min(40vw,540px);background:var(--floor-0);padding:32px 32px 26px;z-index:5}
+.plate h1{font-size:var(--t-display-xl);font-weight:360;line-height:.92;letter-spacing:-.025em;font-variation-settings:"opsz" 72}
+.plate .role{margin-top:16px;font-size:var(--t-lede);line-height:1.4;color:var(--sand);font-variation-settings:"opsz" 24;max-width:34ch}
+.index{list-style:none;margin-top:20px;border-top:var(--b-hair)}
+.index li{border-bottom:var(--b-hair)}
+.index a{display:flex;gap:12px;align-items:baseline;padding:8px 0;text-decoration:none;color:var(--light)}
+.index a span{color:var(--dim)}
+.index a:hover{color:var(--sea)}
+.adv{margin-top:16px;color:var(--dim);font-size:12px}
+.adv b{font-weight:400;color:var(--light)}
+.adv i{font-style:normal;color:var(--sand)}
+.proofctl{position:absolute;right:var(--margin);bottom:var(--margin);z-index:6;background:var(--floor-0);padding:10px 12px;display:grid;grid-template-columns:auto auto auto;gap:6px 12px;align-items:center;color:var(--dim)}
+.proofctl input{accent-color:var(--sea);width:150px}
+.proofctl button{background:none;border:var(--b-ui);color:var(--light);height:32px;padding:0 10px;cursor:pointer}
+.proofctl button:hover{border-color:var(--sea);color:var(--sea)}
+.proofctl output{grid-column:1 / -1;color:var(--sand)}
+.mini{position:absolute;left:var(--margin);top:84px;z-index:5;width:96px;height:96px;opacity:0;transition:opacity .6s}
+.hero.exposed .mini{opacity:1}
+
+/* ---------- scribe lane (photomask grammar) ---------- */
+.scribe{height:var(--scribe);background:var(--floor-deep);border-top:var(--b-hair);border-bottom:var(--b-hair);display:flex;align-items:center;gap:16px;padding:0 var(--margin);color:var(--dim);overflow:hidden}
+.scribe svg{flex:none}
+.scribe .id{flex:1;white-space:nowrap;overflow:hidden;text-overflow:clip}
+.scribe .ticks{flex:2;height:6px;background:repeating-linear-gradient(90deg,var(--line) 0 1px,transparent 1px 24px);opacity:.9}
+
+/* ---------- sections: progressive exposure ---------- */
+.sec{padding:var(--s-10) var(--margin);display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gutter);
+  background:radial-gradient(60% 70% at var(--fx,78%) var(--fy,35%), color-mix(in srgb, var(--exposure) calc(var(--exposure-amt)*100%), transparent), transparent 70%), var(--floor-0)}
+.rail{grid-column:1 / span 2;padding-top:10px}
+.rail .data{color:var(--dim);display:block}
+.rail .nav{display:block;margin-top:10px;color:var(--sand)}
+.body{grid-column:3 / span 10;min-width:0}
+.h2{font-size:var(--t-display-l);font-weight:340;line-height:.98;letter-spacing:-.02em;font-variation-settings:"opsz" 72}
+.h3{font-size:var(--t-display-m);font-weight:400;line-height:1.1;letter-spacing:-.01em;font-variation-settings:"opsz" 48}
+.lede{font-size:var(--t-lede);line-height:1.45;color:var(--sand);max-width:52ch;font-variation-settings:"opsz" 24}
+.ghead{font-size:var(--t-small);color:var(--dim);display:block;margin-bottom:14px}
+
+/* type specimen */
+.spec{display:grid;grid-template-columns:minmax(0,1fr);row-gap:var(--s-6)}
+.spec .row{display:grid;grid-template-columns:220px minmax(0,1fr);gap:var(--gutter);align-items:baseline;padding-bottom:var(--s-6);border-bottom:var(--b-hair)}
+.spec .meta{color:var(--dim)}
+.why{display:grid;grid-template-columns:1fr 1fr;gap:var(--gutter);margin-top:var(--s-7)}
+.why div{border-top:var(--b-ui);padding-top:16px}
+.glyphs{display:flex;flex-wrap:wrap;gap:32px;align-items:flex-end}
+.glyphs svg{display:block}
+
+/* palette */
+.pal{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gutter)}
+.grp{margin-top:var(--s-7)}
+.grp:first-child{margin-top:0}
+.sw{border:var(--b-hair);min-width:0}
+.sw .chip{height:96px;position:relative}
+.sw .chip .ratio{position:absolute;left:12px;bottom:10px}
+.sw .t{padding:12px;display:flex;flex-direction:column;gap:6px}
+.sw .t .data:first-child{color:var(--light)}
+.sw .t .data{color:var(--dim)}
+.sw .t .role{font-size:var(--t-small);line-height:1.35;color:var(--sand)}
+
+/* tokens */
+.tok{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s-8) var(--gutter)}
+.tok > div{min-width:0}
+.scale{display:flex;flex-direction:column;gap:8px}
+.scale div{display:grid;grid-template-columns:64px 1fr;align-items:center;gap:12px;color:var(--dim)}
+.scale i{display:block;height:8px;background:var(--line-strong);max-width:100%}
+.pads{display:flex;flex-wrap:wrap;gap:8px}
+.pad{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 14px;background:var(--floor-1);border:var(--b-ui);color:var(--light);text-decoration:none}
+.pad::before{content:"";width:8px;height:8px;background:var(--m5-al)}
+.pad.lit,.pad:hover{background:var(--sea);color:var(--ink);border-color:var(--sea);box-shadow:0 0 0 1px var(--sea),0 0 16px rgba(61,157,242,.35)}
+.pad.lit::before,.pad:hover::before{background:var(--ink)}
+.btn{display:inline-flex;align-items:center;height:44px;padding:0 18px;text-decoration:none}
+.btn.primary{background:var(--sea);color:var(--ink)}
+.btn.ghost{border:var(--b-ui);color:var(--light)}
+.demo-focus{outline:3px solid var(--sea);outline-offset:2px;box-shadow:var(--focus)}
+.onsand{background:var(--sand-sun);padding:24px;display:flex;flex-wrap:wrap;gap:16px;align-items:center}
+
+/* light plates */
+.plates{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--gutter)}
+.lp{margin:0;min-width:0}
+.lp .img{aspect-ratio:4/5;position:relative;overflow:hidden;border:var(--b-hair)}
+.lp figcaption{margin-top:12px}
+.lp figcaption .nav{color:var(--light)}
+.lp figcaption p{font-size:var(--t-small);line-height:1.45;color:var(--sand);margin-top:8px}
+.fill{position:absolute;inset:0;background-image:linear-gradient(var(--line),var(--line));background-size:4px 4px;
+  -webkit-mask:repeating-conic-gradient(#000 0 25%,transparent 0 50%) 0 0/12px 12px;mask:repeating-conic-gradient(#000 0 25%,transparent 0 50%) 0 0/12px 12px;opacity:.6}
+.fid{position:absolute;width:8px;height:8px;border-color:var(--line-strong);border-style:solid;border-width:0}
+.fid.tl{left:10px;top:10px;border-left-width:1px;border-top-width:1px}
+.fid.tr{right:10px;top:10px;border-right-width:1px;border-top-width:1px}
+.fid.bl{left:10px;bottom:10px;border-left-width:1px;border-bottom-width:1px}
+.fid.br{right:10px;bottom:10px;border-right-width:1px;border-bottom-width:1px}
+.slotlabel{position:absolute;left:14px;bottom:26px;color:var(--dim)}
+
+/* S4 panel: chambers drawn along the CPU block */
+.panel{--block:var(--m1-copper)}
+.phead{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));column-gap:var(--gutter);align-items:end}
+.phead .a{grid-column:1 / span 5}
+.phead .b{grid-column:6 / span 5}
+.blockrule{height:0;border-top:2px solid var(--block);width:48px;margin-bottom:18px}
+.caption{font-size:var(--t-small);line-height:1.5;color:var(--sand);border-left:2px solid var(--block);padding-left:14px;font-style:italic}
+.stack{margin-top:14px;color:var(--dim)}
+.cpu{margin-top:40px}
+.cpu svg{display:block;width:100%;height:auto}
+.crail{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 0;border-bottom:var(--b-hair)}
+.crail button{height:44px;padding:0 14px;background:var(--floor-1);border:var(--b-ui);cursor:pointer}
+.crail button:hover{border-color:var(--sea)}
+.crail button[aria-pressed="true"]{border-color:var(--sea);color:var(--sea)}
+.crail .note{margin-left:auto;color:var(--dim);min-width:0}
+.tablewrap{overflow-x:auto;margin-top:20px}
+table.cyc{width:100%;border-collapse:collapse;min-width:520px}
+table.cyc th,table.cyc td{border:1px solid var(--line);padding:7px 6px;text-align:center;font-weight:400}
+table.cyc thead th{background:var(--floor-2);color:var(--dim)}
+table.cyc tbody th{text-align:left;color:var(--light);white-space:nowrap;padding-left:10px}
+table.cyc td{color:var(--sand)}
+table.cyc td.b{color:var(--light)}
+table.cyc td.st{color:var(--m1-copper)}
+
+footer{padding:var(--s-8) var(--margin) var(--s-9);color:var(--dim)}
+
+@media (max-width:900px){
+  .plate{width:auto;right:var(--margin);padding:22px}
+  .rail{grid-column:1 / -1;margin-bottom:24px}
+  .body{grid-column:1 / -1}
+  .pal{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .plates{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tok{grid-template-columns:minmax(0,1fr)}
+  .spec .row{grid-template-columns:minmax(0,1fr)}
+  .why{grid-template-columns:1fr}
+  .phead .a,.phead .b{grid-column:1 / -1}
+  .phead .b{margin-top:20px}
+  .proofctl{top:64px;bottom:auto;right:var(--margin);grid-template-columns:auto auto}
+  .proofctl .lbl{display:none}
+  .proofctl input{width:110px}
+  .mini{display:none}
+  .adv{display:none}
+  .scribe .ticks{display:none}
+}
+@media (max-width:767px){
+  .hero{min-height:720px}
+  .plate{bottom:calc(var(--bottombar) + env(safe-area-inset-bottom) + 10px);left:var(--margin);right:var(--margin);padding:18px 18px 8px}
+  .plate h1{font-size:44px}
+  .plate .role{font-size:18px;margin-top:10px}
+  .index{margin-top:12px}
+  .index a{min-height:44px;flex-wrap:wrap;align-content:center;gap:0 10px;padding:4px 0;font-size:12px}
+  .proofctl output{display:none}
+  .proofctl{grid-template-columns:auto auto;padding:6px 8px}
+}
+@media (max-width:520px){ .pal{grid-template-columns:minmax(0,1fr)} .plates{grid-template-columns:minmax(0,1fr)} }
+@media (prefers-reduced-motion:reduce){ .mini{transition:none} }
+</style>
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="bar">
+  <a class="word" href="#top">Akash Gojuru</a>
+  <nav class="pill nav" aria-label="Resume and contact">
+    <a class="res" href="#resume">Resume&nbsp;↗</a><a class="con" href="#contact">Contact</a>
+  </nav>
+</header>
+
+<nav class="pbar nav" aria-label="Sections, resume and contact">
+  <button class="pmap" type="button" aria-label="Section map, 3 of 7, Link Layer"><span aria-hidden="true">≡</span><span class="data">3/7</span>Link Layer<span aria-hidden="true">▴</span></button>
+  <a class="pres" href="#resume">Resume&nbsp;↗</a>
+  <a class="pcon" href="#contact">Contact</a>
+</nav>
+
+<!-- ======================= S1-hero ======================= -->
+<section class="hero" id="top" aria-label="S1-hero">
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <canvas id="still" aria-hidden="true"></canvas>
+
+  <svg class="mini" viewBox="0 0 96 96" aria-hidden="true">
+    <rect x="1.5" y="1.5" width="93" height="93" fill="none" stroke="#737E83"/>
+    <g fill="#C3C9CC"><rect x="26" y="90" width="3" height="3"/><rect x="36" y="90" width="3" height="3"/><rect x="46" y="90" width="3" height="3"/><rect x="56" y="90" width="3" height="3"/><rect x="66" y="90" width="3" height="3"/><rect x="90" y="80" width="3" height="3"/></g>
+    <rect x="10" y="10" width="58" height="18" fill="#A597DD"/>
+    <rect x="10" y="34" width="46" height="18" fill="none" stroke="#D08A62"/>
+    <rect x="62" y="34" width="24" height="16" fill="none" stroke="#86C4A8"/>
+  </svg>
+
+  <div class="plate">
+    <h1>Akash Gojuru</h1>
+    <p class="role">Computer Engineering, Iowa State. Heading into ASIC design; seeking hardware and chip-design internships.</p>
+    <!-- [SLOT: grad-term] "Graduating <term>" line, omitted when empty -->
+    <ul class="index data" aria-label="Projects">
+      <li><a href="#s3">BLE Link Layer <span>senior design, in progress</span></a></li>
+      <li><a href="#s4">RISC-V 5-stage pipeline <span>hazard debug, review, docs</span></a></li>
+      <li><a href="#s5">WiSARD <span>RAM-based classifier</span></a></li>
+      <li><a href="#s6">CyBot <span>autonomous robot</span></a></li>
+    </ul>
+<div class="adv data" aria-label="Loader: a decoded BLE advertising packet">ch37 <b>ADV_IND</b> <i>len 23 B</i> · AD 0x09 <b>"Akash Gojuru"</b> · AdvData <i>17/31 B</i> → CONNECT_IND</div>
+  </div>
+
+  <div class="proofctl data" role="group" aria-label="Proof control, not part of the site">
+    <span class="lbl">surface f</span>
+    <input id="focus" type="range" min="0" max="1000" value="0" aria-label="Water surface: random to engineered">
+    <button id="replay" type="button">Replay</button>
+    <output id="meter" aria-live="polite">measuring…</output>
+  </div>
+</section>
+
+<div class="scribe" aria-hidden="true">
+  <svg width="14" height="14" viewBox="0 0 14 14"><rect x=".5" y=".5" width="13" height="13" fill="none" stroke="#737E83"/><rect x="4.5" y="4.5" width="5" height="5" fill="none" stroke="#737E83"/></svg>
+  <span class="id gds">AG-T1 · TYPE</span><span class="ticks"></span>
+  <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 0V14M0 7H14" stroke="#737E83"/></svg>
+</div>
+
+<main>
+<!-- ======================= 01 TYPE ======================= -->
+<section class="sec" style="--exposure-amt:.12" aria-labelledby="t-type">
+  <div class="rail"><span class="data">AG-T1</span><span class="nav">Type</span></div>
+  <div class="body">
+    <h2 class="h2" id="t-type">The sea speaks. The silicon measures.</h2>
+    <div class="spec" style="margin-top:56px">
+      <div class="row"><div class="meta small">Display XL · 64<br>opsz 72 · 360 · −0.025em<br>The S1 h1, the quiet name</div><div style="font-size:var(--t-display-xl);font-weight:360;line-height:.92;letter-spacing:-.025em">Akash Gojuru</div></div>
+      <div class="row"><div class="meta small">Display L italic · 72<br>The S2 metaphor line</div><div class="it" style="font-size:var(--t-display-l);font-weight:340;line-height:.98;letter-spacing:-.02em">Light through water.<br>Light through a mask.</div></div>
+      <div class="row"><div class="meta small">Lede · 22</div><div class="lede">Sunlight through waves draws patterns on the sand. Lithography draws a chip the same way, with light through a mask. The pattern is the designer's work, and it's the work I'm training for.</div></div>
+      <div class="row"><div class="meta small">Body · 18 / 1.55 · max 62ch</div><div><p style="max-width:62ch">Passionate about digital hardware design, embedded systems, and computer vision; builds projects and solves real-world problems through system design. Seeking hardware engineering and chip design internships.</p><p class="small" style="margin-top:12px">B.S. Computer Engineering, Iowa State University · Dean's List · ChipForge Club member</p></div></div>
+      <div class="row"><div class="meta small">Nav and rails · Newsreader 16<br>sentence case (no faux small caps)</div><div class="nav" style="display:flex;gap:28px;flex-wrap:wrap;color:var(--light)"><span>About</span><span>Projects</span><span>Senior design</span><span>Reflection</span><span style="color:var(--sea)">Resume ↗</span></div></div>
+      <div class="row"><div class="meta small">Tag · mono 12, uppercase<br>pads, block tags, status only</div><div class="tag" style="display:flex;gap:20px;flex-wrap:wrap;color:var(--light)"><span>Resume</span><span>Email</span><span>LinkedIn</span><span style="color:var(--sand)">In progress</span></div></div>
+      <div class="row"><div class="meta small">Data · mono 13, tabular</div><div class="data" style="color:var(--sand)">(lastUnmapped + hop) mod 37 · ch 37/38/39 adv · IF ID EX MEM WB · VHDL · Verilog · C++ · Java · C · Python</div></div>
+      <div class="row"><div class="meta small">Glyph set (canonical)<br>8 × 12 tracks · straps 1.5 · jogs 1 · vias at free ends<br>left: 24-px cap (phone S7) · right: specimen</div><div class="glyphs" id="glyphs"></div></div>
+    </div>
+    <div class="why">
+      <div><span class="nav" style="color:var(--light)">Newsreader · SIL OFL</span><p class="small" style="margin-top:10px">A science-and-news text face. Its optical-size axis makes it a tight hairline display at 72 px and a sturdy reader at 16–18 px. It also sets nav and rails in sentence case: the Google build has no true small caps, and faux ones are refused.</p></div>
+      <div><span class="nav" style="color:var(--light)">Martian Mono · SIL OFL</span><p class="small" style="margin-top:10px">It measures and never speaks: data, code, pads and die-IDs. Its width axis behaves like layout (semi-condensed on pads, 75 on GDS text, normal in tables). Every mono token on the site is real.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="scribe" aria-hidden="true">
+  <svg width="14" height="14" viewBox="0 0 14 14"><rect x=".5" y=".5" width="13" height="13" fill="none" stroke="#737E83"/><rect x="4.5" y="4.5" width="5" height="5" fill="none" stroke="#737E83"/></svg>
+  <span class="id gds">AG-T2 · COLOUR</span><span class="ticks"></span>
+  <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 0V14M0 7H14" stroke="#737E83"/></svg>
+</div>
+
+<!-- ======================= 02 COLOUR ======================= -->
+<section class="sec" style="--exposure-amt:.08;--fx:85%;--fy:20%" aria-labelledby="t-col">
+  <div class="rail"><span class="data">AG-T2</span><span class="nav">Colour</span></div>
+  <div class="body">
+    <h2 class="h2" id="t-col">If it's blue, you can press it.</h2>
+    <p class="lede" style="margin-top:20px">The water has taken the reds, so the light is cool. The one accent sits near the ~475 nm clear ocean water carries furthest, at the blue end that exposes resist. It marks only what reaches Akash.</p>
+    <div style="margin-top:56px">
+      <div class="grp"><span class="ghead">Ground: the exposed plate</span>
+        <div class="pal">
+          <div class="sw"><div class="chip" style="background:#0E1312;outline:1px solid #2E3733;outline-offset:-1px"><span class="ratio data" style="color:#E8EEF0">light 15.99</span></div><div class="t"><span class="data">--floor-0</span><span class="data">#0E1312</span><span class="role">Page ground, the ink plate</span></div></div>
+          <div class="sw"><div class="chip" style="background:#161C1A"><span class="ratio data" style="color:#E8EEF0">light 14.75</span></div><div class="t"><span class="data">--floor-1</span><span class="data">#161C1A</span><span class="role">Rails, chips, pad backs</span></div></div>
+          <div class="sw"><div class="chip" style="background:#222A27"><span class="ratio data" style="color:#85939A">dim 4.65</span></div><div class="t"><span class="data">--floor-2</span><span class="data">#222A27</span><span class="role">Table heads, hover rows</span></div></div>
+          <div class="sw"><div class="chip" style="background:linear-gradient(90deg,#0E1312,#1F292C)"><span class="ratio data" style="color:#85939A">dim 4.70 at 12%</span></div><div class="t"><span class="data">--exposure</span><span class="data">#9CC8E8 · 12→0%</span><span class="role">Residual light, S2 → S6</span></div></div>
+        </div>
+      </div>
+      <div class="grp"><span class="ghead">Sand and light, under water</span>
+        <div class="pal">
+          <div class="sw"><div class="chip" style="background:#BAC4C2"><span class="ratio data" style="color:#0A1016">ink 10.71</span></div><div class="t"><span class="data">--sand-sun</span><span class="data">#BAC4C2</span><span class="role">Sunlit plate, the S5 tide pool</span></div></div>
+          <div class="sw"><div class="chip" style="background:#6E7E80"></div><div class="t"><span class="data">--sand-shade</span><span class="data">#6E7E80</span><span class="role">3D and stills only, never behind text</span></div></div>
+          <div class="sw"><div class="chip" style="background:#E6F4FF"></div><div class="t"><span class="data">--caustic</span><span class="data">#E6F4FF</span><span class="role">Emissive light, 3D only</span></div></div>
+          <div class="sw"><div class="chip" style="background:#E8EEF0"><span class="ratio data" style="color:#0A1016">ink 16.31</span></div><div class="t"><span class="data">--light</span><span class="data">#E8EEF0</span><span class="role">Primary text: cool paper, not cream</span></div></div>
+        </div>
+      </div>
+      <div class="grp"><span class="ghead">Text and action</span>
+        <div class="pal">
+          <div class="sw"><div class="chip" style="background:#0E1312;color:#A7B5BB;padding:14px"><span class="h3" style="font-size:30px">Aa</span><span class="ratio data">8.90 on floor-0</span></div><div class="t"><span class="data">--sand</span><span class="data">#A7B5BB</span><span class="role">Secondary text</span></div></div>
+          <div class="sw"><div class="chip" style="background:#0E1312;color:#85939A;padding:14px"><span class="h3" style="font-size:30px">Aa</span><span class="ratio data">5.92 on floor-0</span></div><div class="t"><span class="data">--dim</span><span class="data">#85939A</span><span class="role">Metadata, hex, slot notes</span></div></div>
+          <div class="sw"><div class="chip" style="background:#3D9DF2"><span class="ratio data" style="color:#0A1016">ink 6.65</span></div><div class="t"><span class="data" style="color:var(--sea)">--sea</span><span class="data">#3D9DF2 · 6.52 on floor-0</span><span class="role">Actionable only. Never on bare sand (1.61).</span></div></div>
+          <div class="sw"><div class="chip" style="background:#0A1016;outline:1px solid #2E3733;outline-offset:-1px"></div><div class="t"><span class="data">--ink</span><span class="data">#0A1016</span><span class="role">Text on sea, on sand; focus halo</span></div></div>
+        </div>
+      </div>
+      <div class="grp"><span class="ghead">Die layers: inside the die only</span>
+        <div class="pal">
+          <div class="sw"><div class="chip" style="background:#A597DD"></div><div class="t"><span class="data">--m2-violet</span><span class="data">#A597DD · 7.20</span><span class="role">S3 radio block</span></div></div>
+          <div class="sw"><div class="chip" style="background:#D08A62"></div><div class="t"><span class="data">--m1-copper</span><span class="data">#D08A62 · 6.69</span><span class="role">S4 CPU block, the one warm note</span></div></div>
+          <div class="sw"><div class="chip" style="background:#86C4A8"></div><div class="t"><span class="data">--m3-oxide</span><span class="data">#86C4A8 · 9.35</span><span class="role">S5 memory block</span></div></div>
+          <div class="sw"><div class="chip" style="background:#C3C9CC"></div><div class="t"><span class="data">--m5-al</span><span class="data">#C3C9CC · 11.20</span><span class="role">Pads, seal ring, bond wires</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="scribe" aria-hidden="true">
+  <svg width="14" height="14" viewBox="0 0 14 14"><rect x=".5" y=".5" width="13" height="13" fill="none" stroke="#737E83"/><rect x="4.5" y="4.5" width="5" height="5" fill="none" stroke="#737E83"/></svg>
+  <span class="id gds">AG-T3 · TOKENS</span><span class="ticks"></span>
+  <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 0V14M0 7H14" stroke="#737E83"/></svg>
+</div>
+
+<!-- ======================= 03 TOKENS ======================= -->
+<section class="sec" style="--exposure-amt:.06;--fx:20%;--fy:30%" aria-labelledby="t-tok">
+  <div class="rail"><span class="data">AG-T3</span><span class="nav">Tokens</span></div>
+  <div class="body">
+    <h2 class="h2" id="t-tok">No shadows. Depth is light.</h2>
+    <div class="tok" style="margin-top:56px">
+      <div>
+        <span class="ghead">Spacing · 4-px base</span>
+        <div class="scale data">
+          <div>s-2 · 8<i style="width:8px"></i></div><div>s-4 · 16<i style="width:16px"></i></div><div>s-5 · 24<i style="width:24px"></i></div>
+          <div>s-6 · 32<i style="width:32px"></i></div><div>s-7 · 48<i style="width:48px"></i></div><div>s-8 · 64<i style="width:64px"></i></div>
+          <div>s-9 · 96<i style="width:96px"></i></div><div>s-10 · 128<i style="width:128px"></i></div><div>s-11 · 192<i style="width:192px"></i></div>
+        </div>
+      </div>
+      <div>
+        <span class="ghead">Pads (S7) · at rest, lit</span>
+        <div class="pads tag">
+          <a class="pad lit" href="#resume">Resume ↗</a><a class="pad" href="#contact">Email</a><a class="pad" href="#contact">LinkedIn</a><a class="pad" href="#contact">GitHub</a><a class="pad" href="#contact">Reflection</a>
+        </div>
+        <p class="small" style="margin-top:12px">Aluminium at rest; on hover or focus the pad goes sea blue, the only glow on the site.</p>
+        <span class="ghead" style="margin-top:36px">Focus ring · sea 3 px + ink 2 px halo</span>
+        <div class="onsand">
+          <a class="btn primary nav demo-focus" href="#resume">Open resume ↗</a>
+          <span class="data" style="color:var(--ink)">on --sand-sun: ink halo 10.71</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:12px;padding:24px;background:var(--floor-0);border:var(--b-hair)">
+          <a class="btn ghost nav demo-focus" href="#contact">Contact</a>
+          <span class="data" style="color:var(--dim)">on --floor-0: sea 6.52</span>
+        </div>
+      </div>
+      <div>
+        <span class="ghead">Borders and the scribe lane</span>
+        <div style="display:flex;flex-direction:column;gap:14px" class="data">
+          <div style="display:flex;align-items:center;gap:14px;color:var(--dim)"><i style="width:96px;border-top:var(--b-hair)"></i>b-hair · decorative, fill</div>
+          <div style="display:flex;align-items:center;gap:14px;color:var(--dim)"><i style="width:96px;border-top:var(--b-ui)"></i>b-ui · 4.50 boundary</div>
+          <div style="display:flex;align-items:center;gap:14px;color:var(--dim)"><i style="width:96px;border-top:2px solid var(--m1-copper)"></i>b-block · per-section layer</div>
+          <div style="color:var(--dim)">scribe · 32 px · keys + die-ID, aria-hidden, never interactive</div>
+        </div>
+      </div>
+      <div>
+        <span class="ghead">Radii</span>
+        <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center">
+          <div style="width:72px;height:48px;border:var(--b-ui)"></div><span class="data" style="color:var(--dim)">r-0 · everything</span>
+          <div style="width:96px;height:36px;border:1px solid var(--sea);border-radius:999px"></div><span class="data" style="color:var(--dim)">r-pill · pinned pill only</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="scribe" aria-hidden="true">
+  <svg width="14" height="14" viewBox="0 0 14 14"><rect x=".5" y=".5" width="13" height="13" fill="none" stroke="#737E83"/><rect x="4.5" y="4.5" width="5" height="5" fill="none" stroke="#737E83"/></svg>
+  <span class="id gds">AG-T4 · LIGHT</span><span class="ticks"></span>
+  <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 0V14M0 7H14" stroke="#737E83"/></svg>
+</div>
+
+<!-- ======================= 04 LIGHT ======================= -->
+<section class="sec" style="--exposure-amt:.04" aria-labelledby="t-light">
+  <div class="rail"><span class="data">AG-T4</span><span class="nav">Light</span></div>
+  <div class="body">
+    <h2 class="h2" id="t-light">Two lights, three rooms.</h2>
+    <div class="plates" style="margin-top:56px">
+      <figure class="lp"><div class="img"><canvas class="plateCv" data-f="0" style="width:100%;height:100%;display:block"></canvas></div>
+        <figcaption><span class="nav">Sunlit plate · S1 open</span><p>Pale sand a few metres down with the sun at zenith. The light is cool because the water took the reds.</p></figcaption></figure>
+      <figure class="lp"><div class="img"><canvas class="plateCv" data-f="1" style="width:100%;height:100%;display:block"></canvas></div>
+        <figcaption><span class="nav">Exposed plate · S1 end, still</span><p>Light is conserved and pulled into the letters, and the camera stops down, so the rest drops to near black. This is also the no-WebGL still.</p></figcaption></figure>
+      <figure class="lp"><div class="img" style="background:var(--floor-0)"><svg id="diemap" viewBox="0 0 200 250" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg></div>
+        <figcaption><span class="nav">Microscope · S2 die map</span><p>Radio wide NW, CPU centre-west, memory east, open lagoon facing the contact pads. An illustrative die. The blocks are projects I worked on; it is not a fabricated chip.</p></figcaption></figure>
+      <figure class="lp"><div class="img">
+          <div class="fill"></div><i class="fid tl"></i><i class="fid tr"></i><i class="fid bl"></i><i class="fid br"></i>
+          <span class="slotlabel tag">Unexposed</span><!-- [SLOT: photo-akash] --></div>
+        <figcaption><span class="nav">Unexposed frame · empty slot</span><p>A 4:5 plate waiting for light: dummy fill, fiducials, one word. When filled, photos keep their natural colour with a light grade.</p></figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<div class="scribe" aria-hidden="true">
+  <svg width="14" height="14" viewBox="0 0 14 14"><rect x=".5" y=".5" width="13" height="13" fill="none" stroke="#737E83"/><rect x="4.5" y="4.5" width="5" height="5" fill="none" stroke="#737E83"/></svg>
+  <span class="id gds">AG-S4 · RISC-V</span><span class="ticks"></span>
+  <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 0V14M0 7H14" stroke="#737E83"/></svg>
+</div>
+
+<!-- ======================= 05 PANEL: S4-riscv ======================= -->
+<section class="sec panel" id="s4" style="--exposure-amt:.06;--fx:50%;--fy:55%" aria-labelledby="t-panel">
+  <div class="rail"><span class="data">AG-S4</span><span class="nav">RISC-V</span></div>
+  <div class="body">
+    <div class="phead">
+      <div class="a">
+        <div class="blockrule"></div>
+        <span class="tag" style="color:var(--m1-copper)">CPU block</span>
+        <h2 class="h2" id="t-panel" style="margin-top:14px;font-size:clamp(34px,3.6vw,56px)">RISC-V, five stages.</h2>
+        <p class="h3 it" style="margin-top:12px;color:var(--sand);font-size:clamp(22px,2vw,28px)">Where the water waits.</p>
+      </div>
+      <div class="b">
+        <p class="caption">My partner led the RTL. I reviewed the design, debugged hazards like these, and wrote the docs.</p>
+        <p style="margin-top:14px;font-size:17px">A full 5-stage CPU: pipeline registers, forwarding, hazard detection and branch logic. Tested with RARS assembly and QuestaSim waveforms.</p>
+        <p class="stack data">VHDL · SystemVerilog · QuestaSim · 2-person team</p>
+      </div>
+    </div>
+
+    <div class="cpu">
+      <svg viewBox="0 0 1000 400" role="img" aria-label="The five pipeline chambers drawn along the CPU block at cycle 4 of a load-use pair with forwarding on: lw in MEM, a bubble in EX, add held in ID, sub held in IF.">
+        <defs>
+          <pattern id="cf" width="18" height="18" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#2E3733"/></pattern>
+          <pattern id="m1" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="2" fill="#D08A62"/></pattern>
+        </defs>
+        <!-- the CPU block: routed edge, calm top-metal field -->
+        <rect x="0" y="0" width="1000" height="400" fill="#161C1A"/>
+        <rect x="0" y="0" width="1000" height="400" fill="url(#cf)" opacity=".45"/>
+        <rect x="1" y="1" width="998" height="398" fill="none" stroke="#D08A62" stroke-width="2"/>
+        <rect x="0" y="0" width="1000" height="26" fill="url(#m1)" opacity=".35"/>
+        <rect x="0" y="374" width="1000" height="26" fill="url(#m1)" opacity=".35"/>
+        <g font-family="Martian Mono, monospace" style="font-variation-settings:'wdth' 75" font-size="11" fill="#85939A" letter-spacing="1"><text x="14" y="18">CPU · 5-STAGE · M1 STRAPS</text><text x="850" y="392">AG-S4</text></g>
+        <g font-family="Martian Mono, monospace" font-size="14" letter-spacing="1" style="font-variation-settings:'wdth' 87.5">
+          <text x="40" y="70" fill="#E8EEF0" font-weight="500">CYCLE 4</text>
+          <text x="140" y="70" fill="#85939A">load-use · forwarding on · one bubble survives</text>
+          <!-- chambers -->
+          <g stroke="#D08A62" stroke-width="2" fill="#0E1312">
+            <rect x="40" y="110" width="170" height="170"/><rect x="230" y="110" width="170" height="170"/><rect x="420" y="110" width="170" height="170"/><rect x="610" y="110" width="170" height="170"/><rect x="800" y="110" width="160" height="170"/>
+          </g>
+          <g stroke="#2E3733"><path d="M40 225H210M230 225H400M420 225H590M610 225H780M800 225H960"/></g>
+          <g fill="#85939A" font-weight="500"><text x="54" y="138">IF</text><text x="244" y="138">ID</text><text x="434" y="138">EX</text><text x="624" y="138">MEM</text><text x="814" y="138">WB</text></g>
+          <g fill="#E8EEF0" font-size="13" letter-spacing="0"><text x="54" y="200">sub x7,x6,x3</text><text x="244" y="200">add x6,x5,x2</text><text x="624" y="200">lw x5,0(x1)</text><text x="814" y="200" fill="#737E83">—</text></g>
+          <g fill="#85939A" font-size="12"><text x="54" y="262">held</text><text x="244" y="262">held</text><text x="434" y="262">nop</text></g>
+          <circle cx="505" cy="192" r="24" fill="none" stroke="#E8EEF0" stroke-width="1.5"/>
+          <circle cx="497" cy="184" r="4" fill="#E8EEF0" opacity=".5"/>
+          <path d="M760 280V330H505V290" fill="none" stroke="#D08A62" stroke-width="3"/>
+          <path d="M497 300L505 288L513 300" fill="none" stroke="#D08A62" stroke-width="3"/>
+          <text x="530" y="352" fill="#D08A62" font-size="12.5">forward MEM/WB → EX · cycle 5</text>
+        </g>
+      </svg>
+      <div class="crail nav" role="group" aria-label="Pipeline controls (sketch)">
+        <button type="button" aria-pressed="true">Forwarding on</button>
+        <button type="button">Step</button>
+        <button type="button">Reset</button>
+        <span class="note data">textbook 5-stage · a teaching model, not our RTL · running in your browser</span>
+      </div>
+    </div>
+
+    <div class="tablewrap">
+    <table class="cyc data" aria-label="DOM twin: cycle by stage">
+      <thead><tr><th scope="col" style="text-align:left;padding-left:10px">instr \ cycle</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">lw x5,0(x1)</th><td>IF</td><td>ID</td><td>EX</td><td>MEM</td><td>WB</td><td></td><td></td><td></td></tr>
+        <tr><th scope="row">add x6,x5,x2</th><td></td><td>IF</td><td>ID</td><td class="st">ID ◦</td><td class="b">EX</td><td>MEM</td><td>WB</td><td></td></tr>
+        <tr><th scope="row">sub x7,x6,x3</th><td></td><td></td><td>IF</td><td class="st">IF ◦</td><td>ID</td><td class="b">EX</td><td>MEM</td><td>WB</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="small" style="margin-top:10px">◦ stall: the load's data exists only after MEM, so one bubble enters EX in cycle 4 even with forwarding. <span class="data" style="color:var(--light)">add → sub</span> forwards EX/MEM → EX with no bubble.</p>
+  </div>
+</section>
+</main>
+
+<footer class="small">Style tile · 04-art · concept B, Caustic Lithography · art-director · revision round 2026-09-23. The hero is a 2D-shader sketch from the same target as the solve (glyph set, target luminance, conserved mean). Production forms the layout with the engineered heightfield, not a blend.</footer>
+
+<script>
+(() => {
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- canonical glyph set (04-art.md, "Glyph set") ---------- */
+const GS = {"grid":[8,12],"stem":1.5,"bar":1,"via":2,"letterGap":2,"lineGap":4,"lines":["AKASH","GOJURU"],"glyphs":{"A":{"r":[[0,0,1.5,12],[6.5,0,1.5,12],[0,0,8,1],[0,6,8,1]],"v":[[0.75,12],[7.25,12]]},"K":{"r":[[0,0,1.5,12],[1.5,5.5,3.5,1],[4,3.5,1,5],[4,3.5,4,1],[6.5,0,1.5,4.5],[4,7.5,4,1],[6.5,7.5,1.5,4.5]],"v":[[0.75,0],[0.75,12],[7.25,0],[7.25,12]]},"S":{"r":[[0,0,8,1],[6.5,0,1.5,2.5],[0,0,1.5,6.5],[0,5.5,8,1],[6.5,5.5,1.5,6.5],[0,11,8,1],[0,9.5,1.5,2.5]],"v":[[7.25,2.5],[0.75,9.5]]},"H":{"r":[[0,0,1.5,12],[6.5,0,1.5,12],[0,5.5,8,1]],"v":[[0.75,0],[0.75,12],[7.25,0],[7.25,12]]},"G":{"r":[[0,0,8,1],[6.5,0,1.5,2.5],[0,0,1.5,12],[0,11,8,1],[6.5,6,1.5,6],[4,6,4,1]],"v":[[7.25,2.5],[4,6.5]]},"O":{"r":[[0,0,1.5,12],[6.5,0,1.5,12],[0,0,8,1],[0,11,8,1]],"v":[]},"J":{"r":[[2.5,0,5.5,1],[6.5,0,1.5,12],[0,11,8,1],[0,8,1.5,4]],"v":[[2.5,0.5],[0.75,8]]},"U":{"r":[[0,0,1.5,12],[6.5,0,1.5,12],[0,11,8,1]],"v":[[0.75,0],[7.25,0]]},"R":{"r":[[0,0,1.5,12],[0,0,8,1],[6.5,0,1.5,6.5],[0,5.5,8,1],[4,5.5,1,3.5],[4,8,4,1],[6.5,8,1.5,4]],"v":[[0.75,12],[7.25,12]]}}};
+const VIA = GS.via;
+function glyphRects(ch){ // strokes + vias, in tracks
+  const g = GS.glyphs[ch]; const out = g.r.map(r=>r.slice());
+  g.v.forEach(([x,y])=>{ const vx=Math.min(Math.max(x-VIA/2,0),8-VIA), vy=Math.min(Math.max(y-VIA/2,0),12-VIA); out.push([vx,vy,VIA,VIA]); });
+  return out;
+}
+function wordLayout(){ // rects for both lines, in tracks, origin top-left of the word block
+  const lines = GS.lines, W = Math.max(...lines.map(l=>l.length*8+(l.length-1)*GS.letterGap));
+  const rects = [];
+  lines.forEach((word,li)=>{
+    const ww = word.length*8+(word.length-1)*GS.letterGap, x0=(W-ww)/2, y0=li*(12+GS.lineGap);
+    [...word].forEach((ch,i)=> glyphRects(ch).forEach(([x,y,w,h])=>rects.push([x+x0+i*(8+GS.letterGap),y+y0,w,h])));
+  });
+  return {rects, W, H: lines.length*12+(lines.length-1)*GS.lineGap};
+}
+
+/* glyph specimen: 24-px cap and large */
+(function specimen(){
+  const host=document.getElementById('glyphs'); if(!host) return;
+  const mk=(cap,fill)=>{ const u=cap/12; const {rects,W,H}=wordLayout();
+    const s=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    s.setAttribute('viewBox',`-1 -1 ${W+2} ${H+2}`); s.setAttribute('width',(W+2)*u); s.setAttribute('height',(H+2)*u); s.setAttribute('aria-hidden','true');
+    s.innerHTML = rects.map(([x,y,w,h])=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}"/>`).join('');
+    return s; };
+  host.appendChild(mk(24,'#E8EEF0'));
+  const big = mk(Math.min(96, Math.max(40, host.clientWidth/60*12*0.95)),'#E8EEF0'); host.appendChild(big);
+})();
+
+/* ---------- solve target: luminance map (C-03) + region labels for the meter ---------- */
+const LV = {letter:1.0, pad:.35, seal:.30, strap:.20, fill:.20, core:.02};
+function layout(W,H){
+  const narrow = W/H < 1.1;
+  const die = narrow ? {x:W*.06,y:H*.07,w:W*.88,h:H*.36} : {x:W*.45,y:H*.14,w:W*.5,h:H*.74};
+  return {die};
+}
+function drawTarget(W,H){
+  const {die} = layout(W,H);
+  const s=document.createElement('canvas'); s.width=W; s.height=H; const c=s.getContext('2d');
+  const lab=document.createElement('canvas'); lab.width=W; lab.height=H; const l=lab.getContext('2d');
+  const g=v=>{const k=Math.round(v*255);return `rgb(${k},${k},${k})`;};
+  c.fillStyle='#000'; c.fillRect(0,0,W,H); l.fillStyle='#000'; l.fillRect(0,0,W,H);
+  const {rects,W:ww,H:wh}=wordLayout();
+  const inner={x:die.x+die.w*.1,y:die.y+die.h*.12,w:die.w*.8,h:die.h*.76};
+  const u=Math.max(1, Math.min(inner.w/ww, inner.h/wh));
+  const bx=inner.x+(inner.w-ww*u)/2, by=inner.y+(inner.h-wh*u)/2;
+  const keep=2.5*u;
+  const ko={x:bx-keep,y:by-keep,w:ww*u+2*keep,h:wh*u+2*keep};
+  // fill lattice: 1-track squares on a 3-track pitch, outside the keep-out
+  const pitch=3*u, fs=u, fx0=die.x+2.2*u, fy0=die.y+2.2*u, fx1=die.x+die.w-2.2*u, fy1=die.y+die.h-2.2*u;
+  l.fillStyle='rgb(0,255,0)'; l.fillRect(fx0,fy0,fx1-fx0,fy1-fy0);   // fill region
+  l.fillStyle='rgb(0,0,255)'; l.fillRect(ko.x,ko.y,ko.w,ko.h);          // core (keep-out band)
+  c.fillStyle=g(LV.fill);
+  for(let y=fy0; y<fy1-fs; y+=pitch) for(let x=fx0; x<fx1-fs; x+=pitch){
+    if(x+fs>ko.x && x<ko.x+ko.w && y+fs>ko.y && y<ko.y+ko.h) continue;
+    c.fillRect(x,y,fs,fs);
+  }
+  // straps (power), seal ring, inner ring
+  c.fillStyle=g(LV.strap);
+  [die.y+die.h*.06, die.y+die.h*.94].forEach(y=>c.fillRect(die.x+2*u,y-u*.4,die.w-4*u,u*.8));
+  c.lineWidth=Math.max(1.5,u*.9); c.strokeStyle=g(LV.seal); c.strokeRect(die.x,die.y,die.w,die.h);
+  c.lineWidth=Math.max(1,u*.5); c.strokeStyle=g(LV.strap); c.strokeRect(die.x+u*1.3,die.y+u*1.3,die.w-u*2.6,die.h-u*2.6);
+  // pad ring (the reef) + bond wires
+  const p=u*1.6, step=u*4.2; c.fillStyle=g(LV.pad);
+  for(let x=die.x+u*3; x<die.x+die.w-u*3; x+=step){ c.fillRect(x,die.y-p-u*.8,p,p); c.fillRect(x,die.y+die.h+u*.8,p,p); }
+  for(let y=die.y+u*3; y<die.y+die.h-u*3; y+=step){ c.fillRect(die.x-p-u*.8,y,p,p); c.fillRect(die.x+die.w+u*.8,y,p,p); }
+  c.fillStyle=g(LV.strap);
+  for(let x=die.x+u*3; x<die.x+die.w-u*3; x+=step*2){ c.fillRect(x+p/2-u*.2,die.y-p-u*5,u*.4,u*4.2); }
+  // letters (traces + vias)
+  c.fillStyle=g(LV.letter); l.fillStyle='rgb(255,0,0)';
+  rects.forEach(([x,y,w,h])=>{ c.fillRect(bx+x*u,by+y*u,w*u,h*u); l.fillRect(bx+x*u,by+y*u,w*u,h*u); });
+  // blurred attractor for the gather phase
+  const b=document.createElement('canvas'); b.width=Math.max(8,W>>4); b.height=Math.max(8,H>>4);
+  b.getContext('2d').drawImage(s,0,0,b.width,b.height);
+  const bl=document.createElement('canvas'); bl.width=W; bl.height=H; const blc=bl.getContext('2d');
+  blc.imageSmoothingEnabled=true; blc.imageSmoothingQuality='high'; blc.drawImage(b,0,0,W,H);
+  const out=document.createElement('canvas'); out.width=W; out.height=H; const oc=out.getContext('2d');
+  const A=c.getImageData(0,0,W,H).data, B=blc.getImageData(0,0,W,H).data, img=oc.createImageData(W,H), D=img.data;
+  for(let i=0;i<D.length;i+=4){ D[i]=A[i]; D[i+1]=Math.min(255,B[i]*2.4); D[i+2]=0; D[i+3]=255; }
+  oc.putImageData(img,0,0);
+  return {packed:out, target:s, labels:l.getImageData(0,0,W,H).data};
+}
+
+/* ---------- shader: shimmer → gather → exposed plate ---------- */
+const VS=`attribute vec2 p;varying vec2 v;void main(){v=p*.5+.5;gl_Position=vec4(p,0.,1.);}`;
+const FS=`precision highp float;
+varying vec2 v; uniform vec2 R; uniform float T,F; uniform sampler2D M;
+vec2 h2(vec2 p){p=vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3)));return fract(sin(p)*43758.5453);}
+float h1(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
+float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h1(i),h1(i+vec2(1,0)),f.x),mix(h1(i+vec2(0,1)),h1(i+vec2(1,1)),f.x),f.y);}
+float net(vec2 p,float t){vec2 i=floor(p),f=fract(p);float d1=8.,d2=8.;
+ for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++){vec2 g=vec2(float(x),float(y));vec2 o=h2(i+g);o=.5+.45*sin(t+6.2831*o);vec2 r=g+o-f;float d=dot(r,r);
+  if(d<d1){d2=d1;d1=d;}else if(d<d2){d2=d;}}
+ return sqrt(d2)-sqrt(d1);}
+float caus(vec2 q,float t){
+ q+=.10*vec2(sin(q.y*1.7+t*.5)+.5*sin(q.y*4.1-t*.9),cos(q.x*1.9-t*.45)+.5*cos(q.x*3.7+t*.8));
+ q+=.11*vec2(vn(q*3.6+t*.25)-.5,vn(q*3.6+vec2(7.1,2.3)-t*.22)-.5);
+ float e1=net(q*2.7,t*.7), e2=net(q*5.2+vec2(3.7,1.3),t*.95);
+ float a=1.-smoothstep(0.,.075,e1), b=1.-smoothstep(0.,.06,e2);
+ float w=.45+.55*vn(q*2.2+t*.15);
+ return (a*a*1.5+.6*b*b)*w+a*b*1.4;}
+void main(){
+ vec2 uv=gl_FragCoord.xy/R.y; float t=T;
+ vec3 m=texture2D(M,vec2(v.x,1.-v.y)).rgb;
+ float d=.0028;
+ vec3 cc=vec3(caus(uv+vec2(d,d*.5),t),caus(uv,t),caus(uv-vec2(d,d*.5),t));
+ float g=smoothstep(0.,.72,F), lock=smoothstep(.42,1.,F);
+ float att=mix(1.,m.g*3.2+.015,g);
+ vec3 gathered=(.95*(1.-g)+.9*cc)*att;
+ vec3 focused=vec3(m.r*1.3);                     /* target luminance; camera exposed for the letters */
+ vec3 I=mix(gathered,focused,lock);
+ float amb=mix(.35,.02,smoothstep(0.,1.,F));     /* ambient ramps 0.35 -> 0.02 */
+ float rip=.6*vn(vec2(uv.x*7.+uv.y*2.,uv.y*26.+vn(uv*2.5)*5.))+.4*vn(uv*60.);
+ vec3 alb=mix(vec3(.50,.56,.56),vec3(.74,.79,.78),.55+.45*rip);   /* sand under water: reds gone */
+ vec3 ambTint=vec3(.78,.94,1.);
+ vec3 lightc=vec3(.90,.96,1.);                   /* --caustic #E6F4FF */
+ vec3 col=alb*(amb*ambTint+I*1.1*lightc)+max(I-vec3(1.),0.)*.3*lightc;
+ col=col/(1.+.12*col);
+ float vig=1.-.08*length(v-.5)*1.4;
+ gl_FragColor=vec4(col*vig,1.);}`;
+
+function makeGL(cv){
+  const gl=cv.getContext('webgl',{antialias:false,premultipliedAlpha:false,preserveDrawingBuffer:true});
+  if(!gl) return null;
+  const sh=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS)){console.error(gl.getShaderInfoLog(o));return null;}return o;};
+  const pr=gl.createProgram(); const a=sh(gl.VERTEX_SHADER,VS), b=sh(gl.FRAGMENT_SHADER,FS); if(!a||!b) return null;
+  gl.attachShader(pr,a);gl.attachShader(pr,b);gl.linkProgram(pr);gl.useProgram(pr);
+  const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  const loc=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  const tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tex);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  const U={R:gl.getUniformLocation(pr,'R'),T:gl.getUniformLocation(pr,'T'),F:gl.getUniformLocation(pr,'F')};
+  return {gl,
+    setTarget(c){gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,c);},
+    draw(w,h,t,f){gl.viewport(0,0,w,h);gl.uniform2f(U.R,w,h);gl.uniform1f(U.T,t);gl.uniform1f(U.F,f);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);},
+    read(w,h){const px=new Uint8Array(w*h*4);gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,px);return px;}};
+}
+
+/* ---------- no-WebGL still: the exposed plate in 2D ---------- */
+function drawStill(cv,W,H,tg){
+  cv.width=W; cv.height=H; const c=cv.getContext('2d');
+  c.fillStyle='#0E1312'; c.fillRect(0,0,W,H);
+  c.globalCompositeOperation='lighter';
+  c.globalAlpha=.22; c.filter='blur('+Math.round(W/140)+'px)'; c.drawImage(tg.target,0,0); c.filter='none';
+  c.globalAlpha=1; c.drawImage(tg.target,0,0);
+  c.globalCompositeOperation='multiply'; c.fillStyle='#E6F4FF'; c.fillRect(0,0,W,H);
+  c.globalCompositeOperation='source-over';
+}
+
+/* ---------- hero ---------- */
+const hero=document.querySelector('.hero'), cv=document.getElementById('gl'), still=document.getElementById('still');
+const slider=document.getElementById('focus'), replay=document.getElementById('replay'), meter=document.getElementById('meter');
+const G1=makeGL(cv);
+let W=0,H=0,TG=null,phase=Math.random()*40,f=0,auto=!reduce,autoStart=performance.now()+1200,last=performance.now();
+if(reduce) f=1;
+const lum=(r,g,b)=>{const L=x=>{x/=255;return x<=.04045?x/12.92:Math.pow((x+.055)/1.055,2.4);};return .2126*L(r)+.7152*L(g)+.0722*L(b);};
+function measure(){ // C-03 acceptance: letters vs fill vs core at f=1, measured on the rendered frame
+  if(!G1||!TG) return;
+  G1.draw(W,H,phase,1); const px=G1.read(W,H), lb=TG.labels;
+  const s=[0,0,0], n=[0,0,0];
+  const st=Math.max(2,Math.round(Math.sqrt(W*H/60000)));
+  for(let y=0;y<H;y+=st) for(let x=0;x<W;x+=st){
+    const i=(y*W+x)*4, j=((H-1-y)*W+x)*4, k=lb[i]>127?0:lb[i+1]>127?1:lb[i+2]>127?2:-1; if(k<0) continue;
+    s[k]+=lum(px[j],px[j+1],px[j+2]); n[k]++;
+  }
+  const m=s.map((v,i)=>v/Math.max(1,n[i]));
+  const rf=m[0]/m[1], rc=m[0]/m[2];
+  meter.textContent=`sketch at f=1 (exact target, no solve blur) · letters:fill ${rf.toFixed(1)}× (≥3) · letters:core ${rc.toFixed(1)}× (≥8) · ${rf>=3&&rc>=8?'pass':'FAIL'}`;
+  window.__meter={letters:m[0],fill:m[1],core:m[2],rf,rc};
+}
+function resize(){
+  const scale=Math.min(1.5,devicePixelRatio||1)*(innerWidth<700?.5:.75);
+  W=Math.max(64,Math.round(hero.clientWidth*scale)); H=Math.max(64,Math.round(hero.clientHeight*scale));
+  TG=drawTarget(W,H);
+  if(G1){ cv.width=W; cv.height=H; G1.setTarget(TG.packed); measure(); }
+  else { cv.style.display='none'; still.style.display='block'; drawStill(still,W,H,TG); hero.classList.add('exposed'); meter.textContent='no WebGL: the exposed-plate still'; }
+}
+resize(); addEventListener('resize',()=>{clearTimeout(resize.t);resize.t=setTimeout(resize,150);});
+const ease=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000); last=now;
+  if(auto){ const k=(now-autoStart)/3600; f=k<=0?0:ease(Math.min(1,k)); slider.value=Math.round(f*1000); }
+  if(!reduce) phase+=dt*(1-f)*.9;
+  hero.classList.toggle('exposed', f>.85);
+  if(G1) G1.draw(W,H,phase,f);
+  if(!reduce || !frame.once){ frame.once=true; requestAnimationFrame(frame); }
+}
+requestAnimationFrame(frame);
+slider.addEventListener('input',()=>{auto=false; f=slider.value/1000;});
+replay.addEventListener('click',()=>{auto=!reduce; autoStart=performance.now()+600; f=reduce?1:0;});
+
+/* ---------- light plates (static frames from the same shader and target) ---------- */
+document.querySelectorAll('.plateCv').forEach(pc=>{
+  const r=pc.getBoundingClientRect(); const w=Math.round(r.width*1.25)||300, h=Math.round(r.height*1.25)||375;
+  pc.width=w; pc.height=h; const tg=drawTarget(Math.round(w*1.9),h);
+  const crop=document.createElement('canvas'); crop.width=w; crop.height=h;
+  crop.getContext('2d').drawImage(tg.packed,-w*.86,0);
+  const g=makeGL(pc);
+  if(g){ g.setTarget(crop); g.draw(w,h,17.3,parseFloat(pc.dataset.f)); }
+  else { const c=pc.getContext('2d'); c.fillStyle=pc.dataset.f==='1'?'#0E1312':'#BAC4C2'; c.fillRect(0,0,w,h); }
+});
+
+/* ---------- S2 die map (SVG from the same floorplan and glyph set) ---------- */
+(function diemap(){
+  const s=document.getElementById('diemap'); if(!s) return;
+  const {rects,W:ww,H:wh}=wordLayout(); const u=128/ww, ox=36, oy=148;
+  let h=`<defs><pattern id="pf" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#2E3733"/></pattern>
+  <pattern id="p1" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="1.2" fill="#D08A62"/></pattern>
+  <pattern id="p2" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="1.2" height="4" fill="#A597DD"/></pattern>
+  <pattern id="p3" width="5" height="5" patternUnits="userSpaceOnUse"><rect width="3" height="3" fill="#86C4A8"/></pattern></defs>
+  <rect x="18" y="40" width="164" height="170" fill="url(#pf)" opacity=".7"/>
+  <rect x="14" y="36" width="172" height="178" fill="none" stroke="#C3C9CC" stroke-width="1.4"/>
+  <rect x="18" y="40" width="164" height="170" fill="none" stroke="#737E83" stroke-width=".6"/>`;
+  // blocks: radio wide NW ~3:1, CPU centre-west ~5:2, memory east ~3:2
+  [[26,50,120,38,'p2','#A597DD'],[26,98,95,38,'p1','#D08A62'],[131,98,45,30,'p3','#86C4A8']].forEach(([x,y,w,hh,p,c])=>{
+    h+=`<rect x="${x}" y="${y}" width="${w}" height="${hh}" fill="#161C1A"/><rect x="${x}" y="${y}" width="${w}" height="${hh}" fill="url(#${p})" opacity=".35"/><rect x="${x}" y="${y}" width="${w}" height="${hh}" fill="none" stroke="${c}" stroke-width=".8"/>`; });
+  // the name in top metal at 12% over the core
+  h+=`<g fill="#E8EEF0" opacity=".12">`+rects.map(([x,y,w,hh])=>`<rect x="${(ox+x*u).toFixed(2)}" y="${(oy+y*u).toFixed(2)}" width="${(w*u).toFixed(2)}" height="${(hh*u).toFixed(2)}"/>`).join('')+`</g>`;
+  // pads: N/E/W reef, contact pads in the middle 60% of the S reef, UART pad SE
+  let pads='';
+  for(let x=30;x<=164;x+=22) pads+=`<rect x="${x}" y="29" width="6" height="6"/>`;
+  for(let y=60;y<=180;y+=30){ pads+=`<rect x="7" y="${y}" width="6" height="6"/><rect x="187" y="${y}" width="6" height="6"/>`; }
+  h+=`<g fill="#C3C9CC">${pads}</g><g fill="#3D9DF2">`+[56,76,96,116,136].map(x=>`<rect x="${x}" y="215" width="6" height="6"/>`).join('')+`</g><rect x="187" y="198" width="6" height="6" fill="#C3C9CC"/>`;
+  h+=`<g stroke="#C3C9CC" stroke-width=".5" opacity=".6">`+[59,79,99,119,139].map(x=>`<path d="M${x} 221V246"/>`).join('')+`<path d="M193 201H200"/></g>`;
+  h+=`<g font-family="Martian Mono, monospace" font-size="5" fill="#85939A" letter-spacing=".4"><text x="29" y="58">RADIO · LL</text><text x="29" y="106">CPU · 5-STAGE</text><text x="134" y="106">MEM</text><text x="60" y="200">LAGOON</text></g>`;
+  s.innerHTML=h;
+})();
+
+/* overflow assertion (C-16) */
+addEventListener('load',()=>{ const ok=document.documentElement.scrollWidth===innerWidth; if(!ok) console.warn('overflow: scrollWidth',document.documentElement.scrollWidth,'innerWidth',innerWidth); window.__noOverflow=ok; });
+})();
+</script>
+</body>
+</html>

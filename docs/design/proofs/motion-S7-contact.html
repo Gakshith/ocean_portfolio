@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>S7 Reef Pads</title>
+<meta name="description" content="Motion proof for S7-contact: the die's pad ring powers up and the contact pads' bond wires carry light out to the open sea.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Martian+Mono:wdth,wght@75..112.5,300..600&family=Newsreader:opsz,wght@6..72,300..500&display=swap">
+<style>
+:root{
+  --floor-0:#0E1312; --floor-1:#161C1A; --floor-2:#222A27; --line:#2E3733; --line-strong:#737E83;
+  --light:#E8EEF0; --sand:#A7B5BB; --dim:#85939A; --ink:#0A1016; --caustic:#E6F4FF;
+  --sea:#3D9DF2; --sea-glow:rgba(61,157,242,.35); --alu:#C3C9CC; --m1:#D08A62; --m2:#A597DD; --m3:#86C4A8;
+  --e-out:cubic-bezier(0.16,1,0.3,1); --e-in:cubic-bezier(0.7,0,0.84,0); --bar-h:56px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--floor-0);color:var(--light)}
+body{font-family:"Newsreader",Georgia,serif;overflow-x:hidden}
+.mono{font-family:"Martian Mono",ui-monospace,monospace;font-variation-settings:"wdth" 87.5}
+:focus-visible{outline:2px solid var(--light);outline-offset:3px}
+/* chrome, as S1 (02-ux): desktop top bar, phone bottom bar */
+.bar{position:fixed;left:0;right:0;top:0;height:var(--bar-h);z-index:20;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:rgba(14,19,18,.86)}
+.bar .word{font:400 18px/1 "Newsreader",serif;color:var(--light);text-decoration:none}
+.pill{display:flex;border-radius:2px;overflow:hidden}
+.pill a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;background:var(--sea);color:var(--ink);text-decoration:none;font:500 12px/1 "Martian Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
+.pill a+a{border-left:1px solid rgba(10,16,22,.35)}
+.bbar{display:none}
+@media (max-width:767px){
+  .bar{display:none}
+  .bbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;gap:8px;align-items:center;padding:6px 12px calc(6px + env(safe-area-inset-bottom));background:var(--floor-1);border-top:1px solid var(--line)}
+  .bbar a{min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:2px;text-decoration:none;font:500 12px/1 "Martian Mono",monospace;letter-spacing:.06em;text-transform:uppercase}
+  .bbar .chip{flex:0 0 144px;border:1px solid var(--line-strong);color:var(--light);justify-content:flex-start;padding:0 10px;text-transform:none;letter-spacing:0;white-space:nowrap}
+  .bbar .res{flex:0 0 88px;background:var(--sea);color:var(--ink)}
+  .bbar .con{flex:1 1 96px;background:var(--floor-2);color:var(--light);border:1px solid var(--line-strong)}
+}
+.before{min-height:70vh;display:grid;place-items:center;color:var(--dim);font-size:11px;text-align:center;padding:16px}
+
+/* S7 */
+#S7-contact{min-height:calc(100vh - var(--bar-h));display:grid;grid-template-columns:minmax(320px,38%) 1fr;gap:clamp(16px,4vw,64px);align-items:center;padding:calc(var(--bar-h) + 4vh) max(16px,5vw) 6vh}
+.copy h2{font-variation-settings:"opsz" 48;font-weight:400;font-size:clamp(26px,2.8vw,40px);line-height:1.1;letter-spacing:-.01em;margin:0 0 24px}
+.pads{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.pads li{display:flex;align-items:stretch;gap:8px;min-width:0}
+.pad-link{flex:1;min-width:0;min-height:56px;display:flex;align-items:center;gap:14px;text-decoration:none;color:var(--light);background:var(--floor-1);padding:0 14px;border-radius:2px;border:1px solid var(--line);
+  font:500 12px/1 "Martian Mono",monospace;font-variation-settings:"wdth" 87.5;letter-spacing:.08em;text-transform:uppercase;
+  transition:background 120ms var(--e-out),color 120ms var(--e-out),border-color 120ms,box-shadow 120ms,transform 80ms}
+.pad-link .n{color:var(--dim);transition:color 120ms}
+.pad-link small{margin-left:auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:400 13px/1 "Martian Mono",monospace;font-variation-settings:"wdth" 100;letter-spacing:0;text-transform:none;color:var(--sand);transition:color 120ms}
+.pad-link.primary{background:var(--sea);color:var(--ink);border-color:var(--sea)}
+.pad-link.primary .n,.pad-link.primary small{color:#16324d}
+.pad-link.lit,.pad-link:focus-visible{background:var(--sea);color:var(--ink);border-color:var(--sea);box-shadow:0 0 0 1px var(--sea),0 0 16px var(--sea-glow);outline:none}
+.pad-link.lit .n,.pad-link.lit small,.pad-link:focus-visible .n,.pad-link:focus-visible small{color:#16324d}
+.pad-link:focus-visible{box-shadow:0 0 0 2px var(--floor-0),0 0 0 4px var(--light),0 0 16px var(--sea-glow)}
+.pad-link:active{transform:scale(.985)}
+.copybtn{min-width:76px;background:var(--floor-2);border:1px solid var(--line-strong);color:var(--light);font:400 12px/1 "Martian Mono",monospace;border-radius:2px;cursor:pointer}
+.copybtn.ok{color:var(--sea);border-color:var(--sea)}
+.note{margin:14px 0 0;font-size:11px;color:var(--dim);min-height:1.2em}
+.stage{position:relative;width:100%;max-width:820px;justify-self:center;max-height:calc(100vh - var(--bar-h) - 8vh)}
+.stage svg{display:block;width:100%;height:auto;max-height:calc(100vh - var(--bar-h) - 12vh)}
+.lead-chip{position:absolute;font:500 12px/1 "Martian Mono",monospace;letter-spacing:.08em;padding:6px 7px;border-radius:2px;
+  background:var(--floor-1);border:1px solid var(--line);color:var(--light);white-space:nowrap;cursor:pointer;opacity:0;transition:background 120ms,color 120ms,border-color 120ms}
+.lead-chip.lit{background:var(--sea);border-color:var(--sea);color:var(--ink)}
+.lead-chip .full{display:inline} .lead-chip .num{display:none}
+.caption{margin:8px 0 0;font-size:12px;color:var(--dim);text-align:center}
+@media (max-width:820px){
+  #S7-contact{grid-template-columns:1fr;padding:3vh 12px calc(var(--bar-h) + 24px);align-content:start}
+  .stage{order:-1;max-height:none} .stage svg{max-height:32vh;margin:0 auto;width:auto;max-width:100%}
+  .lead-chip .full{display:none} .lead-chip .num{display:inline}
+  .copy h2{font-size:24px;margin-bottom:14px}
+  .pad-link small{font-size:12px}
+  .copybtn{min-width:60px}
+}
+/* svg states */
+.padr{fill:var(--alu);fill-opacity:.32}
+.padc{fill:var(--alu);fill-opacity:.5;stroke:var(--sea);stroke-opacity:0;stroke-width:1.2;transition:fill 120ms,fill-opacity 120ms,stroke-opacity 240ms}
+.padc.live{stroke-opacity:.9}
+.padc.lit{fill:var(--sea);fill-opacity:1;filter:url(#seaGlow)}
+.wire{stroke:var(--alu);stroke-opacity:.22;stroke-width:.8;fill:none;transition:stroke 160ms,stroke-opacity 160ms}
+.wire.lit{stroke:var(--sea);stroke-opacity:.8;stroke-width:1}
+.pulse{stroke:var(--sea);stroke-width:2;fill:none;stroke-linecap:round;filter:url(#seaGlow);opacity:0}
+.lead{fill:var(--alu);fill-opacity:.35;transition:fill 120ms,fill-opacity 120ms}
+.lead.lit{fill:var(--sea);fill-opacity:1}
+.hud{position:fixed;right:16px;top:64px;z-index:10;background:var(--floor-1);border:1px solid var(--line);padding:8px 10px;font-size:10px;color:var(--dim);display:flex;gap:6px}
+.hud button{background:transparent;color:var(--light);border:1px solid var(--line-strong);font:inherit;padding:5px 7px;cursor:pointer;border-radius:2px}
+.hud button[aria-pressed="true"]{border-color:var(--sea);color:var(--sea)}
+@media (max-width:820px){ .hud{display:none} }
+.after{min-height:30vh;padding:16px max(16px,5vw) 90px;color:var(--dim);font-size:11px}
+@media (prefers-reduced-motion:reduce){ *{transition-duration:0ms !important} }
+body.rm *{transition-duration:0ms !important}
+</style>
+</head>
+<body>
+<header class="bar"><a class="word" href="#top">Akash Gojuru</a><nav class="pill" aria-label="Fast path"><a href="RESUME_IBM_1.pdf" target="_blank" rel="noopener">Resume ↗</a><a href="#S7-contact">Contact</a></nav></header>
+<nav class="bbar" aria-label="Fast path"><a class="chip" href="#S7-contact">≡ 7/7 Contact ▴</a><a class="res" href="RESUME_IBM_1.pdf" target="_blank" rel="noopener">Resume ↗</a><a class="con" href="#S7-contact">Contact</a></nav>
+
+<div class="before mono">[end of S6-cybot: the camera has risen to the plan view of the atoll. Scroll.]</div>
+
+<section id="S7-contact" aria-labelledby="s7h">
+  <div class="copy">
+    <h2 id="s7h">Every chip talks to the world through its pads. These are how you reach me.</h2>
+    <ul class="pads" id="padList">
+      <li><a class="pad-link primary" data-pad="0" href="RESUME_IBM_1.pdf" target="_blank" rel="noopener"><span class="n">01</span>Resume ↗<small>PDF</small></a></li>
+      <li><a class="pad-link" data-pad="1" href="mailto:gojuru18@iastate.edu"><span class="n">02</span>Email<small>gojuru18@iastate.edu</small></a><button class="copybtn" id="copyEmail" type="button" aria-label="Copy email address">copy</button></li>
+      <li><a class="pad-link" data-pad="2" href="https://linkedin.com/in/akash-gojuru" target="_blank" rel="noopener"><span class="n">03</span>LinkedIn ↗<small>akash-gojuru</small></a></li>
+      <li><a class="pad-link" data-pad="3" href="https://github.com/Gakshith" target="_blank" rel="noopener"><span class="n">04</span>GitHub ↗<small>Gakshith</small></a></li>
+      <li><a class="pad-link" data-pad="4" href="#reflection"><span class="n">05</span>Reflection ↗<small>PDF</small></a></li>
+    </ul>
+    <p class="note mono" id="copyStatus" role="status" aria-live="polite"></p>
+  </div>
+  <div class="stage" id="stage" aria-hidden="true">
+    <svg id="die"></svg>
+    <p class="caption">An illustrative die. The blocks are my projects; it is not a fabricated chip.</p>
+  </div>
+</section>
+<div class="after mono">[footer]</div>
+
+<div class="hud mono"><button id="replay">replay power-up</button><button id="rmBtn" aria-pressed="false">reduced motion</button></div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script>
+const NS='http://www.w3.org/2000/svg', svg=document.getElementById('die'), stage=document.getElementById('stage');
+const el=(tag,attrs,parent=svg)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent.appendChild(e);return e;};
+const mq=matchMedia('(prefers-reduced-motion: reduce)'); let reduced=mq.matches;
+
+/* ---------- the die as S1 leaves it (same geometry and canonical glyphs as the S1 target) ---------- */
+const N=512, d0=Math.round(N*0.05), d1=N-d0, W=d1-d0;
+// C-10: frame the SOUTH half: reef, contact pads, bond wires, leads. The name shows only as a cropped glow at the top.
+const VB={x:0,y:300,w:512,h:276}; svg.setAttribute('viewBox',`${VB.x} ${VB.y} ${VB.w} ${VB.h}`);   // h includes the lead-chip band
+const defs=el('defs',{});
+const glow=el('filter',{id:'seaGlow',x:'-50%',y:'-50%',width:'200%',height:'200%'},defs);
+el('feGaussianBlur',{stdDeviation:'2.2',result:'b'},glow); const mg=el('feMerge',{},glow); el('feMergeNode',{in:'b'},mg); el('feMergeNode',{in:'SourceGraphic'},mg);
+const soft=el('filter',{id:'soft',x:'-10%',y:'-10%',width:'120%',height:'120%'},defs); el('feGaussianBlur',{stdDeviation:'0.9'},soft);
+const fade=el('linearGradient',{id:'fadeTop',x1:0,y1:0,x2:0,y2:1},defs); el('stop',{offset:'0',  'stop-color':'#fff','stop-opacity':0},fade); el('stop',{offset:'.28','stop-color':'#fff','stop-opacity':1},fade);
+const mask=el('mask',{id:'fadeMask'},defs); el('rect',{x:VB.x,y:VB.y,width:VB.w,height:VB.h,fill:'url(#fadeTop)'},mask);
+const plate=el('g',{filter:'url(#soft)',mask:'url(#fadeMask)'});
+const block=(x,y,w,h)=>{ for(let yy=y;yy<y+h;yy+=5) el('rect',{x,y:yy,width:w,height:1,fill:'var(--m1)','fill-opacity':.35},plate);
+  for(let xx=x+2;xx<x+w;xx+=9) el('rect',{x:xx,y,width:1,height:h,fill:'var(--m2)','fill-opacity':.3},plate);
+  el('rect',{x,y,width:w,height:h,fill:'none',stroke:'var(--alu)','stroke-opacity':.4,'stroke-width':1},plate); };
+block(d0+0.10*W,d0+0.10*W,0.30*W,0.24*W); block(d0+0.33*W,d0+0.38*W,0.34*W,0.26*W); block(d0+0.72*W,d0+0.30*W,0.18*W,0.40*W);
+[0.36,0.70,0.82].forEach(f=>el('rect',{x:d0+0.08*W,y:d0+f*W,width:0.84*W,height:1.5,fill:'var(--m3)','fill-opacity':.35},plate));
+el('rect',{x:d0,y:d0,width:W,height:W,fill:'none',stroke:'var(--caustic)','stroke-opacity':.45,'stroke-width':3},plate);
+el('rect',{x:d0+6,y:d0+6,width:W-12,height:W-12,fill:'none',stroke:'var(--caustic)','stroke-opacity':.3,'stroke-width':2},plate);
+const GLYPHS={"grid":[8,12],"letterGap":2,"lineGap":4,"lines":["AKASH","GOJURU"],"glyphs":{"A":{"r":[[0,0,1.5,12],[6.5,0,1.5,12],[0,0,8,1],[0,6,8,1]],"v":[[0.75,12],[7.25,12]]},"K":{"r":[[0,0,1.5,12],[1.5,5.5,3.5,1],[4,3.5,1,5],[4,3.5,4,1],[6.5,0,1.5,4.5],[4,7.5,4,1],[6.5,7.5,1.5,4.5]],"v":[[0.75,0],[0.75,12],[7.25,0],[7.25,12]]},"S":{"r":[[0,0,8,1],[6.5,0,1.5,2.5],[0,0,1.5,6.5],[0,5.5,8,1],[6.5,5.5,1.5,6.5],[0,11,8,1],[0,9.5,1.5,2.5]],"v":[[7.25,2.5],[0.75,9.5]]},"H":{"r":[[0,0,1.5,12],[6.5,0,1.5,12],[0,5.5,8,1]],"v":[[0.75,0],[0.75,12],[7.25,0],[7.25,12]]},"G":{"r":[[0,0,8,1],[6.5,0,1.5,2.5],[0,0,1.5,12],[0,11,8,1],[6.5,6,1.5,6],[4,6,4,1]],"v":[[7.25,2.5],[4,6.5]]},"O":{"r":[[0,0,1.5,12],[6.5,0,1.5,12],[0,0,8,1],[0,11,8,1]],"v":[]},"J":{"r":[[2.5,0,5.5,1],[6.5,0,1.5,12],[0,11,8,1],[0,8,1.5,4]],"v":[[2.5,0.5],[0.75,8]]},"U":{"r":[[0,0,1.5,12],[6.5,0,1.5,12],[0,11,8,1]],"v":[[0.75,0],[7.25,0]]},"R":{"r":[[0,0,1.5,12],[0,0,8,1],[6.5,0,1.5,6.5],[0,5.5,8,1],[4,5.5,1,3.5],[4,8,4,1],[6.5,8,1.5,4]],"v":[[0.75,12],[7.25,12]]}}};
+const tk=6.5, G=GLYPHS, lw=w=>(w.length*8+(w.length-1)*2)*tk, y0=(N-28*tk)/2, lettersG=el('g',{fill:'var(--caustic)','fill-opacity':.7},plate);
+G.lines.forEach((w,li)=>{ const x0=(N-lw(w))/2, yy=y0+li*16*tk;
+  [...w].forEach((ch,i)=>{ const gx=x0+i*10*tk, g=G.glyphs[ch];
+    g.r.forEach(([x,y,ww,hh])=>el('rect',{x:gx+x*tk,y:yy+y*tk,width:ww*tk,height:hh*tk},lettersG));
+    g.v.forEach(([cx,cy])=>{const vx=Math.min(Math.max(cx,1),7),vy=Math.min(Math.max(cy,1),11); el('rect',{x:gx+(vx-1)*tk,y:yy+(vy-1)*tk,width:2*tk,height:2*tk},lettersG);}); }); });
+for(let y=d0+36;y<d1-40;y+=24)for(let x=d0+36;x<d1-40;x+=24){ if(y>y0-24&&y<y0+28*tk+20&&x>(N-lw('GOJURU'))/2-24&&x<(N+lw('GOJURU'))/2+20) continue;
+  el('rect',{x,y,width:7,height:7,fill:'var(--caustic)','fill-opacity':.18},plate); }
+
+/* ---------- the reef: 60 pads in ring order (clockwise from the SE corner, where the UART pad tethers CyBot) ---------- */
+const pads=15, pw=(W-60)/pads, ps=Math.round(pw*0.5), po=d0+30, pe=d0+11, ring=[];
+for(let i=pads-1;i>=0;i--) ring.push({x:po+i*pw+(pw-ps)/2, y:d1-pe-ps, side:'S', i});
+for(let i=pads-1;i>=0;i--) ring.push({x:pe, y:po+i*pw+(pw-ps)/2, side:'W', i});
+for(let i=0;i<pads;i++)     ring.push({x:po+i*pw+(pw-ps)/2, y:pe, side:'N', i});
+for(let i=0;i<pads;i++)     ring.push({x:d1-pe-ps, y:po+i*pw+(pw-ps)/2, side:'E', i});
+const CONTACT=[5,6,7,8,9], NAMES=['RESUME','EMAIL','LINKEDIN','GITHUB','REFLECTION'];   // middle third of the south reef (inside the middle 60%)
+const padEls=ring.map(p=>el('rect',{x:p.x,y:p.y,width:ps,height:ps,class:(p.side==='S'&&CONTACT.includes(p.i))?'padc':'padr'}));
+const link=[...document.querySelectorAll('.pad-link')];
+const contacts=CONTACT.map((pi,k)=>{
+  const p=ring.find(r=>r.side==='S'&&r.i===pi), pad=padEls[ring.indexOf(p)];
+  const px=p.x+ps/2, py=p.y+ps, lx=70+k*93, ly=524;
+  const wire=el('line',{x1:px,y1:py,x2:lx,y2:ly,class:'wire'}), len=Math.hypot(lx-px,ly-py);
+  const pulse=el('line',{x1:px,y1:py,x2:lx,y2:ly,class:'pulse','stroke-dasharray':`14 ${len+20}`,'stroke-dashoffset':14});
+  const lead=el('rect',{x:lx-5,y:ly,width:10,height:14,class:'lead'});
+  const chip=document.createElement('span'); chip.className='lead-chip'; chip.setAttribute('aria-hidden','true');
+  chip.innerHTML=`<span class="full">${NAMES[k]}</span><span class="num">0${k+1}</span>`;
+  chip.style.left=((lx-VB.x)/VB.w*100)+'%'; chip.style.top=`calc(${((ly+18-VB.y)/VB.h*100)}% * var(--svgH, 1))`;
+  stage.appendChild(chip);
+  return {pad,wire,pulse,lead,chip,len,k};
+});
+// the chips sit over the svg (whose height can be capped on phone), so position them against the svg's box
+function placeChips(){ const sr=svg.getBoundingClientRect(), st=stage.getBoundingClientRect();
+  const k0=Math.min(sr.width/VB.w, sr.height/VB.h), ox=(sr.width-VB.w*k0)/2, oy=(sr.height-VB.h*k0)/2;   // preserveAspectRatio: meet, centred
+  contacts.forEach((c,k)=>{ const lx=70+k*93, ly=524+18;
+    c.chip.style.left=(sr.left-st.left+ox+(lx-VB.x)*k0)+'px'; c.chip.style.top=(sr.top-st.top+oy+(ly-VB.y)*k0)+'px'; }); }
+contacts.forEach(c=>gsap.set(c.chip,{xPercent:-50}));
+addEventListener('resize',placeChips); placeChips(); document.fonts&&document.fonts.ready.then(placeChips);
+
+/* ---------- interaction: row or pad lights its bond wire (feedback ≤ 120ms, starting the same frame) ---------- */
+function light(k,on){
+  const c=contacts[k]; if(!c) return;
+  [c.pad,c.wire,c.lead,c.chip,link[k]].forEach(n=>n.classList.toggle('lit',on));
+  gsap.killTweensOf(c.pulse);
+  if(on&&!reduced){ gsap.fromTo(c.pulse,{attr:{'stroke-dashoffset':14},opacity:1},{attr:{'stroke-dashoffset':-(c.len+6)},duration:.42,ease:'expo.out',onComplete:()=>gsap.to(c.pulse,{opacity:0,duration:.15})}); }
+  else gsap.set(c.pulse,{opacity:0});
+}
+link.forEach((a,k)=>{ a.addEventListener('pointerenter',()=>light(k,true)); a.addEventListener('pointerleave',()=>light(k,false));
+  a.addEventListener('focus',()=>light(k,true)); a.addEventListener('blur',()=>light(k,false)); });
+contacts.forEach(c=>[c.pad,c.lead,c.chip].forEach(n=>{ n.style.cursor='pointer';
+  n.addEventListener('pointerenter',()=>light(c.k,true)); n.addEventListener('pointerleave',()=>light(c.k,false)); n.addEventListener('click',()=>link[c.k].click()); }));
+document.getElementById('copyEmail').addEventListener('click',async e=>{ const b=e.currentTarget; try{ await navigator.clipboard.writeText('gojuru18@iastate.edu'); }catch(_){}
+  b.textContent='copied'; b.classList.add('ok'); document.getElementById('copyStatus').textContent='Email address copied.'; setTimeout(()=>{b.textContent='copy'; b.classList.remove('ok');},1400); });
+
+/* ---------- signature: the reef powers up once as S7 arrives. Decoration only: the list is live at 0%. ---------- */
+function setLive(){ contacts.forEach(c=>{ c.pad.classList.add('live'); gsap.set(c.wire,{attr:{'stroke-dasharray':'none'}}); gsap.set(c.chip,{opacity:1,y:0}); });
+  padEls.forEach(p=>{ if(p.classList.contains('padr')) gsap.set(p,{fillOpacity:.55}); }); }
+function powerUp(){
+  if(reduced){ setLive(); return; }
+  const tl=gsap.timeline();
+  padEls.forEach((p,i)=>{ const c=p.classList.contains('padc');                 // 60 pads x 12 ms = a 720 ms sweep
+    tl.fromTo(p,{fillOpacity:c?.5:.32},{fillOpacity:1,duration:.16,ease:'power2.out'},i*.012)
+      .to(p,{fillOpacity:c?.5:.55,duration:.45,ease:'power2.inOut',onComplete:()=>{ if(c) gsap.set(p,{clearProps:'fillOpacity'}); }},i*.012+.16); });
+  contacts.forEach((c,k)=>{ gsap.set(c.wire,{attr:{'stroke-dasharray':`${c.len} ${c.len}`,'stroke-dashoffset':c.len}});
+    tl.add(()=>c.pad.classList.add('live'),.62+k*.07).to(c.wire,{attr:{'stroke-dashoffset':0},duration:.52,ease:'power3.out'},.62+k*.07)
+      .fromTo(c.chip,{opacity:0,y:6},{opacity:1,y:0,duration:.24,ease:'power2.out'},.98+k*.07); });
+  return tl;
+}
+function reset(){ contacts.forEach(c=>{c.pad.classList.remove('live'); gsap.set(c.chip,{opacity:0}); gsap.set(c.wire,{attr:{'stroke-dasharray':`${c.len} ${c.len}`,'stroke-dashoffset':c.len}});});
+  padEls.forEach(p=>gsap.set(p,{clearProps:'fillOpacity'})); }
+gsap.registerPlugin(ScrollTrigger);
+reset();
+ScrollTrigger.create({trigger:'#S7-contact',start:'top 70%',once:true,onEnter:()=>powerUp()});
+document.getElementById('replay').addEventListener('click',()=>{reset(); requestAnimationFrame(()=>powerUp());});
+const rmBtn=document.getElementById('rmBtn'); const syncRM=()=>{rmBtn.setAttribute('aria-pressed',reduced); document.body.classList.toggle('rm',reduced);}; syncRM();
+rmBtn.addEventListener('click',()=>{reduced=!reduced; syncRM();});
+mq.addEventListener('change',e=>{reduced=e.matches; syncRM();});
+window.__s7={powerUp,reset,light,placeChips};
+</script>
+</body>
+</html>
