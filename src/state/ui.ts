@@ -35,6 +35,13 @@ function set(patch: Partial<UiState>) {
 function hydrate() {
   if (hydrated || typeof window === 'undefined') return
   hydrated = true
+  // The Interrupt closes via history.back(). With 'auto' restoration the browser lands on the
+  // entry's #hash anchor after our scrollTo(savedY), so we own scroll restoration instead.
+  try {
+    history.scrollRestoration = 'manual'
+  } catch {
+    // not supported: the close still restores savedY
+  }
   try {
     if (window.localStorage.getItem(R_KEY) === '0') state = { ...state, rKey: false }
   } catch {
@@ -73,6 +80,8 @@ function setInert(on: boolean) {
   }
 }
 
+const active = () => (document.activeElement instanceof HTMLElement ? document.activeElement : null)
+
 function focusSafely(el: HTMLElement | null) {
   if (el && el.isConnected) el.focus({ preventScroll: true })
 }
@@ -81,8 +90,11 @@ export function openInterrupt(from?: HTMLElement | null): void {
   if (typeof window === 'undefined') return
   if (state.overlay === 'interrupt' && state.phase === 'open') return
   clearTimeout(closeTimer)
-  if (state.overlay && state.overlay !== 'interrupt') set({ overlay: null })
-  opener = from ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null)
+  // Replacing Keys or the sheet: focus is inside the overlay that is about to unmount,
+  // so keep that overlay's opener as the place to return to.
+  const replacing = state.overlay !== null && state.overlay !== 'interrupt'
+  if (replacing) set({ overlay: null })
+  opener = from ?? (replacing ? opener : active())
   savedY = window.scrollY
   setPauseReason('interrupt', true)
   saveContext()
@@ -131,7 +143,7 @@ function finishInterrupt() {
 
 export function openKeys(from?: HTMLElement | null): void {
   if (typeof window === 'undefined' || state.overlay === 'interrupt') return
-  opener = from ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null)
+  opener = from ?? (state.overlay === 'sheet' ? opener : active())
   set({ overlay: 'keys' })
 }
 

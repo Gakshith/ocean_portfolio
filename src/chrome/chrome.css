@@ -11,3 +11,9 @@ html {
     padding-bottom: calc(var(--bottombar) + env(safe-area-inset-bottom));
   }
 }
+@media (min-width: 768px) {
+  /* The fixed 96px minimap and the Still toggle sit at the bottom corners. */
+  html {
+    scroll-padding-bottom: calc(96px + var(--s-4) + var(--s-2));
+  }
+}

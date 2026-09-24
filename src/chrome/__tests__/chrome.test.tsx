@@ -262,3 +262,36 @@ describe('Still, jumps and the phone sheet', () => {
     expect(document.activeElement).toBe(chip)
   })
 })
+
+describe('review round 1', () => {
+  it('owns scroll restoration after hydrate, so Back cannot land on the #hash anchor', () => {
+    render(<Page />)
+    expect(history.scrollRestoration).toBe('manual')
+  })
+
+  it('R over the Keys popover returns focus to what opened Keys, not <body>', async () => {
+    const user = userEvent.setup()
+    render(<Page />)
+    const still = document.querySelector<HTMLButtonElement>('.c-still--desk')!
+    act(() => still.focus())
+    await user.keyboard('?')
+    expect(document.activeElement?.id).toBe('chrome-keys-title')
+    await user.keyboard('r')
+    await waitFor(() => expect(dialog()).not.toBeNull())
+    expect(screen.queryByRole('dialog', { name: 'Keys' })).toBeNull()
+    await user.keyboard('{Escape}')
+    await waitFor(() => expect(document.activeElement).toBe(still))
+  })
+
+  it('R over the phone sheet returns focus to the chip', async () => {
+    const user = userEvent.setup()
+    render(<Page />)
+    const chip = document.querySelector<HTMLButtonElement>('.c-bbar__chip')!
+    await user.click(chip)
+    within(document.getElementById('chrome-sheet')!).getAllByRole('link')[0].focus()
+    await user.keyboard('r')
+    await waitFor(() => expect(dialog()).not.toBeNull())
+    await user.keyboard('{Escape}')
+    await waitFor(() => expect(document.activeElement).toBe(chip))
+  })
+})

@@ -1,6 +1,6 @@
 // The Surface Interrupt: the global fast path. Plan "Global UI" + 02-ux "Surface Interrupt".
 // History, inert, scroll and pause live in state/ui.ts; this renders the panel and traps focus.
-import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { identity, links, projects } from '../content/content'
 import { SECTIONS } from '../state/sections'
@@ -27,6 +27,8 @@ function trapTab(e: KeyboardEvent<HTMLDivElement>) {
 
 function CopyEmail() {
   const [status, setStatus] = useState<'idle' | 'copied' | 'failed'>('idle')
+  const reset = useRef<number | undefined>(undefined)
+  useEffect(() => () => window.clearTimeout(reset.current), [])
   const copy = async () => {
     let ok = false
     try {
@@ -36,7 +38,8 @@ function CopyEmail() {
       ok = false
     }
     setStatus(ok ? 'copied' : 'failed')
-    window.setTimeout(() => setStatus('idle'), 1400)
+    window.clearTimeout(reset.current)
+    reset.current = window.setTimeout(() => setStatus('idle'), 1400)
   }
   return (
     <>
