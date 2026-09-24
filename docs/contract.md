@@ -152,3 +152,19 @@ unless you run `VITE_FORMSPREE_ID=xvkgqbpl npm run dev`.
   a phase 1 gate.
 - **R-P1-06 · The S5 honesty line is italic, not bold.** The plan's `**…**` is markdown
   emphasis, and the tokens say "body emphasis is italic, never bold".
+- **R-P1-07 · Tide Pool inked cells are `--ink` on `--sand-sun`, not oxide.** Oxide on sand
+  is about 1.1:1 and fails the 3:1 non-text contrast rule (WCAG 1.4.11); the plan's order puts
+  accessibility above looks. Oxide stays in the discriminator bars and the winner. Bubble
+  Lock's optional desktop drag-in is deferred; the plan marks it optional.
+- **R-P1-08 · S2 facts come before the die map on phone.** The facts `<dl>` sits in the text
+  column, so DOM order matches visual order at every size (WCAG 1.3.2). The plan's phone note
+  placed the facts after the die; the plan's order puts accessibility above that layout detail.
+- **R-P1-09 · The phone S1 split is measured inside the two bars.** The plan keeps the 56px
+  top bar on phone (only the top pill goes; 02-ux: "Top bar 56px and phone bottom bar 56px"),
+  and the ~38/58 split came from a proof with neither bar. Phone S1 tightens plate spacing
+  on the spacing tokens (about 163px of drawing at 375×667). The 44px index rows and the
+  `--t-lede` role line are never shrunk. The phase 2 lettering zone is sized again on real
+  phones.
+- **R-P1-10 · A stalled instruction reads "(stall)" in both the chambers and the cycle
+  table.** It's the standard term for the chip-engineer audience, and one word for one state.
+  This supersedes the plan's R-08 "(held)" wording; the bubble cell stays "bubble".
