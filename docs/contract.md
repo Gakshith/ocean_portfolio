@@ -10,7 +10,7 @@ Phase 1 is the no-WebGL Still site. **No three.js, R3F, GSAP or Lenis.**
 
 | Owner | Paths | Branch |
 |---|---|---|
-| lead | `package.json`, `vite.config.ts`, `tsconfig*`, `index.html`, `scripts/`, `src/main.tsx`, `src/entry-server.tsx`, `src/App.tsx`, `src/styles/tokens.css`, `src/contract.test.tsx`, `docs/contract.md` | `dev` |
+| lead | `package.json`, `.env.production`, `vite.config.ts`, `tsconfig*`, `index.html`, `scripts/`, `src/main.tsx`, `src/entry-server.tsx`, `src/App.tsx`, `src/styles/tokens.css`, `src/contract.test.tsx`, `docs/contract.md` | `dev` |
 | chrome_agent | `src/chrome/**`, `src/state/**` | `feat/fast-path` |
 | sections_agent | `src/content/**`, `src/sections/**`, `src/svg/**`, `src/styles/**` except `tokens.css`, `public/**` | `feat/still-site` |
 | sims_agent | `src/sims/**` | `feat/sims` |
@@ -116,8 +116,10 @@ at 100% of the column width, and each handles its own phone layout.
 
 ## Form
 
-S7 "Write a message" renders only when `import.meta.env.VITE_FORMSPREE_ID` is set
-(see `.env.example`). The client supplies the ID later.
+S7 "Write a message" renders only when `import.meta.env.VITE_FORMSPREE_ID` is set, and it
+POSTs to `https://formspree.io/f/${VITE_FORMSPREE_ID}`. The client's ID (`xvkgqbpl`) is in
+`.env.production`, so production builds render the form. `npm run dev` doesn't render it
+unless you run `VITE_FORMSPREE_ID=xvkgqbpl npm run dev`.
 
 ## Gates (DONE needs proof)
 
