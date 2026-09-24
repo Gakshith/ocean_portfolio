@@ -1,0 +1,85 @@
+.sim--cy {
+  margin: 0;
+  gap: var(--s-4);
+}
+.sim-cy__stage {
+  border: var(--b-hair);
+  background: var(--floor-deep);
+}
+.sim-cy__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  font-family: var(--f-mono);
+  font-size: 18px;
+}
+.sim-cy__caption {
+  font-size: var(--t-small);
+  font-style: italic;
+  color: var(--sand);
+}
+.sim-cy__readout {
+  display: grid;
+  gap: var(--s-3);
+}
+.sim-cy__legend {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: var(--s-2) var(--gutter);
+  font-size: var(--t-small);
+  color: var(--sand);
+}
+.sim-cy__legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.sim-cy__key {
+  flex: none;
+  width: 28px;
+  height: 14px;
+  position: relative;
+}
+.sim-cy__key--cone {
+  background: color-mix(in srgb, var(--light) 10%, transparent);
+  clip-path: polygon(0 50%, 100% 0, 100% 100%);
+  border: 0;
+}
+.sim-cy__key--echo {
+  border-top: 3px solid var(--light);
+  height: 0;
+}
+.sim-cy__key--ir {
+  height: 0;
+  border-top: 2px dotted var(--sand);
+}
+.sim-cy__key--bump::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: -3px;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+}
+.sim-cy__key--bump::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 4px;
+  width: 7px;
+  height: 3px;
+  background: var(--light);
+}
+.sim-cy__key--path {
+  height: 0;
+  border-top: 1.5px dashed var(--dim);
+}
+
+@media (max-width: 767px) {
+  .sim-cy__svg {
+    font-size: 26px;
+  }
+}

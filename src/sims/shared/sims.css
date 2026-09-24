@@ -1,0 +1,251 @@
+/* Shared sim chrome: the block surface, the control rail, buttons, twins. Tokens only. */
+
+.sim {
+  --block: var(--m5-al);
+  display: grid;
+  gap: var(--s-5);
+  width: 100%;
+  min-width: 0;
+  color: var(--light);
+  font-family: var(--f-serif);
+  font-size: var(--t-body);
+  line-height: var(--lh-body);
+}
+.sim *,
+.sim *::before,
+.sim *::after {
+  box-sizing: border-box;
+}
+.sim :where(h3, h4, p, ol, ul, dl, dd, figure) {
+  margin: 0;
+  padding: 0;
+}
+
+.sim-title {
+  font-size: var(--t-display-m);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  font-variation-settings: 'opsz' 48;
+}
+.sim-h3 {
+  font-size: var(--t-small);
+  font-weight: 400;
+  color: var(--dim);
+  line-height: 1.4;
+}
+
+/* Mono voices */
+.sim-data,
+.sim-tag {
+  font-family: var(--f-mono);
+  font-variant-numeric: tabular-nums;
+}
+.sim-data {
+  font-size: var(--t-data);
+  line-height: 1.5;
+}
+.sim-tag {
+  font-size: var(--t-tag);
+  letter-spacing: var(--track-tag);
+  text-transform: uppercase;
+  line-height: 1;
+}
+.sim-dim {
+  color: var(--dim);
+}
+.sim-sand {
+  color: var(--sand);
+}
+
+/* The block: a flat plan still of the block's top metal, framed by its layer rule. */
+.sim-block {
+  position: relative;
+  background-color: var(--floor-1);
+  background-image: radial-gradient(var(--line) 1.2px, transparent 1.6px);
+  background-size: 18px 18px;
+  border: 2px solid var(--block);
+  padding: 28px var(--s-4);
+  min-width: 0;
+}
+.sim-block::before,
+.sim-block::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 14px;
+  background: repeating-linear-gradient(90deg, var(--block) 0 10px, transparent 10px 14px);
+  opacity: 0.18;
+  pointer-events: none;
+}
+.sim-block::before {
+  top: 0;
+}
+.sim-block::after {
+  bottom: 0;
+}
+.sim-block__tag {
+  position: absolute;
+  top: 7px;
+  left: var(--s-4);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dim);
+  line-height: 1;
+  z-index: 1;
+}
+.sim-block__id {
+  position: absolute;
+  bottom: 7px;
+  right: var(--s-4);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+  line-height: 1;
+  z-index: 1;
+}
+
+/* Control rail */
+.sim-rail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3) var(--s-4);
+  background: var(--floor-1);
+  border-top: var(--b-ui);
+  border-bottom: var(--b-ui);
+  padding: var(--s-2) var(--s-4);
+}
+.sim-rail__name {
+  font-size: var(--t-nav);
+  line-height: 1.3;
+}
+.sim-rail__name em {
+  color: var(--sand);
+}
+.sim-rail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+.sim-rail__caption {
+  margin-left: auto;
+  flex: 1 1 260px;
+  max-width: 46ch;
+  font-size: var(--t-small);
+  line-height: 1.4;
+  color: var(--dim);
+  text-align: right;
+}
+
+/* Buttons: flat, hairline, sentence case, 44px targets. */
+.sim-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 var(--s-4);
+  background: var(--floor-1);
+  border: var(--b-ui);
+  border-radius: 0;
+  color: var(--light);
+  font: inherit;
+  font-size: var(--t-nav);
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color var(--t-fast) var(--e-out);
+}
+.sim-btn:hover:not(:disabled):not([aria-disabled='true']) {
+  border-color: var(--sea);
+}
+.sim-btn:disabled,
+.sim-btn[aria-disabled='true'] {
+  color: var(--dim);
+  border-color: var(--line);
+  cursor: not-allowed;
+}
+.sim-btn__glyph {
+  font-family: var(--f-mono);
+  font-size: 12px;
+}
+
+.sim :focus-visible {
+  outline: 3px solid var(--sea);
+  outline-offset: 2px;
+  box-shadow: var(--focus);
+}
+
+/* Inline notes (never colour alone: they are sentences). */
+.sim-note {
+  font-size: var(--t-small);
+  line-height: 1.45;
+  color: var(--sand);
+  min-height: 1.45em;
+}
+
+/* Range inputs */
+.sim-range {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-3);
+  font-size: var(--t-nav);
+}
+.sim-range input[type='range'] {
+  width: min(240px, 36vw);
+  min-width: 120px;
+  height: 44px;
+  margin: 0;
+  accent-color: var(--light);
+  cursor: pointer;
+}
+.sim-range output {
+  font-family: var(--f-mono);
+  font-size: var(--t-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.sim-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sim *,
+  .sim *::before,
+  .sim *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+:root[data-calm='true'] .sim *,
+:root[data-calm='true'] .sim *::before,
+:root[data-calm='true'] .sim *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+@media (max-width: 767px) {
+  .sim-range {
+    flex-wrap: wrap;
+  }
+  .sim-rail__caption {
+    text-align: left;
+    margin-left: 0;
+  }
+}
