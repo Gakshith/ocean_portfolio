@@ -159,3 +159,9 @@ unless you run `VITE_FORMSPREE_ID=xvkgqbpl npm run dev`.
 - **R-P1-08 · S2 facts come before the die map on phone.** The facts `<dl>` sits in the text
   column, so DOM order matches visual order at every size (WCAG 1.3.2). The plan's phone note
   placed the facts after the die; the plan's order puts accessibility above that layout detail.
+- **R-P1-09 · The phone S1 split is measured inside the two bars.** The plan keeps the 56px
+  top bar on phone (only the top pill goes; 02-ux: "Top bar 56px and phone bottom bar 56px"),
+  and the ~38/58 split came from a proof with neither bar. Phone S1 tightens plate spacing
+  on the spacing tokens (about 163px of drawing at 375×667). The 44px index rows and the
+  `--t-lede` role line are never shrunk. The phase 2 lettering zone is sized again on real
+  phones.
