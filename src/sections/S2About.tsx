@@ -27,7 +27,7 @@ export function S2About() {
           {projects.map((p) => (
             <li key={p.key} data-k={p.section}>
               <a href={`#${p.section}`}>
-                <span className="t-tag die-row-block">{p.block}</span>
+                <span className="t-tag die-row-block">{p.block}</span>{' '}
                 <span className="die-row-title">{p.title}</span>
                 <span className="arrow" aria-hidden="true">
                   ↓
