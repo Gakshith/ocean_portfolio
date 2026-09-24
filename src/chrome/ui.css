@@ -1,6 +1,12 @@
 /* Global UI. Tokens only (src/styles/tokens.css). Phone < 768, tablet and desktop >= 768.
    Nothing here hides, fades or moves on scroll; only the Surface Interrupt covers it. */
 
+/* Own box model, so chrome sizes (96px map, 44px targets, 144/88/96 bar) hold without base.css. */
+:where(.c-skip, .c-bar, .c-diemap, .c-still, .c-phone, .c-keys, .c-irq),
+:where(.c-skip, .c-bar, .c-diemap, .c-still, .c-phone, .c-keys, .c-irq) * {
+  box-sizing: border-box;
+}
+
 .c-sr {
   position: absolute !important;
   width: 1px;

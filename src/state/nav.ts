@@ -26,6 +26,7 @@ export function setCurrent(id: SectionId) {
 
 /** A section counts as current once its top passes 40% of the viewport. */
 export function measureCurrent(): SectionId | null {
+  if (window.scrollY <= 0 && document.getElementById(SECTIONS[0].id)) return SECTIONS[0].id
   let found: SectionId | null = null
   for (const { id } of SECTIONS) {
     const el = document.getElementById(id)
