@@ -93,7 +93,7 @@
   line-height: 1;
 }
 .sim-hop__chipw {
-  font-size: 10px;
+  font-size: var(--t-tag);
   font-variation-settings: 'wdth' 75;
   font-stretch: 75%;
   line-height: 1;
@@ -236,9 +236,6 @@
   .sim-hop__chips {
     grid-template-columns: repeat(6, 50px);
     justify-content: start;
-  }
-  .sim-hop__chipw {
-    font-size: 9px;
   }
   .sim-hop__legend span:last-child {
     white-space: normal;

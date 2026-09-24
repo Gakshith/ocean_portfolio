@@ -28,6 +28,28 @@ export function useSimGate(ref: RefObject<Element | null>, userPaused = false) {
   return { calm, paused, inView, running: !calm && !paused && inView && !userPaused }
 }
 
+/** Tag size in CSS px (--t-tag). SVG labels are sized so they render at this size on screen. */
+export const TAG_PX = 12
+
+/**
+ * CSS px per SVG user unit for an svg whose viewBox is `viewW` wide, measured after mount
+ * (SVG text scales with the drawing). Null on the server and while the svg is hidden.
+ */
+export function useUnitScale(ref: RefObject<Element | null>, viewW: number): number | null {
+  const [scale, setScale] = useState<number | null>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(([e]) => {
+      const w = e.contentRect.width
+      if (w > 0) setScale(w / viewW)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [ref, viewW])
+  return scale
+}
+
 /** setInterval that only runs while `active`; the latest callback is always used. */
 export function useInterval(fn: () => void, ms: number, active: boolean) {
   const saved = useRef(fn)

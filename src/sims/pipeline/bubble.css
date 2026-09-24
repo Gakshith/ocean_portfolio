@@ -24,7 +24,7 @@
   align-items: center;
   justify-content: center;
   font-family: var(--f-mono);
-  font-size: 11px;
+  font-size: var(--t-tag);
   letter-spacing: var(--track-tag);
   text-transform: uppercase;
   color: var(--ink);
@@ -361,14 +361,14 @@
   }
   .sim-bl__bubble,
   .sim-bl__sub {
-    font-size: 11px;
+    font-size: var(--t-tag);
   }
   .sim-bl__fwdlabel {
     left: auto;
     right: 0;
     white-space: normal;
     text-align: right;
-    font-size: 11px;
+    font-size: var(--t-tag);
   }
   .sim-bl__table th:first-child {
     position: sticky;
