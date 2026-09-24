@@ -1,0 +1,207 @@
+.sim--tp {
+  --block: var(--m3-oxide);
+}
+
+.sim-tp__surface {
+  padding: 40px var(--s-6) 36px;
+}
+.sim-tp__stage {
+  display: grid;
+  grid-template-columns: minmax(0, 384px) minmax(0, 340px);
+  justify-content: center;
+  align-items: center;
+  gap: var(--s-5) var(--s-7);
+}
+
+/* The one window of lit sand after S1. */
+.sim-tp__pool {
+  position: relative;
+  background: var(--sand-sun);
+  padding: 12px;
+  overflow: hidden;
+}
+.sim-tp__pool::after {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(circle at 30% 30%, var(--caustic), transparent 45%),
+    radial-gradient(circle at 70% 65%, var(--caustic), transparent 40%);
+  opacity: 0;
+  pointer-events: none;
+}
+.sim-tp__pool.is-lit::after {
+  opacity: 0.1;
+  animation: sim-tp-shimmer 9s ease-in-out infinite alternate;
+}
+@keyframes sim-tp-shimmer {
+  to {
+    transform: translate(6%, -4%) rotate(8deg);
+  }
+}
+
+.sim-tp__pad {
+  position: relative;
+  display: grid;
+  grid-template-rows: repeat(16, minmax(0, 1fr));
+  aspect-ratio: 1;
+  width: 100%;
+  border: 1px solid var(--ink);
+  touch-action: none;
+  cursor: crosshair;
+  user-select: none;
+  -webkit-user-select: none;
+  z-index: 1;
+}
+.sim-tp__row {
+  display: grid;
+  grid-template-columns: repeat(16, minmax(0, 1fr));
+}
+.sim-tp__cell {
+  border-right: 1px solid color-mix(in srgb, var(--sand-shade) 45%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--sand-shade) 45%, transparent);
+}
+.sim-tp__cell.is-on {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+.sim-tp__cell:focus-visible {
+  position: relative;
+  z-index: 2;
+  outline: 3px solid var(--sea);
+  outline-offset: 0;
+  box-shadow: 0 0 0 5px var(--ink);
+}
+.sim-tp__wash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 0 40%, color-mix(in srgb, var(--caustic) 55%, transparent) 50%, transparent 60%);
+  background-size: 250% 100%;
+  background-position: 100% 0;
+  opacity: 0;
+  animation: sim-tp-wash 360ms ease-in-out;
+}
+@keyframes sim-tp-wash {
+  from {
+    opacity: 1;
+    background-position: 100% 0;
+  }
+  to {
+    opacity: 1;
+    background-position: 0 0;
+  }
+}
+
+.sim-tp__readout {
+  display: grid;
+  gap: var(--s-3);
+  min-width: 0;
+}
+.sim-tp__bars {
+  list-style: none;
+  display: grid;
+  gap: var(--s-2);
+}
+.sim-tp__bars li {
+  display: grid;
+  grid-template-columns: 5.5em minmax(0, 1fr) 4.5em;
+  align-items: center;
+  gap: var(--s-3);
+}
+.sim-tp__name {
+  font-size: var(--t-nav);
+  color: var(--sand);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sim-tp__bar {
+  height: 12px;
+  border: var(--b-hair);
+  background: var(--floor-0);
+}
+.sim-tp__bar span {
+  display: block;
+  height: 100%;
+  background: var(--m3-oxide);
+  opacity: 0.35;
+  transition: width 320ms cubic-bezier(0.16, 1, 0.3, 1), opacity 160ms var(--e-out);
+}
+.sim-tp__n {
+  text-align: right;
+  color: var(--sand);
+}
+.sim-tp__bars li.is-win .sim-tp__name {
+  color: var(--light);
+  font-weight: 600;
+}
+.sim-tp__bars li.is-win .sim-tp__bar span {
+  opacity: 1;
+}
+.sim-tp__bars li.is-win .sim-tp__n {
+  color: var(--light);
+}
+.sim-tp__verdict {
+  font-size: var(--t-lede);
+  line-height: 1.3;
+  color: var(--light);
+  border-top: var(--b-hair);
+  padding-top: var(--s-3);
+}
+.sim-tp__verdict[data-kind='tie'],
+.sim-tp__verdict[data-kind='empty'] {
+  color: var(--sand);
+}
+
+.sim-tp__controls {
+  display: grid;
+  gap: var(--s-3);
+}
+.sim-tp__row1 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-4);
+}
+.sim-tp__teach {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-3);
+  font-size: var(--t-nav);
+}
+.sim-tp__input {
+  min-height: 44px;
+  width: 14em;
+  max-width: 100%;
+  padding: 0 var(--s-3);
+  background: var(--floor-0);
+  border: var(--b-ui);
+  border-radius: 0;
+  color: var(--light);
+  font: inherit;
+}
+.sim-tp__input::placeholder {
+  color: var(--dim);
+}
+
+@media (max-width: 767px) {
+  .sim-tp__surface {
+    padding: 34px 0 30px;
+    border-left: 0;
+    border-right: 0;
+  }
+  .sim-tp__stage {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+  .sim-tp__pool {
+    /* 280×280 pad plus the 8px sand rim; the page scrolls in the gutters either side */
+    width: min(296px, 50vh);
+    padding: 8px;
+  }
+  .sim-tp__readout {
+    width: 100%;
+    padding: 0 var(--s-2);
+  }
+}
