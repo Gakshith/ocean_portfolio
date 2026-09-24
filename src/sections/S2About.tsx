@@ -15,6 +15,14 @@ export function S2About() {
         <p className="t-lede s2-lede">{about.lede}</p>
         <p className="measure">{identity.about}</p>
         {identity.oceanStory && <p className="measure">{identity.oceanStory}</p>}
+        <dl className="facts">
+          {identity.facts.map((f) => (
+            <div key={f.term} className="fact">
+              <dt className="t-small">{f.term}</dt>
+              <dd>{f.values.join(' · ')}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
 
       <div className="s2-die">
@@ -37,15 +45,6 @@ export function S2About() {
           ))}
         </ul>
       </div>
-
-      <dl className="facts">
-        {identity.facts.map((f) => (
-          <div key={f.term} className="fact">
-            <dt className="t-small">{f.term}</dt>
-            <dd>{f.values.join(' · ')}</dd>
-          </div>
-        ))}
-      </dl>
 
       <div className="s2-photo">
         <PhotoSlot media={identity.photo} ratio="4 / 5" />

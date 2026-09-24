@@ -40,7 +40,7 @@ export function ProjectSection({
         ))}
         {p.honesty && (
           <p className="proj-honesty measure">
-            <strong>{p.honesty}</strong>
+            <em>{p.honesty}</em>
           </p>
         )}
         <Chips items={p.stack} label={`${p.title}: tools`} />
