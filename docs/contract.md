@@ -152,3 +152,7 @@ unless you run `VITE_FORMSPREE_ID=xvkgqbpl npm run dev`.
   a phase 1 gate.
 - **R-P1-06 · The S5 honesty line is italic, not bold.** The plan's `**…**` is markdown
   emphasis, and the tokens say "body emphasis is italic, never bold".
+- **R-P1-07 · Tide Pool inked cells are `--ink` on `--sand-sun`, not oxide.** Oxide on sand
+  is about 1.1:1 and fails the 3:1 non-text contrast rule (WCAG 1.4.11); the plan's order puts
+  accessibility above looks. Oxide stays in the discriminator bars and the winner. Bubble
+  Lock's optional desktop drag-in is deferred; the plan marks it optional.
