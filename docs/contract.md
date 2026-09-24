@@ -143,3 +143,6 @@ unless you run `VITE_FORMSPREE_ID=xvkgqbpl npm run dev`.
   `[chip][Resume][Contact]`, and DOM order must match visual order (WCAG 2.4.3). So on phones
   it's skip → wordmark → chip → Resume. Desktop and tablet keep Resume at tab 3. Still one
   click on every size.
+- **R-P1-04 · Phone bottom-bar chip is `1fr`, not a fixed 144px.** Fixed 144+88+96 + gaps +
+  margins = 368px, which overflows at 320px. Resume (88) and Contact (96) stay fixed, and the
+  chip takes the rest (151 at 375).
