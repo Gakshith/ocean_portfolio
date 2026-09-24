@@ -19,6 +19,9 @@
   cursor: pointer;
 }
 
+.sim-hop__legend span {
+  white-space: nowrap;
+}
 .sim-hop__legend {
   display: flex;
   flex-wrap: wrap;
@@ -91,8 +94,11 @@
 }
 .sim-hop__chipw {
   font-size: 10px;
+  font-variation-settings: 'wdth' 75;
+  font-stretch: 75%;
   line-height: 1;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
+  max-width: 100%;
   color: var(--sand);
   min-height: 10px;
 }
@@ -230,5 +236,11 @@
   .sim-hop__chips {
     grid-template-columns: repeat(6, 50px);
     justify-content: start;
+  }
+  .sim-hop__chipw {
+    font-size: 9px;
+  }
+  .sim-hop__legend span:last-child {
+    white-space: normal;
   }
 }

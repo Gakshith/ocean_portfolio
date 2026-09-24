@@ -230,7 +230,7 @@ export function Spectrogram({ s, f, uid, hover = null, onLane, onHover }: Props)
       {/* the map switch sweep at the instant */}
       {last?.mapApplied ? <line key={`s${last.event}`} className="sim-hop__sweep" style={{ ['--sweep' as string]: `${y1 - y0}px` }} x1={x0} x2={x1} y1={y0} y2={y0} stroke="var(--light)" /> : null}
 
-      <text x={x1} y={f.h - 4} textAnchor="end" fill="var(--dim)">
+      <text x={x0} y={f.h - 4} fill="var(--dim)">
         time →
       </text>
 
