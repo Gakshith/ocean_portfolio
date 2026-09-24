@@ -63,7 +63,13 @@ export function BubbleLock({ headingId }: SimProps) {
   const surface = useRef<HTMLDivElement>(null)
   const [scenario, setScenario] = useState<ScenarioId>('load-use')
   const [forwarding, setForwarding] = useState(true)
-  const [cycle, setCycle] = useState(0)
+  const [cycle, setRawCycle] = useState(0)
+  // Latest cycle for handlers: two timer ticks can land before one render.
+  const latest = useRef(0)
+  const setCycle = (c: number) => {
+    latest.current = c
+    setRawCycle(c)
+  }
   const [playing, setPlaying] = useState(false)
   const [live, announce] = useAnnouncer()
   // Play is user-started, so it runs under calm too (as cuts); it still stops off-screen and when paused.
@@ -85,7 +91,7 @@ export function BubbleLock({ headingId }: SimProps) {
   }
   useInterval(
     () => {
-      if (go(cycle + 1) >= run.cycles) setPlaying(false)
+      if (go(latest.current + 1) >= run.cycles) setPlaying(false)
     },
     CYCLE_MS,
     playing && !paused && inView,

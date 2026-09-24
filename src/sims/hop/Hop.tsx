@@ -41,7 +41,13 @@ export function Hop({ headingId }: SimProps) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const chipsRef = useRef<HTMLDivElement>(null)
   const surface = useRef<HTMLDivElement>(null)
-  const [s, setS] = useState<HopState>(opening)
+  const [s, setRaw] = useState<HopState>(opening)
+  // Latest state for handlers: two timer ticks can land before one render.
+  const latest = useRef(s)
+  const setS = (next: HopState) => {
+    latest.current = next
+    setRaw(next)
+  }
   const [userPaused, setUserPaused] = useState(false)
   const [note, setNote] = useState('')
   const [focusCh, setFocusCh] = useState(0)
@@ -51,7 +57,7 @@ export function Hop({ headingId }: SimProps) {
   const { calm, running } = useSimGate(surface, userPaused)
 
   const advance = (fromUser: boolean) => {
-    const next = step(s)
+    const next = step(latest.current)
     const e = next.log.at(-1)!
     setS(next)
     if (e.mapApplied) announce(`Channel map updated at event ${e.event}: ${countUsed(next.map)} data channels in use.`)
@@ -60,7 +66,7 @@ export function Hop({ headingId }: SimProps) {
   useInterval(() => advance(false), EVENT_MS, running)
 
   const toggle = (ch: number) => {
-    const r = toggleStaged(s, ch)
+    const r = toggleStaged(latest.current, ch)
     if (r.error) {
       setNote(NOTES[r.error])
       announce(NOTES[r.error])
@@ -70,7 +76,7 @@ export function Hop({ headingId }: SimProps) {
     setS(r.state)
   }
   const send = () => {
-    const r = sendUpdate(s)
+    const r = sendUpdate(latest.current)
     if (r.error) {
       setNote(NOTES[r.error])
       return
@@ -80,7 +86,7 @@ export function Hop({ headingId }: SimProps) {
     announce(`Update sent. New map takes effect at event ${r.state.update!.instant}.`)
   }
   const demo = () => {
-    const r = avoidWhale(s)
+    const r = avoidWhale(latest.current)
     if (r.error) {
       setNote(NOTES[r.error])
       return
@@ -90,7 +96,7 @@ export function Hop({ headingId }: SimProps) {
     announce(`Update sent: ch10 to ch15 marked bad. New map takes effect at event ${r.state.update!.instant}.`)
   }
   const reconnect = (hop: number) => {
-    setS(newConnection(s, hop))
+    setS(newConnection(latest.current, hop))
     setNote('')
     announce(`New connection: CONNECT_IND, hop = ${hop}. Hop log reset.`)
   }
