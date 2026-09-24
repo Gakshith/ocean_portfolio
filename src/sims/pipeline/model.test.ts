@@ -7,7 +7,7 @@ const show = (r: PipeRun, c: number) => {
   return Object.fromEntries(
     Object.entries(ch).map(([k, s]) => [
       k,
-      !s ? '—' : s.kind === 'bubble' ? 'bubble' : `${r.program[s.i].short}${s.kind === 'flushed' ? ' flushed' : s.held ? ' (held)' : ''}`,
+      !s ? '—' : s.kind === 'bubble' ? 'bubble' : `${r.program[s.i].short}${s.kind === 'flushed' ? ' flushed' : s.stalled ? ' (stall)' : ''}`,
     ]),
   )
 }
@@ -25,8 +25,8 @@ describe('load-use (lw → add → sub)', () => {
     expect(off.stalls[1]).toBe(2)
   })
 
-  it('cycle 4: bubble in EX, add held in ID, sub held in IF, lw in MEM', () => {
-    expect(show(on, 4)).toEqual({ IF: 'sub (held)', ID: 'add (held)', EX: 'bubble', MEM: 'lw', WB: '—' })
+  it('cycle 4: bubble in EX, add stalled in ID, sub stalled in IF, lw in MEM', () => {
+    expect(show(on, 4)).toEqual({ IF: 'sub (stall)', ID: 'add (stall)', EX: 'bubble', MEM: 'lw', WB: '—' })
     expect(caption(on, 4)).toBe(
       "Cycle 4: lw's value exists only after MEM, so one bubble enters EX, even with forwarding.",
     )

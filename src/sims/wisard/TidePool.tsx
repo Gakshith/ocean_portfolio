@@ -248,6 +248,9 @@ export function TidePool({ headingId }: SimProps) {
 
           <div className="sim-tp__readout">
             <p className="sim-h3">Discriminators (one RAM set per class)</p>
+            <p className="sim-note sim-dim">
+              wave, fish and shell start trained on a few sample drawings bundled with this page.
+            </p>
             <ul className="sim-tp__bars">
               {model.classes.map((c, i) => {
                 const win = v.kind === 'winner' && v.top === i

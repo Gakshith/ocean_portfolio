@@ -7,7 +7,7 @@ describe('CyBot course', () => {
   it('has five forward PING cones of ±20°', () => {
     expect(ps).toHaveLength(5)
     for (const p of ps) {
-      const edges = [p.cone[1], p.cone.at(-1)!].map((q) => bearing(p.pose, q))
+      const edges = [p.cone[1], p.cone.at(-1)!].map((q) => bearing(p.sensor, q))
       expect(edges.map((e) => Math.round(e))).toEqual([-HALF_ANGLE, HALF_ANGLE])
     }
   })
@@ -16,22 +16,24 @@ describe('CyBot course', () => {
     expect(ps.map((p) => p.echo?.obstacle ?? null)).toEqual([null, 'A', 'B', 'C', 'F'])
     for (const p of ps) {
       if (!p.echo) {
-        expect(OBSTACLES.every((o) => clipToCone(p.pose, o) === null)).toBe(true)
+        expect(OBSTACLES.every((o) => clipToCone(p.sensor, o) === null)).toBe(true)
         continue
       }
       for (const q of [p.echo.a, p.echo.b]) {
-        expect(Math.abs(bearing(p.pose, q))).toBeLessThanOrEqual(HALF_ANGLE)
-        expect(Math.hypot(q.x - p.pose.x, q.y - p.pose.y)).toBeLessThanOrEqual(PING_RANGE)
+        expect(Math.abs(bearing(p.sensor, q))).toBeLessThanOrEqual(HALF_ANGLE)
+        expect(Math.hypot(q.x - p.sensor.x, q.y - p.sensor.y)).toBeLessThanOrEqual(PING_RANGE)
       }
       // exactly one obstacle in each hitting cone, so no echo hides another
-      expect(OBSTACLES.filter((o) => clipToCone(p.pose, o)).length).toBe(1)
+      expect(OBSTACLES.filter((o) => clipToCone(p.sensor, o)).length).toBe(1)
     }
   })
 
-  it('reads d = v·t/2 with v = 343 m/s', () => {
+  it('measures d from the sensor face, not the robot centre, and reads d = v·t/2 with v = 343 m/s', () => {
+    // centre-to-obstacle 230, 230, 200, 250 units; the sensor sits R_BOT = 30 units (0.15 m) ahead
+    expect(ps.filter((p) => p.echo).map((p) => +p.echo!.dM.toFixed(2))).toEqual([1.0, 1.0, 0.85, 1.1])
+    for (const p of ps) expect(Math.hypot(p.sensor.x - p.pose.x, p.sensor.y - p.pose.y)).toBeCloseTo(R_BOT, 6)
     const last = ps.at(-1)!.echo!
-    expect(last.dM).toBeCloseTo(1.25, 2)
-    expect(last.tMs).toBeCloseTo(((2 * 1.25) / 343) * 1000, 3)
+    expect(last.tMs).toBeCloseTo(((2 * 1.1) / 343) * 1000, 3)
   })
 
   it('shows one short IR ray that ends on an obstacle', () => {

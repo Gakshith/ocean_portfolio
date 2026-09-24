@@ -50,7 +50,7 @@ export const SCENARIOS: Record<ScenarioId, { label: string; program: Instr[] }> 
 export const SCENARIO_IDS = Object.keys(SCENARIOS) as ScenarioId[]
 
 export type Slot =
-  | { kind: 'instr'; i: number; held: boolean; fwd: { reg: number; from: FwdSource; producer: number }[] }
+  | { kind: 'instr'; i: number; stalled: boolean; fwd: { reg: number; from: FwdSource; producer: number }[] }
   | { kind: 'flushed'; i: number }
   | { kind: 'bubble' }
   | null
@@ -137,14 +137,14 @@ export function simulate(scenario: ScenarioId, forwarding: boolean): PipeRun {
     const flushedNow = (s: Slot): Slot => (s?.kind === 'instr' ? { kind: 'flushed', i: s.i } : null)
     // Flushed instructions travel on as bubbles; everything else moves one stage.
     const drift = (s: Slot): Slot =>
-      s?.kind === 'instr' ? { ...s, held: false, fwd: [] } : s?.kind === 'flushed' ? { kind: 'bubble' } : s
+      s?.kind === 'instr' ? { ...s, stalled: false, fwd: [] } : s?.kind === 'flushed' ? { kind: 'bubble' } : s
 
     const next: Chambers = {
       WB: drift(prev.MEM),
       MEM: drift(prev.EX),
       EX: taken ? flushedNow(prev.ID) : stall ? { kind: 'bubble' } : drift(prev.ID),
-      ID: taken ? flushedNow(prev.IF) : stall ? held(prev.ID) : drift(prev.IF),
-      IF: stall ? held(prev.IF) : null,
+      ID: taken ? flushedNow(prev.IF) : stall ? stalled(prev.ID) : drift(prev.IF),
+      IF: stall ? stalled(prev.IF) : null,
     }
     if (taken && ex?.kind === 'instr') {
       const gone = [prev.ID, prev.IF].filter((s) => s?.kind === 'instr').map((s) => (s as { i: number }).i)
@@ -156,7 +156,7 @@ export function simulate(scenario: ScenarioId, forwarding: boolean): PipeRun {
       bubbles++
       if (id?.kind === 'instr') stalls[id.i]++
     }
-    if (!stall && pc < program.length) next.IF = { kind: 'instr', i: pc++, held: false, fwd: [] }
+    if (!stall && pc < program.length) next.IF = { kind: 'instr', i: pc++, stalled: false, fwd: [] }
 
     // Operand sourcing for the instruction now entering EX.
     const nx = next.EX
@@ -177,7 +177,7 @@ export function simulate(scenario: ScenarioId, forwarding: boolean): PipeRun {
     }
     // Without forwarding, a stalled consumer reads the register file in the cycle its producer writes back.
     const nid = next.ID
-    if (!forwarding && nid?.kind === 'instr' && nid.held) {
+    if (!forwarding && nid?.kind === 'instr' && nid.stalled) {
       for (const reg of program[nid.i].rs) {
         if (writes(program, next.WB, reg)) {
           ev.push({ kind: 'regfile', consumer: nid.i, producer: (next.WB as { i: number }).i, reg })
@@ -203,7 +203,7 @@ export function simulate(scenario: ScenarioId, forwarding: boolean): PipeRun {
       for (const stage of STAGES) {
         const s = ch[stage]
         if (s?.kind === 'instr' && s.i === i)
-          return { stage, stall: s.held, fwd: s.fwd.map((f) => f.from) }
+          return { stage, stall: s.stalled, fwd: s.fwd.map((f) => f.from) }
         if (s?.kind === 'flushed' && s.i === i) return { stage: 'flushed', stall: false, fwd: [] }
       }
       return null
@@ -213,8 +213,8 @@ export function simulate(scenario: ScenarioId, forwarding: boolean): PipeRun {
   return { scenario, forwarding, program, chambers, events, table, cycles, bubbles, stalls, flushed }
 }
 
-function held(s: Slot): Slot {
-  return s?.kind === 'instr' ? { ...s, held: true, fwd: [] } : s
+function stalled(s: Slot): Slot {
+  return s?.kind === 'instr' ? { ...s, stalled: true, fwd: [] } : s
 }
 
 /** "ID (stall)", "EX ← MEM/WB", "flushed": the cycle table's cell text. */

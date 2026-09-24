@@ -44,7 +44,7 @@ function SlotView({ slot, program }: { slot: Slot; program: Instr[] }) {
   return (
     <span>
       <span className="sim-bl__tok">{tok}</span>
-      {slot.held ? <span className="sim-bl__sub">(held)</span> : null}
+      {slot.stalled ? <span className="sim-bl__sub">(stall)</span> : null}
     </span>
   )
 }
@@ -56,7 +56,7 @@ const slotWords = (slot: Slot, program: Instr[]) =>
       ? 'bubble'
       : slot.kind === 'flushed'
         ? `${program[slot.i].text}, flushed`
-        : `${program[slot.i].text}${slot.held ? ', held' : ''}`
+        : `${program[slot.i].text}${slot.stalled ? ', stall' : ''}`
 
 export function BubbleLock({ headingId }: SimProps) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
@@ -286,7 +286,7 @@ export function BubbleLock({ headingId }: SimProps) {
           </table>
         </div>
         <p className="sim-note sim-dim">
-          (stall): held in that stage while a bubble enters EX. ← names the pipeline register a value is forwarded from.
+          (stall): the instruction stays in that stage for the cycle while a bubble enters EX. ← names the pipeline register a value is forwarded from.
         </p>
       </div>
 

@@ -48,9 +48,9 @@ export const POSES: readonly Pose[] = [
   { x: 560, y: 330, h: 0, ping: true }, // echo ahead, still far: creep closer
   { x: 690, y: 330, h: 0, ir: true }, // IR sees it close: turn right
   { x: 690, y: 330, h: 90, ping: true }, // far echo: drive on
-  { x: 690, y: 390, h: 90, bump: true }, // bump on the left side
+  { x: 690, y: 390, h: 90, bump: true }, // bump on its right side (heading south, right is −x)
   { x: 690, y: 370, h: 90 }, // back off
-  { x: 715, y: 440, h: 70 }, // veer right, away from the bump
+  { x: 715, y: 440, h: 70 }, // veer left, away from the bump
   { x: 715, y: 520, h: 90 },
 ]
 
@@ -90,6 +90,8 @@ export function clipToCone(from: Pose, s: Seg): { a: Pt; b: Pt; near: number } |
 export interface Ping {
   n: number
   pose: Pose
+  /** The PING sensor on the robot's front edge: the cone's apex and the origin of d. */
+  sensor: Pose
   /** Cone polygon points: apex, then the arc. */
   cone: Pt[]
   echo: { obstacle: string; a: Pt; b: Pt; d: number; tMs: number; dM: number } | null
@@ -97,19 +99,25 @@ export interface Ping {
 
 export function pings(): Ping[] {
   return POSES.filter((p) => p.ping).map((pose, k) => {
-    const hits = OBSTACLES.map((o) => ({ o, c: clipToCone(pose, o) })).filter((h) => h.c)
+    const sensor = front(pose)
+    const hits = OBSTACLES.map((o) => ({ o, c: clipToCone(sensor, o) })).filter((h) => h.c)
     hits.sort((p, q) => p.c!.near - q.c!.near)
     const hit = hits[0]
-    const cone: Pt[] = [{ x: pose.x, y: pose.y }]
+    const cone: Pt[] = [{ x: sensor.x, y: sensor.y }]
     for (let a = -HALF_ANGLE; a <= HALF_ANGLE; a += 5)
-      cone.push({ x: pose.x + PING_RANGE * Math.cos(rad(pose.h + a)), y: pose.y + PING_RANGE * Math.sin(rad(pose.h + a)) })
+      cone.push({ x: sensor.x + PING_RANGE * Math.cos(rad(pose.h + a)), y: sensor.y + PING_RANGE * Math.sin(rad(pose.h + a)) })
     let echo: Ping['echo'] = null
     if (hit) {
       const dM = (hit.c!.near * MM_PER_UNIT) / 1000
       echo = { obstacle: hit.o.id, a: hit.c!.a, b: hit.c!.b, d: hit.c!.near, dM, tMs: ((2 * dM) / V_SOUND) * 1000 }
     }
-    return { n: k + 1, pose, cone, echo }
+    return { n: k + 1, pose, sensor, cone, echo }
   })
+}
+
+/** The point on the robot's front edge along its heading, where the PING and IR sensors sit. */
+export function front(pose: Pose): Pose {
+  return { ...pose, x: pose.x + R_BOT * Math.cos(rad(pose.h)), y: pose.y + R_BOT * Math.sin(rad(pose.h)) }
 }
 
 /** Distance from p to segment s. */
@@ -123,7 +131,7 @@ export function segDist(p: Pt, s: Seg): number {
 /** IR: a short ray from the front edge along the heading to the obstacle it reaches. */
 export function irRays(): { from: Pt; to: Pt; pose: Pose }[] {
   return POSES.filter((p) => p.ir).flatMap((pose) => {
-    const from = { x: pose.x + R_BOT * Math.cos(rad(pose.h)), y: pose.y + R_BOT * Math.sin(rad(pose.h)) }
+    const from = front(pose)
     for (let s = 0; s <= IR_RANGE; s += 0.5) {
       const p = { x: from.x + s * Math.cos(rad(pose.h)), y: from.y + s * Math.sin(rad(pose.h)) }
       if (OBSTACLES.some((o) => segDist(p, o) < 0.5)) return [{ from, to: p, pose }]

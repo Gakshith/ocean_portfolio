@@ -75,10 +75,10 @@ export function CybotStill({ headingId }: SimProps) {
                 <line x1={p.echo.a.x} y1={p.echo.a.y} x2={p.echo.b.x} y2={p.echo.b.y} stroke="var(--light)" strokeWidth={3} />
                 <text
                   className="sim-cy__lbl"
-                  x={(p.echo.a.x + p.echo.b.x) / 2 + (p.pose.h === 0 ? 12 : 0)}
-                  y={(p.echo.a.y + p.echo.b.y) / 2 + (p.pose.h === 0 ? 0 : 26)}
+                  x={p.pose.h === 0 ? (p.echo.a.x + p.echo.b.x) / 2 + 12 : Math.min(p.echo.a.x, p.echo.b.x) - 12}
+                  y={(p.echo.a.y + p.echo.b.y) / 2}
                   fill="var(--light)"
-                  textAnchor={p.pose.h === 0 ? 'start' : 'middle'}
+                  textAnchor={p.pose.h === 0 ? 'start' : 'end'}
                   dominantBaseline="middle"
                 >
                   {fmt(p.echo.dM, 2)} m
