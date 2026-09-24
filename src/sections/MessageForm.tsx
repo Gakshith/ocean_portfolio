@@ -1,7 +1,7 @@
 // S7 "Write a message" (D-04): secondary to email, and ABSENT unless VITE_FORMSPREE_ID is set.
 // Works as a plain POST with JS off; with JS it validates inline and posts without leaving the
 // page. The post never waits on an animation.
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { links } from '../content/content'
 
@@ -26,6 +26,11 @@ function validate(data: FormData): Errors {
 export function MessageForm({ summary, formId = FORM_ID }: { summary: string; formId?: string }) {
   const [errors, setErrors] = useState<Errors>({})
   const [status, setStatus] = useState<Status>('idle')
+  const formRef = useRef<HTMLFormElement>(null)
+  // Native validation until hydrated (JS off still checks required fields); then inline errors.
+  useEffect(() => {
+    if (formRef.current) formRef.current.noValidate = true
+  }, [])
   if (!formId) return null
   const action = `https://formspree.io/f/${encodeURIComponent(formId)}`
 
@@ -79,7 +84,7 @@ export function MessageForm({ summary, formId = FORM_ID }: { summary: string; fo
   return (
     <details className="msg">
       <summary className="t-nav">{summary}</summary>
-      <form action={action} method="POST" noValidate onSubmit={submit}>
+      <form ref={formRef} action={action} method="POST" onSubmit={submit}>
         {field('name', 'Name', 'input', 'text', 'name')}
         {field('email', 'Email', 'input', 'email', 'email')}
         {field('message', 'Message', 'textarea')}
