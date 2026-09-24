@@ -137,3 +137,7 @@ S7 "Write a message" renders only when `import.meta.env.VITE_FORMSPREE_ID` is se
 - **R-P1-02 · S3 data line is in first person:** "…a teaching model running in your browser,
   not my silicon". This matches the site's voice (S4 "not our RTL"). It changes voice only,
   not facts.
+- **R-P1-03 · Phone Resume is tab stop 4.** The plan's phone bar is visually
+  `[chip][Resume][Contact]`, and DOM order must match visual order (WCAG 2.4.3). So on phones
+  it's skip → wordmark → chip → Resume. Desktop and tablet keep Resume at tab 3. Still one
+  click on every size.
