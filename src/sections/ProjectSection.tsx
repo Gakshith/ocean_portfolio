@@ -46,12 +46,8 @@ export function ProjectSection({
         <Chips items={p.stack} label={`${p.title}: tools`} />
       </div>
 
-      <div className="block-frame">
-        <span className="t-tag block-tag" aria-hidden="true">
-          {p.block} block
-        </span>
-        {children}
-      </div>
+      {/* The sim draws its own block surface, layer rule and die-ID (contract §7): no frame here. */}
+      <div className="sim-mount">{children}</div>
       {p.dataLine && <p className="t-data data-line">{p.dataLine}</p>}
 
       <MediaSlot media={p.media} />
