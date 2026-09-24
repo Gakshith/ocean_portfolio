@@ -482,21 +482,8 @@ main > section.s1 {
 .proj-honesty {
   margin-top: var(--s-4);
 }
-.block-frame {
-  position: relative;
-  /* not var(--b-block): that token resolves --block at :root, before the section overrides it */
-  border: 2px solid var(--block);
-  background: var(--floor-1);
-  padding: var(--s-6) var(--s-5) var(--s-5);
+.sim-mount {
   min-width: 0;
-}
-.block-tag {
-  position: absolute;
-  top: -7px;
-  left: var(--s-4);
-  padding: 0 6px;
-  background: var(--floor-0);
-  color: var(--block);
 }
 .data-line {
   color: var(--dim);
@@ -959,9 +946,6 @@ main > section.s1 {
   .fact {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--s-1);
-  }
-  .block-frame {
-    padding: var(--s-5) var(--s-3) var(--s-3);
   }
   .pad-address {
     display: block;
