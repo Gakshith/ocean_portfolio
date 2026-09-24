@@ -11,7 +11,6 @@
   width: 100%;
   height: auto;
   font-family: var(--f-mono);
-  font-size: 18px;
 }
 .sim-cy__caption {
   font-size: var(--t-small);
@@ -76,10 +75,4 @@
 .sim-cy__key--path {
   height: 0;
   border-top: 1.5px dashed var(--dim);
-}
-
-@media (max-width: 767px) {
-  .sim-cy__svg {
-    font-size: 26px;
-  }
 }

@@ -1,4 +1,5 @@
-import { useId } from 'react'
+import { useId, useRef } from 'react'
+import { TAG_PX, useUnitScale } from '../shared/hooks'
 import type { SimProps } from '../types'
 import { POSES, R_BOT, UART_FROM, V_SOUND, VIEW, bumps, irRays, pings } from './course'
 import './cybot.css'
@@ -15,6 +16,10 @@ const LAST = [...PINGS].reverse().find((p) => p.echo)!.echo!
 /** S6: the static echo diagram (Still / reduced motion / phase 1). The scrub comes in phase 2. */
 export function CybotStill({ headingId }: SimProps) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '')
+  const svg = useRef<SVGSVGElement>(null)
+  // Labels render at --t-tag on screen, so their size in units follows the drawing's scale.
+  const fs = TAG_PX / (useUnitScale(svg, VIEW.w) ?? 1)
+  const narrow = fs > 24 // phone: "PING 3" becomes "3" (the legend names the cones)
   const cap = `${uid}-cap`
   const path = POSES.map((p, i) => `${i ? 'L' : 'M'}${p.x} ${p.y}`).join(' ')
   const echoes = PINGS.filter((p) => p.echo).length
@@ -23,12 +28,12 @@ export function CybotStill({ headingId }: SimProps) {
   return (
     <figure className="sim sim--cy" aria-labelledby={`${headingId} ${cap}`}>
       <div className="sim-cy__stage">
-        <svg className="sim-cy__svg" viewBox={`0 0 ${VIEW.w} ${VIEW.h}`} role="img" aria-label={summary}>
+        <svg ref={svg} className="sim-cy__svg" viewBox={`0 0 ${VIEW.w} ${VIEW.h}`} fontSize={fs} role="img" aria-label={summary}>
           <rect width={VIEW.w} height={VIEW.h} fill="var(--floor-deep)" />
 
           {/* UART line from the die's SE pad */}
           <rect x={0} y={UART_FROM.y - 9} width={18} height={18} fill="var(--m5-al)" opacity={0.8} />
-          <text className="sim-cy__lbl" x={4} y={UART_FROM.y + 34} fill="var(--dim)">
+          <text className="sim-cy__lbl" x={4} y={UART_FROM.y + 12 + fs} fill="var(--dim)">
             UART
           </text>
           <path
@@ -53,11 +58,11 @@ export function CybotStill({ headingId }: SimProps) {
               <text
                 className="sim-cy__lbl"
                 x={p.pose.x - 10}
-                y={p.pose.y - 14}
+                y={p.pose.y - fs * 0.6}
                 fill="var(--sand)"
                 textAnchor="end"
               >
-                PING {p.n}
+                {narrow ? p.n : `PING ${p.n}`}
               </text>
             </g>
           ))}
@@ -91,7 +96,7 @@ export function CybotStill({ headingId }: SimProps) {
           {IR.map((r, i) => (
             <g key={i}>
               <line x1={r.from.x} y1={r.from.y} x2={r.to.x} y2={r.to.y} stroke="var(--sand)" strokeWidth={2} strokeDasharray="2 5" strokeLinecap="round" />
-              <text className="sim-cy__lbl" x={(r.from.x + r.to.x) / 2} y={r.from.y + 26} fill="var(--sand)" textAnchor="middle">
+              <text className="sim-cy__lbl" x={(r.from.x + r.to.x) / 2} y={r.from.y + fs + 6} fill="var(--sand)" textAnchor="middle">
                 IR
               </text>
             </g>
@@ -107,7 +112,7 @@ export function CybotStill({ headingId }: SimProps) {
               <g key={i}>
                 <circle cx={b.pose.x} cy={b.pose.y} r={R_BOT} fill="none" stroke="var(--line-strong)" strokeWidth={1} />
                 <line x1={p0.x} y1={p0.y} x2={p1.x} y2={p1.y} stroke="var(--light)" strokeWidth={3} />
-                <text className="sim-cy__lbl" x={p1.x - 10} y={p1.y + 4} fill="var(--light)" textAnchor="end">
+                <text className="sim-cy__lbl" x={p1.x - 10} y={p1.y + fs * 0.35} fill="var(--light)" textAnchor="end">
                   bump
                 </text>
               </g>
@@ -125,7 +130,7 @@ export function CybotStill({ headingId }: SimProps) {
               stroke="var(--light)"
               strokeWidth={1.5}
             />
-            <text className="sim-cy__lbl" x={END.x + R_BOT + 10} y={END.y + 6} fill="var(--light)">
+            <text className="sim-cy__lbl" x={END.x + R_BOT + 10} y={END.y + fs * 0.35} fill="var(--light)">
               CyBot
             </text>
           </g>
@@ -143,7 +148,7 @@ export function CybotStill({ headingId }: SimProps) {
         <ul className="sim-cy__legend">
           <li>
             <span className="sim-cy__key sim-cy__key--cone" aria-hidden="true" />
-            PING: a narrow forward cone, ±20°
+            PING (numbered in order): a narrow forward cone, ±20°
           </li>
           <li>
             <span className="sim-cy__key sim-cy__key--echo" aria-hidden="true" />

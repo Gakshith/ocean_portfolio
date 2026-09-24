@@ -22,11 +22,11 @@
 }
 
 .sim-title {
-  font-size: var(--t-display-m);
+  font-size: var(--t-lede);
+  font-style: normal;
   font-weight: 400;
-  line-height: 1.1;
-  letter-spacing: -0.01em;
-  font-variation-settings: 'opsz' 48;
+  line-height: 1.3;
+  font-variation-settings: 'opsz' 24;
 }
 .sim-h3 {
   font-size: var(--t-small);
@@ -90,7 +90,7 @@
   top: 7px;
   left: var(--s-4);
   font-family: var(--f-mono);
-  font-size: 11px;
+  font-size: var(--t-tag);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--dim);
@@ -102,7 +102,7 @@
   bottom: 7px;
   right: var(--s-4);
   font-family: var(--f-mono);
-  font-size: 11px;
+  font-size: var(--t-tag);
   letter-spacing: 0.06em;
   color: var(--dim);
   line-height: 1;

@@ -1,4 +1,6 @@
 import { LANES, NUM_DATA, WHALE, chipState, freqMHz, type HopState } from './csa1'
+import { useRef } from 'react'
+import { TAG_PX, useUnitScale } from '../shared/hooks'
 import type { Frame } from './frames'
 
 interface Props {
@@ -12,10 +14,14 @@ interface Props {
 
 /** The radio block's spectrogram: 40 lanes in frequency order, one column per connection event. */
 export function Spectrogram({ s, f, uid, hover = null, onLane, onHover }: Props) {
-  const x0 = f.gutter
+  const svg = useRef<SVGSVGElement>(null)
+  // Labels render at --t-tag on screen whatever the surface width, so size them in units.
+  const font = TAG_PX / (useUnitScale(svg, f.w) ?? f.nominalScale)
+  const gutterLabel = f.compact ? 2 : 9 // "39" or "ch39 2480"
+  const x0 = Math.max(f.gutter, Math.ceil(gutterLabel * 0.64 * font + 12))
   const x1 = f.w - 6
-  const y0 = 6
-  const y1 = f.h - (f.compact ? 14 : 20)
+  const y0 = Math.max(6, Math.ceil(font * 0.6))
+  const y1 = f.h - Math.ceil(font + 8)
   const laneH = (y1 - y0) / 40
   const colW = (x1 - x0) / f.cols
   const laneY = (ch: number) => y0 + (39 - LANES.indexOf(ch)) * laneH + laneH / 2
@@ -36,12 +42,13 @@ export function Spectrogram({ s, f, uid, hover = null, onLane, onHover }: Props)
 
   return (
     <svg
+      ref={svg}
       className="sim-hop__svg"
       viewBox={`0 0 ${f.w} ${f.h}`}
       aria-hidden="true"
       focusable="false"
       fontFamily="var(--f-mono)"
-      fontSize={f.font}
+      fontSize={font}
       onMouseLeave={() => onHover?.(null)}
     >
       <defs>
@@ -149,7 +156,7 @@ export function Spectrogram({ s, f, uid, hover = null, onLane, onHover }: Props)
         e.mapApplied ? (
           <g key={`i${e.event}`}>
             <line x1={colX(i)} x2={colX(i)} y1={y0} y2={y1} stroke="var(--light)" strokeOpacity={0.5} strokeDasharray="2 3" />
-            <text x={colX(i)} y={y1 + (f.compact ? 10 : 14)} textAnchor="middle" fill="var(--light)">
+            <text x={colX(i)} y={f.h - 4} textAnchor="middle" fill="var(--light)">
               new map
             </text>
           </g>
@@ -221,7 +228,7 @@ export function Spectrogram({ s, f, uid, hover = null, onLane, onHover }: Props)
       {lostLabels.map((e) => {
         const i = events.indexOf(e)
         return (
-          <text key={`l${e.event}`} x={colX(i)} y={laneY(e.channel) + laneH * 2.2 + 4} textAnchor="middle" fill="var(--dim)">
+          <text key={`l${e.event}`} x={colX(i)} y={laneY(e.channel) + markH + font} textAnchor="middle" fill="var(--dim)">
             lost
           </text>
         )

@@ -205,7 +205,7 @@ export function TidePool({ headingId }: SimProps) {
 
       <div className="sim-block sim-tp__surface">
         <span className="sim-block__tag" aria-hidden="true">
-          Memory · {model.classes.length} discriminators · {rams} RAMs each
+          Memory · {model.classes.length} × {rams} RAMs
         </span>
         <div className="sim-tp__stage">
           <div ref={pool} className={`sim-tp__pool${shimmer ? ' is-lit' : ''}`}>
