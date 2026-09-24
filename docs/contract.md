@@ -10,7 +10,7 @@ Phase 1 is the no-WebGL Still site. **No three.js, R3F, GSAP or Lenis.**
 
 | Owner | Paths | Branch |
 |---|---|---|
-| lead | `package.json`, `vite.config.ts`, `tsconfig*`, `index.html`, `scripts/`, `src/main.tsx`, `src/entry-server.tsx`, `src/App.tsx`, `src/styles/tokens.css`, `src/contract.test.tsx`, `docs/contract.md` | `dev` |
+| lead | `package.json`, `.env.production`, `vite.config.ts`, `tsconfig*`, `index.html`, `scripts/`, `src/main.tsx`, `src/entry-server.tsx`, `src/App.tsx`, `src/styles/tokens.css`, `src/contract.test.tsx`, `docs/contract.md` | `dev` |
 | chrome_agent | `src/chrome/**`, `src/state/**` | `feat/fast-path` |
 | sections_agent | `src/content/**`, `src/sections/**`, `src/svg/**`, `src/styles/**` except `tokens.css`, `public/**` | `feat/still-site` |
 | sims_agent | `src/sims/**` | `feat/sims` |
@@ -116,8 +116,10 @@ at 100% of the column width, and each handles its own phone layout.
 
 ## Form
 
-S7 "Write a message" renders only when `import.meta.env.VITE_FORMSPREE_ID` is set
-(see `.env.example`). The client supplies the ID later.
+S7 "Write a message" renders only when `import.meta.env.VITE_FORMSPREE_ID` is set, and it
+POSTs to `https://formspree.io/f/${VITE_FORMSPREE_ID}`. The client's ID (`xvkgqbpl`) is in
+`.env.production`, so production builds render the form. `npm run dev` doesn't render it
+unless you run `VITE_FORMSPREE_ID=xvkgqbpl npm run dev`.
 
 ## Gates (DONE needs proof)
 
@@ -137,3 +139,7 @@ S7 "Write a message" renders only when `import.meta.env.VITE_FORMSPREE_ID` is se
 - **R-P1-02 · S3 data line is in first person:** "…a teaching model running in your browser,
   not my silicon". This matches the site's voice (S4 "not our RTL"). It changes voice only,
   not facts.
+- **R-P1-03 · Phone Resume is tab stop 4.** The plan's phone bar is visually
+  `[chip][Resume][Contact]`, and DOM order must match visual order (WCAG 2.4.3). So on phones
+  it's skip → wordmark → chip → Resume. Desktop and tablet keep Resume at tab 3. Still one
+  click on every size.
