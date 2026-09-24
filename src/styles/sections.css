@@ -304,6 +304,7 @@ main > section.s1 {
   border-top: var(--b-hair);
 }
 .plate-index a {
+  font-stretch: 87.5%;
   display: flex;
   align-items: center;
   min-height: 44px;
@@ -478,7 +479,8 @@ main > section.s1 {
 }
 .block-frame {
   position: relative;
-  border: var(--b-block);
+  /* not var(--b-block): that token resolves --block at :root, before the section overrides it */
+  border: 2px solid var(--block);
   background: var(--floor-1);
   padding: var(--s-6) var(--s-5) var(--s-5);
   min-width: 0;
@@ -583,13 +585,10 @@ main > section.s1 {
   background: var(--sea);
 }
 .pad-label {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0 var(--s-3);
   min-width: 0;
 }
 .pad-address {
+  margin-left: var(--s-2);
   color: var(--sand);
   overflow-wrap: anywhere;
 }
@@ -666,6 +665,7 @@ main > section.s1 {
   text-decoration: none;
   background: var(--floor-1);
   border: 1px solid color-mix(in srgb, var(--sea) calc(var(--on) * 100%), var(--line-strong));
+  font-stretch: 75%;
 }
 .s7:has([data-pad='1']:is(:hover, :focus-within)) [data-pad='1'],
 .s7:has([data-pad='2']:is(:hover, :focus-within)) [data-pad='2'],
@@ -769,6 +769,7 @@ main > section.s1 {
 }
 .footer-caption {
   flex-basis: 100%;
+  max-width: none;
   color: var(--dim);
   margin-top: 0;
 }
@@ -776,7 +777,7 @@ main > section.s1 {
 /* ---------- desktop ≥ 1100 ---------- */
 @media (min-width: 1100px) {
   .s2-text {
-    grid-column: 1 / span 5;
+    grid-column: 1 / span 6;
     grid-row: 1;
   }
   .s2-die {
@@ -926,9 +927,9 @@ main > section.s1 {
   .block-frame {
     padding: var(--s-5) var(--s-3) var(--s-3);
   }
-  .pad-label {
-    flex-direction: column;
-    gap: 2px;
+  .pad-address {
+    display: block;
+    margin-left: 0;
   }
 }
 

@@ -42,7 +42,7 @@ export interface Pad {
 }
 
 export const PADS_PER_SIDE = 15
-export const PAD_SIZE = 3
+export const PAD_SIZE = 2.4
 const RING = 5 // pad-ring centreline inset from the die edge
 const span = (i: number) => 10 + (i * 80) / (PADS_PER_SIDE - 1)
 
