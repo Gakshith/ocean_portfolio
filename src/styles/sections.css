@@ -611,7 +611,7 @@ main > section.s1 {
 }
 .s7-atoll {
   position: relative;
-  aspect-ratio: 106 / 72;
+  aspect-ratio: 106 / 65.5;
   width: 100%;
   margin-inline: auto;
 }

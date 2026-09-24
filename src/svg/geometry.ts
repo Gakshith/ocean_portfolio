@@ -9,7 +9,7 @@ export function padRect(p: Pad) {
 }
 
 // S7 atoll framing (C-10): the south half of the die plus the bond-out leads.
-export const ATOLL_VIEW = { x: -3, y: 44, w: 106, h: 72 } as const
+export const ATOLL_VIEW = { x: -3, y: 50.5, w: 106, h: 65.5 } as const
 export const LEAD_Y = 110
 export const leadX = (n: number) => 8 + (n - 1) * 21
 
