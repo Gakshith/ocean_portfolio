@@ -1,39 +1,43 @@
-// STUB (lead, freeze commit). sections_agent owns and replaces this file; keep these exports.
-import { identity } from '../content/content'
-import { BubbleLock, CybotStill, Hop, TidePool } from '../sims'
+// The Still site, S1–S7, in the DOM (build order step 3). App mounts <Sections/> inside <main>
+// and <Footer/> after it. Scribe lanes separate the sections.
+import '../styles/fonts.css'
+import '../styles/base.css'
+import '../styles/sections.css'
+import { projects } from '../content/content'
+import { BubbleLock, Hop, TidePool } from '../sims'
+import { Scribe } from './parts'
+import { ProjectSection } from './ProjectSection'
+import { S1Hero } from './S1Hero'
+import { S2About } from './S2About'
+import { S6Cybot } from './S6Cybot'
+import { S7Contact } from './S7Contact'
+
+export { Footer } from './Footer'
+
+const [linklayer, riscv, wisard] = projects
 
 export function Sections() {
   return (
     <>
-      <section id="top" data-section="top" aria-labelledby="top-title">
-        <h1 id="top-title" tabIndex={-1}>{identity.name}</h1>
-      </section>
-      <section id="about" data-section="about" aria-labelledby="about-title">
-        <h2 id="about-title" tabIndex={-1}>Light through water. Light through a mask.</h2>
-      </section>
-      <section id="link-layer" data-section="link-layer" aria-labelledby="link-layer-title">
-        <h2 id="link-layer-title" tabIndex={-1}>BLE Link Layer</h2>
+      <S1Hero />
+      <Scribe dieId="AG-S2 · ABOUT" />
+      <S2About />
+      <Scribe dieId="AG-S3 · LINK LAYER" />
+      <ProjectSection project={linklayer} variant="s3" next={{ href: '#risc-v', label: 'Next block: RISC-V' }}>
         <Hop headingId="link-layer-title" />
-      </section>
-      <section id="risc-v" data-section="risc-v" aria-labelledby="risc-v-title">
-        <h2 id="risc-v-title" tabIndex={-1}>RISC-V 5-stage pipelined processor</h2>
+      </ProjectSection>
+      <Scribe dieId="AG-S4 · RISC-V" />
+      <ProjectSection project={riscv} variant="s4" next={{ href: '#wisard', label: 'Next block: WiSARD' }}>
         <BubbleLock headingId="risc-v-title" />
-      </section>
-      <section id="wisard" data-section="wisard" aria-labelledby="wisard-title">
-        <h2 id="wisard-title" tabIndex={-1}>WiSARD weightless neural network</h2>
+      </ProjectSection>
+      <Scribe dieId="AG-S5 · WISARD" />
+      <ProjectSection project={wisard} variant="s5" next={{ href: '#cybot', label: 'Next: CyBot, off-die' }}>
         <TidePool headingId="wisard-title" />
-      </section>
-      <section id="cybot" data-section="cybot" aria-labelledby="cybot-title">
-        <h2 id="cybot-title" tabIndex={-1}>CyBot autonomous robot (CPRE 2880)</h2>
-        <CybotStill headingId="cybot-title" />
-      </section>
-      <section id="contact" data-section="contact" aria-labelledby="contact-title">
-        <h2 id="contact-title" tabIndex={-1}>Every chip talks to the world through its pads. These are how you reach me.</h2>
-      </section>
+      </ProjectSection>
+      <Scribe dieId="AG-S6 · CYBOT · OFF-DIE" />
+      <S6Cybot />
+      <Scribe dieId="AG-S7 · PADS" />
+      <S7Contact />
     </>
   )
-}
-
-export function Footer() {
-  return <footer />
 }

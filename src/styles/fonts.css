@@ -1,0 +1,53 @@
+/* Self-hosted, subset fonts (public/fonts). Built from @fontsource-variable/{newsreader,martian-mono}
+   with fonttools: pyftsubset to the site's glyphs (Basic Latin, — – · ’ “ ” … ← ↑ → ↓ ↗ ≈ ×),
+   then varLib.instancer to the weights used (Newsreader wght 400–600 with full opsz 6–72,
+   Martian Mono wght 400–600 and wdth 75–100). The roman (58 KB) is the only critical font and is
+   preloaded from index.html. */
+
+@font-face {
+  font-family: 'Newsreader';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('/fonts/newsreader-roman-latin.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'Newsreader';
+  font-style: italic;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('/fonts/newsreader-italic-latin.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'Martian Mono';
+  font-style: normal;
+  font-weight: 400 600;
+  font-stretch: 75% 100%;
+  font-display: swap;
+  src: url('/fonts/martian-mono-latin.woff2') format('woff2-variations');
+}
+
+/* Metric-matched fallback. --f-serif names "Iowan Old Style" next, so that name is redefined as
+   Georgia scaled to Newsreader's x-height (0.426 vs 0.481 em) with Newsreader's ascent and descent,
+   so the swap barely moves the plate. Where Georgia is absent the face is skipped. */
+@font-face {
+  font-family: 'Iowan Old Style';
+  font-style: normal;
+  src: local('Georgia');
+  size-adjust: 88.5%;
+  ascent-override: 83%;
+  descent-override: 29.9%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Iowan Old Style';
+  font-style: italic;
+  src: local('Georgia Italic'), local('Georgia-Italic');
+  size-adjust: 88.5%;
+  ascent-override: 83%;
+  descent-override: 29.9%;
+  line-gap-override: 0%;
+}
