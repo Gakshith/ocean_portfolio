@@ -33,3 +33,4 @@
   --t-tap:80ms; --t-fast:120ms; --t-close:200ms; --t-ui:240ms; --t-read:320ms; --t-travel:900ms;
   --e-out:cubic-bezier(0.16,1,0.3,1); --e-in:cubic-bezier(0.7,0,0.84,0);
   /* camera: power3.inOut (scroll travel), power2.inOut (jumps); sims: steps() + short expo.out settle */
+}

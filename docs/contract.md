@@ -125,3 +125,15 @@ S7 "Write a message" renders only when `import.meta.env.VITE_FORMSPREE_ID` is se
 - `src/contract.test.tsx` still passes (the lead's seam test).
 - UI: screenshots at 1440×900 and 375×667, and `scrollWidth === innerWidth` at 375.
 - Per-slice gates are in each kickoff and the plan's build order.
+
+## Rulings (lead, during build)
+
+- **R-P1-01 · Footer "How the light works" is not rendered in phase 1.** Its copy describes a
+  live refraction and a baked still, and phase 1 has neither: the S1 still is a temporary SVG
+  drawing until the step 5 bake. Keep the verbatim copy and both links in `content.ts`
+  (Yue et al. 2014: https://doi.org/10.1145/2580946), but don't render the `<details>`.
+  Phase 2 turns it on and writes a truthful Still-mode variant once the bake exists.
+  Brief (honesty) wins over the plan's copy.
+- **R-P1-02 · S3 data line is in first person:** "…a teaching model running in your browser,
+  not my silicon". This matches the site's voice (S4 "not our RTL"). It changes voice only,
+  not facts.
