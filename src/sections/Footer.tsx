@@ -1,7 +1,8 @@
-// Footer: name · Iowa State · Back to top · Still · Keys, plus the die caption (C-17).
+// Footer: name · Iowa State · Back to top · Still · Keys. The die caption lives in S7 just above
+// (R-P1-11), so it is not repeated here.
 // "How the light works" is held back in phase 1 (lead ruling 1): the Still site shows no
 // refraction yet. Its copy waits in content.ts (footer.howLight).
-import { dieCaption, identity } from '../content/content'
+import { identity } from '../content/content'
 import { useMotion } from '../state/motion'
 import { openKeys } from '../state/ui'
 
@@ -29,7 +30,6 @@ export function Footer() {
           </button>
         </li>
       </ul>
-      <p className="die-caption footer-caption">{dieCaption}</p>
     </footer>
   )
 }

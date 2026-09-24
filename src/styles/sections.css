@@ -739,7 +739,7 @@ main > section.s1 {
   color: var(--sand);
 }
 /* At ≥ 768 chrome's fixed minimap (and Still toggle) sit over the page bottom: keep the footer's
-   last line, the C-17 die caption, clear of them at max scroll. */
+   last line clear of them at max scroll. */
 @media (min-width: 768px) {
   .site-footer {
     padding-bottom: calc(var(--s-4) + 96px + var(--s-4));
@@ -765,12 +765,6 @@ main > section.s1 {
 .footer-links button[aria-pressed='true'] {
   background: var(--floor-2);
   border-color: var(--line-strong);
-}
-.footer-caption {
-  flex-basis: 100%;
-  max-width: none;
-  color: var(--dim);
-  margin-top: 0;
 }
 
 /* ---------- desktop ≥ 1100 ---------- */
