@@ -863,13 +863,26 @@ main > section.s1 {
     grid-template-rows: minmax(0, 1fr) auto;
     row-gap: var(--s-5);
   }
+  /* Row 1 is the leftover space; the drawing is absolutely placed inside it, so it never adds to
+     the row's size and shrinks rather than pushing the plate down. */
   .s1-stage {
     grid-column: 1;
     grid-row: 1;
-    justify-self: center;
-    width: auto;
-    height: min(32svh, 100%, calc(100vw - 2 * var(--margin)));
+    position: relative;
+    align-self: stretch;
+    width: 100%;
+    aspect-ratio: auto;
     min-height: 0;
+    --stage-cap: 32svh;
+  }
+  .s1-stage .hero-still {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: auto;
+    height: min(100%, var(--stage-cap));
+    max-width: 100%;
+    aspect-ratio: 1;
   }
   .plate {
     grid-column: 1;
@@ -918,10 +931,11 @@ main > section.s1 {
     padding: var(--s-8) var(--margin);
   }
   main > section.s1 {
-    padding: var(--s-4) var(--margin) calc(var(--bottombar) + env(safe-area-inset-bottom) + var(--s-3));
+    padding: calc(var(--bar) + var(--s-3)) var(--margin) calc(var(--bottombar) + env(safe-area-inset-bottom) + var(--s-3));
+    row-gap: var(--s-3);
   }
   .s1-stage {
-    height: min(30svh, calc(100vw - 2 * var(--margin)));
+    --stage-cap: 30svh;
   }
   .plate {
     padding: var(--s-5) var(--s-4) var(--s-3);
