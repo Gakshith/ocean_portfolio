@@ -239,7 +239,7 @@ export function BubbleLock({ headingId }: SimProps) {
 
       <p className="sim-bl__caption">{cap ?? (cycle === 0 ? 'Cycle 0: nothing fetched yet. Step clocks the pipeline once.' : `Cycle ${cycle}: no hazard this cycle.`)}</p>
 
-      <section className="sim-bl__table" aria-labelledby={tableH}>
+      <div className="sim-bl__table">
         <h3 id={tableH} className="sim-h3">
           Cycle table
         </h3>
@@ -282,7 +282,7 @@ export function BubbleLock({ headingId }: SimProps) {
         <p className="sim-note sim-dim">
           (stall): held in that stage while a bubble enters EX. ← names the pipeline register a value is forwarded from.
         </p>
-      </section>
+      </div>
 
       <Live text={live} />
     </div>

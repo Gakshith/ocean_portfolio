@@ -211,7 +211,7 @@ export function Hop({ headingId }: SimProps) {
       </div>
 
       <div className="sim-hop__twin">
-        <section className="sim-hop__map" data-open={editOpen} aria-labelledby={mapH}>
+        <div className="sim-hop__map" data-open={editOpen}>
           <div className="sim-hop__maphead">
             <h3 id={mapH} className="sim-h3">
               Channel map
@@ -280,9 +280,9 @@ export function Hop({ headingId }: SimProps) {
               </p>
             </div>
           </div>
-        </section>
+        </div>
 
-        <section className="sim-hop__log" aria-labelledby={logH}>
+        <div className="sim-hop__log">
           <h3 id={logH} className="sim-h3">
             Last 8 hops
           </h3>
@@ -298,7 +298,7 @@ export function Hop({ headingId }: SimProps) {
             <p className="sim-data sim-dim">CONNECT_IND · hop = {s.hop} · no events yet</p>
           )}
           <p className="sim-note sim-dim">unmapped→channel. “ch” marks a remap.</p>
-        </section>
+        </div>
       </div>
 
       <Live text={live} />
