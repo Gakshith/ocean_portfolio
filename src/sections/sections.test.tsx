@@ -30,7 +30,8 @@ describe('Still site HTML', () => {
   })
 
   it('has no contact form without VITE_FORMSPREE_ID', () => {
-    expect(doc.querySelector('form')).toBeNull()
+    // Scoped to the S7 message form: sims render their own <form> controls (TidePool Teach).
+    expect(doc.querySelector('.msg, form[action^="https://formspree.io"]')).toBeNull()
     expect(text).not.toContain('Write a message')
   })
 
@@ -88,8 +89,8 @@ describe('MessageForm with a form service', () => {
   })
 
   it('posts to Formspree as a plain form, with visible labels', () => {
-    render(<MessageForm summary="Write a message" formId="abc123" />)
-    const form = document.querySelector('form')!
+    const { container } = render(<MessageForm summary="Write a message" formId="abc123" />)
+    const form = container.querySelector('form')!
     expect(form.getAttribute('action')).toBe('https://formspree.io/f/abc123')
     expect(form.getAttribute('method')).toBe('POST')
     for (const label of ['Name', 'Email', 'Message']) expect(screen.getByLabelText(label)).toBeTruthy()
