@@ -168,3 +168,8 @@ unless you run `VITE_FORMSPREE_ID=xvkgqbpl npm run dev`.
 - **R-P1-10 · A stalled instruction reads "(stall)" in both the chambers and the cycle
   table.** It's the standard term for the chip-engineer audience, and one word for one state.
   This supersedes the plan's R-08 "(held)" wording; the bubble cell stays "bubble".
+- **R-P1-11 · No die caption in the footer in phase 1.** S7's caption sits directly above it,
+  in the same viewport. C-17's honesty line still appears in S2, the three rails and S7.
+- **R-P1-12 · Sub-headings sit one step below `--t-display-m`.** The S2 "On this die" h3 and
+  the sims' "Try it: …" h3s use `--t-lede`, so the S7 h2 is the only 40px heading at its
+  level. Sim tags use `--t-tag` (12px), with no off-token 11px.
