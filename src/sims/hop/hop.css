@@ -1,0 +1,234 @@
+.sim--hop {
+  --block: var(--m2-violet);
+}
+
+.sim-hop__surface {
+  padding-top: 26px;
+  padding-bottom: 22px;
+}
+.sim-hop__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.sim-hop__narrow {
+  display: none;
+}
+.sim-hop__lane {
+  cursor: pointer;
+}
+
+.sim-hop__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-4);
+  margin-top: calc(-1 * var(--s-3));
+}
+
+.sim-hop__controls {
+  display: grid;
+  gap: var(--s-3);
+}
+.sim-hop__formula {
+  color: var(--light);
+  overflow-wrap: anywhere;
+}
+.sim-hop__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-4);
+}
+.sim-hop__status {
+  color: var(--sand);
+}
+
+.sim-hop__twin {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: var(--s-6) var(--gutter);
+  align-items: start;
+}
+.sim-hop__maphead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-1) var(--s-4);
+  margin-bottom: var(--s-3);
+}
+.sim-hop__disclosure {
+  display: none;
+}
+.sim-hop__chips {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: var(--s-2);
+}
+.sim-hop__chip {
+  appearance: none;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 50px;
+  min-width: 0;
+  padding: 0 2px;
+  background: var(--floor-1);
+  border: var(--b-ui);
+  border-radius: 0;
+  color: var(--light);
+  font-family: var(--f-mono);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--e-out);
+}
+.sim-hop__chipn {
+  font-size: var(--t-data);
+  line-height: 1;
+}
+.sim-hop__chipw {
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--sand);
+  min-height: 10px;
+}
+.sim-hop__chip:hover:not([aria-disabled='true']) {
+  border-color: var(--sea);
+}
+.sim-hop__chip--pending-bad,
+.sim-hop__chip--pending-used {
+  border: 1px dashed var(--light);
+}
+.sim-hop__chip--bad {
+  color: var(--sand);
+  background-image: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--dim) 45%, transparent) 0 1.4px,
+    transparent 1.4px 6px
+  );
+}
+.sim-hop__chip--pending-used {
+  background-image: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--dim) 30%, transparent) 0 1.4px,
+    transparent 1.4px 6px
+  );
+}
+.sim-hop__chip[aria-disabled='true'] {
+  cursor: not-allowed;
+  color: var(--dim);
+}
+.sim-hop__send {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-4);
+  margin-top: var(--s-3);
+}
+
+.sim-hop__log ol {
+  list-style: none;
+  display: grid;
+  gap: 2px;
+  margin-top: var(--s-3);
+}
+.sim-hop__log li {
+  border-bottom: var(--b-hair);
+  padding: 4px 0;
+}
+.sim-hop__log li.is-lost {
+  color: var(--dim);
+}
+.sim-hop__log .sim-note {
+  margin-top: var(--s-2);
+}
+
+/* motion (cut entirely under calm / reduced motion by sims.css) */
+.sim-hop__mark {
+  animation: sim-hop-rise 90ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sim-hop__connector {
+  animation: sim-hop-fade 400ms ease-out forwards;
+}
+.sim-hop__ghost {
+  animation: sim-hop-ghost 180ms var(--e-out);
+}
+.sim-hop__pending {
+  animation: sim-hop-rise 100ms var(--e-out);
+}
+.sim-hop__sweep {
+  opacity: 0;
+  animation: sim-hop-sweep 200ms ease-in-out;
+}
+.sim-hop__whale-drift {
+  animation-name: sim-hop-drift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.sim--hop:not(.is-running) .sim-hop__whale-drift {
+  animation-play-state: paused;
+}
+@keyframes sim-hop-rise {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes sim-hop-fade {
+  from {
+    stroke-opacity: 0.8;
+  }
+  to {
+    stroke-opacity: 0;
+  }
+}
+@keyframes sim-hop-ghost {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes sim-hop-sweep {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(var(--sweep));
+  }
+}
+@keyframes sim-hop-drift {
+  to {
+    transform: translateX(var(--drift));
+  }
+}
+
+@media (max-width: 767px) {
+  .sim-hop__wide {
+    display: none;
+  }
+  .sim-hop__narrow {
+    display: block;
+  }
+  .sim-hop__surface {
+    padding: 22px 0 18px;
+    border-left: 0;
+    border-right: 0;
+  }
+  .sim-hop__twin {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sim-hop__disclosure {
+    display: inline-flex;
+  }
+  .sim-hop__map[data-open='false'] .sim-hop__mapbody {
+    display: none;
+  }
+  .sim-hop__chips {
+    grid-template-columns: repeat(6, 50px);
+    justify-content: start;
+  }
+}

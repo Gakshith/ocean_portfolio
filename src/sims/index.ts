@@ -1,18 +1,10 @@
-// STUB (lead, freeze commit). sims_agent owns and replaces this file; keep these exports.
-export interface SimProps {
-  /** id of the section h2 this sim belongs to (`${sectionId}-title`). */
-  headingId: string
-}
+// Public surface of the sims slice (contract §7). Each sim is 100% of its column and
+// handles its own phone layout; sections mount them with the section h2 id.
+import './shared/sims.css'
 
-export function Hop(_: SimProps) {
-  return null
-}
-export function BubbleLock(_: SimProps) {
-  return null
-}
-export function TidePool(_: SimProps) {
-  return null
-}
-export function CybotStill(_: SimProps) {
-  return null
-}
+export type { SimProps } from './types'
+export { Hop } from './hop/Hop'
+export { BubbleLock } from './pipeline/BubbleLock'
+export { TidePool } from './wisard/TidePool'
+export { CybotStill } from './cybot/CybotStill'
+

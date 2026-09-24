@@ -54,7 +54,7 @@ export const POSES: readonly Pose[] = [
   { x: 715, y: 520, h: 90 },
 ]
 
-export const UART_FROM: Pt = { x: 0, y: 70 }
+export const UART_FROM: Pt = { x: 0, y: 140 }
 
 const rad = (d: number) => (d * Math.PI) / 180
 const dist = (p: Pt, q: Pt) => Math.hypot(p.x - q.x, p.y - q.y)
