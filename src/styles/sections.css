@@ -232,15 +232,19 @@ main > section {
     )
     var(--floor-deep);
 }
+/* Bottom padding clears chrome's fixed minimap (bottom 16px + 96px box + 16px gap) at ≥ 768. */
+.s1 {
+  --s1-clear: calc(var(--s-4) + 96px + var(--s-4));
+}
 main > section.s1 {
-  padding: calc(var(--bar) + var(--s-6)) var(--margin) var(--margin);
+  padding: calc(var(--bar) + var(--s-6)) var(--margin) var(--s1-clear);
 }
 .s1-stage {
   grid-column: 6 / -1;
   grid-row: 1;
   align-self: center;
   justify-self: end;
-  width: min(100%, calc(100svh - var(--bar) - var(--s-8)));
+  width: min(100%, calc(100svh - var(--bar) - var(--s-6) - var(--s1-clear)));
   aspect-ratio: 1;
 }
 .hero-still {
@@ -857,7 +861,7 @@ main > section.s1 {
     grid-row: 1;
     justify-self: center;
     width: auto;
-    height: min(38svh, calc(100vw - 2 * var(--margin)));
+    height: min(32svh, calc(100vw - 2 * var(--margin)));
   }
   .plate {
     grid-column: 1;
