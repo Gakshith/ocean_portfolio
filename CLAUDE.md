@@ -14,6 +14,8 @@ npm run lint     # oxlint
   at base `/ocean_portfolio/`. Phase 1 is the no-WebGL Still site; Three.js / WebGPU, R3F, GSAP
   and Lenis arrive in phase 2 (build order steps 5–10).
 - Seams, ownership and shared rules: `docs/contract.md`.
+- CI (`.github/workflows/ci.yml`) runs lint, test and build on every PR and on `dev`. Pushing to
+  `main` deploys `dist/` to GitHub Pages (`deploy.yml`): https://gakshith.github.io/ocean_portfolio/
 - `docs/vision.md` holds the client vision. `docs/content.md` holds the real content, and
   site copy must come only from it.
 - `docs/design/` holds the design team's output. The build follows `06-final-plan.md` once
