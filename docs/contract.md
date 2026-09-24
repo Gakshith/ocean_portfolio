@@ -165,3 +165,6 @@ unless you run `VITE_FORMSPREE_ID=xvkgqbpl npm run dev`.
   on the spacing tokens (about 163px of drawing at 375×667). The 44px index rows and the
   `--t-lede` role line are never shrunk. The phase 2 lettering zone is sized again on real
   phones.
+- **R-P1-10 · A stalled instruction reads "(stall)" in both the chambers and the cycle
+  table.** It's the standard term for the chip-engineer audience, and one word for one state.
+  This supersedes the plan's R-08 "(held)" wording; the bubble cell stays "bubble".
