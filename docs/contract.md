@@ -156,3 +156,6 @@ unless you run `VITE_FORMSPREE_ID=xvkgqbpl npm run dev`.
   is about 1.1:1 and fails the 3:1 non-text contrast rule (WCAG 1.4.11); the plan's order puts
   accessibility above looks. Oxide stays in the discriminator bars and the winner. Bubble
   Lock's optional desktop drag-in is deferred; the plan marks it optional.
+- **R-P1-08 · S2 facts come before the die map on phone.** The facts `<dl>` sits in the text
+  column, so DOM order matches visual order at every size (WCAG 1.3.2). The plan's phone note
+  placed the facts after the die; the plan's order puts accessibility above that layout detail.
