@@ -94,7 +94,7 @@ export const projects: readonly Project[] = [
       'The senior design project is an open-source Bluetooth Low Energy microcontroller. My part is the digital Link Layer: advertising, scanning, connection handling, PDU decode and generation, state machines, and CSA#1 channel selection.',
     ],
     stack: ['Python', 'C', 'Verilog'],
-    dataLine: 'CSA#1 per the BLE Core spec · a teaching model running in your browser, not his silicon',
+    dataLine: 'CSA#1 per the BLE Core spec · a teaching model running in your browser, not my silicon',
     honesty: null,
     media: null,
   },
@@ -181,7 +181,9 @@ export const contact = {
 
 export const footer = {
   howLightHeading: 'How the light works',
-  /** Verbatim from the plan; the two references are linked where they are named. */
+  /** Verbatim from the plan; the two references are linked where they are named. NOT rendered in
+   *  phase 1 (lead ruling 1): the Still site shows no refraction, so this waits for the step 5
+   *  bake and a truthful Still variant. */
   howLight: {
     before:
       'The water in the opening scene is a surface solved in advance so that its refraction focuses sunlight into the layout, using the goal-based caustics method (',

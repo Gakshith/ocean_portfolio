@@ -73,7 +73,6 @@ describe('frozen lines are the plan’s, verbatim', () => {
     C.about.lede,
     C.contact.heading,
     C.projects[0].status!,
-    C.projects[0].dataLine!,
     C.projects[1].role!,
     C.projects[1].dataLine!,
     C.projects[2].honesty!,
@@ -81,6 +80,12 @@ describe('frozen lines are the plan’s, verbatim', () => {
     ...C.projects.map((p) => p.title),
   ]
   it.each(frozen)('%s', (line) => expect(plan).toContain(norm(line)))
+
+  it('S3 data line: the plan’s, in first person (lead ruling 2)', () => {
+    const line = C.projects[0].dataLine!
+    expect(line.endsWith('not my silicon')).toBe(true)
+    expect(plan).toContain(norm(line.replace('not my silicon', 'not his silicon')))
+  })
 
   it('How the light works', () => {
     const h = C.footer.howLight
