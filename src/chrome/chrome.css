@@ -1,0 +1,19 @@
+/* Only what docs/contract.md allows chrome to set globally: scroll padding so the pinned
+   bars never cover focus (WCAG 2.4.11), and room under the phone bottom bar. */
+html {
+  scroll-padding-top: calc(var(--bar) + 16px);
+}
+@media (max-width: 767px) {
+  html {
+    scroll-padding-bottom: calc(var(--bottombar) + env(safe-area-inset-bottom));
+  }
+  body {
+    padding-bottom: calc(var(--bottombar) + env(safe-area-inset-bottom));
+  }
+}
+@media (min-width: 768px) {
+  /* The fixed 96px minimap and the Still toggle sit at the bottom corners. */
+  html {
+    scroll-padding-bottom: calc(96px + var(--s-4) + var(--s-2));
+  }
+}
