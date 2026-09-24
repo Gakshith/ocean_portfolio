@@ -30,7 +30,7 @@ export function S2About() {
           <DieMap />
         </div>
         <p className="die-caption">{dieCaption}</p>
-        <h3 className="t-display-m s2-die-h">{about.dieHeading}</h3>
+        <h3 className="t-lede s2-die-h">{about.dieHeading}</h3>
         <ul className="die-rows">
           {projects.map((p) => (
             <li key={p.key} data-k={p.section}>
