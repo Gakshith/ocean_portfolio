@@ -146,3 +146,9 @@ unless you run `VITE_FORMSPREE_ID=xvkgqbpl npm run dev`.
 - **R-P1-04 · Phone bottom-bar chip is `1fr`, not a fixed 144px.** Fixed 144+88+96 + gaps +
   margins = 368px, which overflows at 320px. Resume (88) and Contact (96) stay fixed, and the
   chip takes the rest (151 at 375).
+- **R-P1-05 · The 60 KB font budget covers the render-critical, preloaded font only**
+  (Newsreader roman). The plan itself loads Martian Mono and the italic non-blocking, outside
+  first paint. Italic and mono weight is an open item for step 10's performance traces, not
+  a phase 1 gate.
+- **R-P1-06 · The S5 honesty line is italic, not bold.** The plan's `**…**` is markdown
+  emphasis, and the tokens say "body emphasis is italic, never bold".
