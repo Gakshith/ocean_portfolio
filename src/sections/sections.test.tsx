@@ -35,8 +35,10 @@ describe('Still site HTML', () => {
     expect(text).not.toContain('Write a message')
   })
 
-  it('holds "How the light works" back in phase 1 (lead ruling 1)', () => {
-    expect(text).not.toContain('How the light works')
+  it('"How the light works" states only what ships: the Still variant while 3D is off (R-P1-01)', () => {
+    expect(text).toContain('How the light works')
+    expect(text).toContain('This page shows that result as a still image')
+    expect(text).not.toContain('nothing is cross-faded')
   })
 
   it('S1 plate indexes the four projects as in-page links', () => {

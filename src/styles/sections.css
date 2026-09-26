@@ -741,6 +741,24 @@ main > section.s1 {
   background: var(--floor-2);
   border-color: var(--line-strong);
 }
+/* "How the light works" (Footer.tsx): full width under the links, 44px summary target. */
+.how-light {
+  flex-basis: 100%;
+  color: var(--sand);
+}
+.how-light p {
+  max-width: 68ch;
+}
+.how-light summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--light);
+  cursor: pointer;
+}
+.how-light a {
+  color: var(--light);
+}
 
 /* ---------- desktop ≥ 1100 ---------- */
 @media (min-width: 1100px) {

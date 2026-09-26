@@ -193,4 +193,11 @@ export const footer = {
     after:
       '). Your browser refracts light through that surface every frame; nothing is cross-faded. Lithography does the same job with a mask and optics: shape the light, and the pattern prints. The die itself is illustrative, not a chip that was fabricated.',
   },
+  /** Still-mode variant (lead, Q4), shown while 3D is off. It reuses the yue / middle / ferraro parts. */
+  howLightStill: {
+    before:
+      'The light in the opening image is refraction through a water surface solved in advance so that it focuses sunlight into the layout, using the goal-based caustics method (',
+    after:
+      '). This page shows that result as a still image, rendered offline from the same surface; with 3D on, your browser refracts it live, every frame. Lithography does the same job with a mask and optics: shape the light, and the pattern prints. The die itself is illustrative, not a chip that was fabricated.',
+  },
 } as const
