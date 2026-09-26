@@ -12,6 +12,29 @@ export interface Motion {
   /** No auto-motion: stillChosen || reducedMotion. Sims gate autoplay on this. */
   calm: boolean
   setStill: (on: boolean) => void
+  /** Phase 2 (STUB, lead freeze; bake_agent implements): the renderer is ready. */
+  has3D: boolean
+  /** Phase 2 (STUB): intent to start the 3D path. The S1 pin keys on this. */
+  load3D: boolean
+  /** Phase 2 (STUB): why 3D is off, shown by the toggle. */
+  off3D: Off3D
+}
+
+export type Off3D =
+  | null
+  | 'still-chosen'
+  | 'default-off'
+  | 'device-memory'
+  | 'save-data'
+  | 'reduced-motion'
+  | 'no-gpu'
+
+/** Flip to true once Akash's real-phone measurements pass (plan open question 4). */
+export const DEFAULT_3D = false
+
+/** Phase 2 (STUB): webgl_agent calls this when the renderer is ready or fails for good. */
+export function setHas3D(ready: boolean): void {
+  void ready
 }
 
 /** Phase 1 ships no 3D layer. Phase 2 flips this once the renderer is ready. */
@@ -30,10 +53,22 @@ function build(reducedMotion: boolean, stillChosen: boolean): Motion {
     still: stillChosen || reducedMotion || !has3D,
     calm: stillChosen || reducedMotion,
     setStill,
+    has3D,
+    load3D: false,
+    off3D: reducedMotion ? 'reduced-motion' : stillChosen ? 'still-chosen' : 'default-off',
   }
 }
 
-const ssr: Motion = { reducedMotion: false, stillChosen: false, still: false, calm: false, setStill }
+const ssr: Motion = {
+  reducedMotion: false,
+  stillChosen: false,
+  still: false,
+  calm: false,
+  setStill,
+  has3D: false,
+  load3D: false,
+  off3D: null,
+}
 let current: Motion = ssr
 
 function reflect(m: Motion) {

@@ -6,7 +6,7 @@ import { HeroStill } from '../svg/HeroStill'
 export function S1Hero() {
   return (
     <section id="top" data-section="top" aria-labelledby="top-title" className="s1">
-      <div className="plate">
+      <div className="plate" data-gl-avoid>
         <h1 id="top-title" tabIndex={-1} className="t-display-xl plate-name">
           {identity.name}
         </h1>
@@ -21,6 +21,7 @@ export function S1Hero() {
             </li>
           ))}
         </ul>
+        <div data-adv-slot aria-hidden="true" />
       </div>
       <div className="s1-stage">
         <HeroStill />

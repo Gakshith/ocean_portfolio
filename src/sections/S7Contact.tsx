@@ -79,7 +79,7 @@ export function S7Contact() {
         <MessageForm summary={contact.formSummary} />
       </div>
 
-      <figure className="s7-stage" aria-hidden="true">
+      <figure className="s7-stage" data-gl-stage="contact" aria-hidden="true">
         <div className="s7-atoll">
           <Atoll targets={rows} />
           {rows.map((r) => (

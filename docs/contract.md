@@ -173,3 +173,113 @@ unless you run `VITE_FORMSPREE_ID=xvkgqbpl npm run dev`.
 - **R-P1-12 · Sub-headings sit one step below `--t-display-m`.** The S2 "On this die" h3 and
   the sims' "Try it: …" h3s use `--t-lede`, so the S7 h2 is the only 40px heading at its
   level. Sim tags use `--t-tag` (12px), with no off-token 11px.
+
+---
+
+# Contract: phase 2 (build order steps 5–10)
+
+Frozen by the lead (Ocean_main_agent) on 2026-09-26. Phase 1 seams and rulings above still
+hold. Same change rule: `CONTRACT | change | why`, through the lead only.
+
+## Ownership
+
+| Owner | Paths | Branch |
+|---|---|---|
+| lead | as phase 1, plus `src/gl/index.tsx` stub, the App mount, the DOM hooks below | `dev` |
+| bake_agent | `scripts/bake/**`, `public/bake/**`, `src/bake/**`, `src/scroll/**`, `src/state/**`, `src/chrome/**`, `src/sims/cybot/**`, `src/sections/S1Hero.tsx`, `src/svg/HeroStill.tsx` (delete), the `.s1-stage` / `.hero-still` rules in `src/styles/sections.css`, `src/sections/Footer.tsx` | `feat/bake` → `feat/scroll` |
+| webgl_agent | `src/gl/**` (engine, TSL shaders, loader, tiers, camera, reef, lazy `gl.css`, ADV_IND and lead-chip DOM) | `feat/hero` → `feat/reef` |
+| p2_reviewer | reviews only; holds the Playwright MCP browser | — |
+
+Files marked `STUB (lead, phase 2 freeze)` belong to the named owner, who replaces them and keeps
+their exports. Step 9 (sims on blocks) is assigned after step 8.
+
+## App shell and DOM hooks (lead, freeze commit)
+
+- `<Gl3D />` (`src/gl`) is App's first child. It renders `null` on the server and on the first
+  client render; all 3D work runs in effects.
+- `data-gl-avoid` on the S1 plate, the top bar (`.c-bar`) and the phone bottom bar (`.c-bbar`):
+  the fitted framing's free region excludes these.
+- `data-gl-stage="about"` on the S2 die-map frame, `data-gl-stage="contact"` on the S7 stage
+  (S3–S5 surfaces added in step 9): the die or block lands in this rect.
+- `<div data-adv-slot aria-hidden="true">` is the last child of the S1 plate (ADV_IND portal).
+- S7 rows already carry `data-pad="1..5"`.
+
+## Seam 1: bake → webgl (bake_agent owns)
+
+| file | format |
+|---|---|
+| `public/bake/slope-512.f16` | 512², RG interleaved, IEEE half LE, no header, 1 MiB. Row 0 = south (GL order), col 0 = west. Covers p ∈ [-1,1]², texel centre p = -1 + (i+.5)·2/512. R = ∂h/∂x, G = ∂h/∂y (north-up; three z = -y). HalfFloat, NoColorSpace, Nearest, no flipY / premultiply / mips. Fetched with `?v=<sha8>`. |
+| `public/bake/slope-256.f16` | same format, 2×2 box average (low tier and phones) |
+| `public/bake/traces-512.u8` | 512² Uint8, same orientation: 255 · (15×15 box blur of letters ∪ straps), the residual-calm mask |
+| `public/bake/s1.avif` (+ `-640/-1024/-1600`) | the focused plan frame (Still, reduced motion, phone freeze). `fetchpriority=high`, ≤ 60 KB at the largest width, never out-paints the plate text |
+| `public/bake/poster.avif` | the P = 0 shimmer. Fetched only by webgl's loader, never on the Still path. ≤ 60 KB |
+| `public/bake/block-{radio,cpu,memory}.avif`, `s6.avif` | plan stills |
+| `public/bake/manifest.sha256` | `npm run bake -- --check` re-bakes and verifies byte-identical outputs |
+| `src/bake/bake.json` | `BakeMeta` (`src/bake/meta.ts`), bundled by import |
+| `src/bake/target.ts` | pure-TS target builder, shared by the bake CLI and webgl's test-only contrast check |
+
+- **R-P2-05 · Margin (open question 3).** Solve on a periodic 1024² over [-2,2], and ship the 512²
+  [-1,1] crop, with slope = 0 outside. The lagoon carries swell only out to |p| = 3, and webgl
+  ramps the swell from lagoon to sea over |p| 1.5 → 3 (runtime only). Acceptance: crop vs full
+  solve ≤ 1% rms, displacement at the crop edge < 0.05 texel.
+- **R-P2-06 · The name is ~82 die units wide at 6.5 texels/track** (the proof's density; the
+  phase 1 SVG's 66 would be 5.2, under the ~6 floor). The exact letter bbox is in `bake.json`.
+- **R-P2-07 · Two images.** `poster.avif` is the 3D's first frame. `s1.avif` is the focused still.
+  The Still path never downloads the poster.
+
+## Seam 2: scroll → webgl (bake_agent owns)
+
+Typed stubs: `src/scroll/{clock,scroll,windows,index}.ts` and the phase 2 fields in
+`src/state/motion.ts`.
+
+- `clock` (gsap.ticker, `lagSmoothing(0)`): each tick runs Lenis.raf → ScrollTrigger.update →
+  scrollStore emit → frame fns. `add(fn)` → unsub; `fn` returns true to request the next tick
+  and is never called while `pauseBus` is paused. `invalidate()` / `takeInvalidated()`. It
+  sleeps (no rAF) when idle; 1s idle = 0 rAF is tested.
+- `scrollStore`: `{ y, heroP, from, to, t, dwellPx }`. `heroP` is the S1 pin progress (120vh ≥ 768,
+  100vh < 768), emitted from the first tick after `load3D`, and 1 when there's no pin.
+- `TRAVEL`: one table of camera travel windows in scroll-y px. The default is
+  `[top(to) − vh, top(to) − 0.3vh]`; cybot>contact is `[top(contact) − 0.6vh, top(contact) + 0.4vh]`.
+- `jumpTo(id)` goes through `lenis.scrollTo(dwellStart, { immediate: true })`, with a 120/200
+  DOM cross-fade unless `calm`, then focuses `#id-title`. `onJump(fn(id, { from, instant }))`, where
+  `instant = calm || still`. Nothing fires on first paint or hash load.
+- `pauseBus` / `registerContextSaver` are unchanged. webgl saves the camera pose; scroll saves
+  scrollY and stops Lenis on `interrupt`.
+- Motion store additions: `has3D`, `load3D`, `off3D`, `setHas3D(ready)`, `DEFAULT_3D = false`.
+  - `load3D = capable && !reducedMotion && (?3d=1 || (!stillChosen && DEFAULT_3D-or-stored-on && !(deviceMemory ≤ 2) && !saveData))`.
+  - `still = !has3D || stillChosen || reducedMotion`.
+  - The S1 pin keys on `load3D` (intent), so the layout is fixed before the first frame. If
+    `load3D` goes false, the pin unmounts with same-frame scroll compensation.
+
+## Phase 2 rulings
+
+- **R-P2-01 · Entry budget.** Entry HTML+CSS was 29.3 / 30 KB gzip at the freeze. All gl and
+  loader CSS ships lazily with the 3D chunk (`src/gl/gl.css`, every rule scoped under
+  `html[data-still="false"]`). New entry CSS must fit the headroom. The reviewer gates on it.
+- **R-P2-02 · The toggle shows the effective state**, plus why 3D is off (`off3D`). The phase 1
+  "Still OFF" while `data-still=true` goes away.
+- **R-P2-03 · `?3d=1` = pressing "Turn on 3D".** It overrides the default-off gate, the
+  deviceMemory hint, saveData and a stored Still choice for that visit. It never overrides
+  reduced motion or a missing WebGPU/WebGL2. Flipping the default is the one line `DEFAULT_3D`.
+- **R-P2-04 · S7 caption:** the R-01 frozen wording only, never the proof's "my projects".
+- **R-P2-08 · Footer "How the light works"** renders again. With 3D on it uses the plan's verbatim
+  copy. In Still, the second sentence becomes: "This page shows that result as a still image,
+  rendered offline from the same surface; with 3D on, your browser refracts it live, every frame."
+- **R-P2-09 · No React Three Fiber.** Plain `three/webgpu` + TSL with an imperative engine.
+  Measured: R3F adds +165 KB min+gz (classic three + react-reconciler) and a second render loop
+  that fights the one clock. Performance ranks above the stack line in the plan's order.
+- **R-P2-10 · Phone < 45 fps for 2s** stops the caustic passes and hard-swaps to `s1.avif` inside
+  the pinned stage, with no layout change. `setHas3D(false)` is only for unrecoverable failure
+  (init fails, or the context isn't restored within 3s).
+
+## Phase 2 gates (in addition to phase 1's)
+
+- Every number is labelled with its backend (WebGPU or WebGL2).
+- Step 5: `npm run bake -- --check` is byte-identical; RG16F precision ≤ 1% rms; letters ≥ 3× fill
+  and ≥ 8× core on the baked field; poster and s1 ≤ 60 KB.
+- Step 7: `framingTest` passes at 1280×720, 1440×900, 1920×1080, 375×667 and 390×844; 60 fps
+  during the focus on desktop; 0 idle frames; with 3D off the Still path is unchanged and
+  Lighthouse stays ≥ 90.
+- Reviewer bars: no lagoon/open-sea seam (the proof shows it at x ≈ 518 at P .5, and at
+  x ≈ 465/570 at P 1, at 1440). Letters at P .45–.55 are at least as sharp as the proof's.
+  S7 visibly beats the flat SVG proof.

@@ -26,7 +26,7 @@ export function S2About() {
       </div>
 
       <div className="s2-die">
-        <div className="diemap-frame">
+        <div className="diemap-frame" data-gl-stage="about">
           <DieMap />
         </div>
         <p className="die-caption">{dieCaption}</p>

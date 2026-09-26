@@ -12,7 +12,7 @@ export function TopBar() {
   const { current } = useNav()
   const here = SECTIONS.find((s) => s.id === current)
   return (
-    <header className="c-bar">
+    <header className="c-bar" data-gl-avoid>
       <a className="c-wordmark" href="#top">
         {identity.name}
       </a>
@@ -74,7 +74,7 @@ export function BottomBar() {
         </nav>
         <StillToggle className="c-btn c-still c-still--row" />
       </div>
-      <div className="c-bbar">
+      <div className="c-bbar" data-gl-avoid>
         <button
           ref={chip}
           type="button"
