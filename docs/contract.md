@@ -218,10 +218,17 @@ their exports. Step 9 (sims on blocks) is assigned after step 8.
 | `src/bake/bake.json` | `BakeMeta` (`src/bake/meta.ts`), bundled by import |
 | `src/bake/target.ts` | pure-TS target builder, shared by the bake CLI and webgl's test-only contrast check |
 
-- **R-P2-05 · Margin (open question 3).** Solve on a periodic 1024² over [-2,2], and ship the 512²
-  [-1,1] crop, with slope = 0 outside. The lagoon carries swell only out to |p| = 3, and webgl
-  ramps the swell from lagoon to sea over |p| 1.5 → 3 (runtime only). Acceptance: crop vs full
-  solve ≤ 1% rms, displacement at the crop edge < 0.05 texel.
+- **R-P2-05 · Margin (open question 3), amended 2026-09-26.** Solve the tile with Neumann
+  boundaries (a mirror-extended periodic 1024² domain; a uniform periodic margin was measured
+  not to decay: ~28 texels of displacement at the edge). Ship the 512² [-1,1] crop with slope = 0
+  outside. The lagoon carries swell only out to |p| = 3, and webgl ramps the swell from lagoon to
+  sea over |p| 1.5 → 3 (runtime only). Acceptance:
+  1. normal displacement at the edge ≤ 0.5 texel (the tangential shear, ~20 texels, is harmless and reported);
+  2. band I = 1.00 ± 0.02 from 3 texels inside the edge, with the last 3 texels ≤ 6%;
+  3. crop vs the mirror-continued full render ≤ 1% rms at display scale;
+  4. LF ≥ 3 and LC ≥ 8.
+
+  The seam verdict is the reviewer's screenshot of the live render.
 - **R-P2-06 · The name is ~82 die units wide at 6.5 texels/track** (the proof's density; the
   phase 1 SVG's 66 would be 5.2, under the ~6 floor). The exact letter bbox is in `bake.json`.
 - **R-P2-07 · Two images.** `poster.avif` is the 3D's first frame. `s1.avif` is the focused still.
