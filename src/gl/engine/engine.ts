@@ -169,6 +169,15 @@ export async function createEngine(o: EngineOptions) {
     renderer = new WebGPURenderer({ canvas, antialias: false, alpha: false, powerPreference: 'high-performance', forceWebGL: true, trackTimestamp: true })
     await renderer.init()
   }
+  // WebGPURenderer runs its own requestAnimationFrame loop forever (it resets info and advances
+  // the node frame). The one clock drives us instead, so stop it and do those two steps only on
+  // frames that draw: 0 rAF callbacks while idle.
+  const anim = (renderer as unknown as { _animation: { stop(): void; nodes: { nodeFrame: { update(): void } } } })._animation
+  anim.stop()
+  const beginFrame = () => {
+    anim.nodes.nodeFrame.update()
+    renderer.info.reset()
+  }
   const backendName: 'WebGPU' | 'WebGL2' = (renderer.backend as { isWebGPUBackend?: boolean }).isWebGPUBackend ? 'WebGPU' : 'WebGL2'
   let lost = false
   renderer.onDeviceLost = () => {
@@ -351,7 +360,8 @@ export async function createEngine(o: EngineOptions) {
 
   // ---------- compile, yielding between materials (no long task > 50ms while interactive) ----------
   const compileAll = async () => {
-    for (const sc of [dieScene, seaScene, skirtScene]) {
+    for (const [i, sc] of [dieScene, seaScene, skirtScene].entries()) {
+      performance.mark(`gl:compile:caustic${i}`)
       await renderer.compileAsync(sc, oCam)
       await yieldTask()
     }
@@ -362,7 +372,9 @@ export async function createEngine(o: EngineOptions) {
         await renderer.compileAsync(blurScene, oCam)
         await yieldTask()
       }
+    performance.mark('gl:compile:floor')
     await renderer.compileAsync(floorScene, cam)
+    performance.mark('gl:compile:done')
     await yieldTask()
   }
   await compileAll()
@@ -581,6 +593,7 @@ export async function createEngine(o: EngineOptions) {
     const easing = fShown !== fT
     const changed = dirty || P !== lastP || easing || compMoving || moving || causticsStale
     if (!changed) return false
+    beginFrame()
     applyPose(cam, poseAt(P, comp), W.w, W.h)
     // Low tier: caustics at 30 Hz, the floor at 60 (phone cut 2).
     const skipCaustics = tierName === 'low' && moving && !causticsStale && frames % 2 === 1
