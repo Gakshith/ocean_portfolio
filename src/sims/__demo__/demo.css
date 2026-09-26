@@ -1,0 +1,6 @@
+html { background: var(--floor-0); color: var(--light); }
+body { margin: 0; font-family: var(--f-serif); }
+.demo { max-width: 1312px; margin: 0 auto; padding: 48px var(--margin) 96px; display: grid; gap: 96px; }
+.demo h2 { font-size: var(--t-display-l); font-weight: 340; line-height: .98; letter-spacing: -.02em; margin: 0 0 32px; }
+/* The harness loads fonts from fontsource, whose family names carry "Variable". */
+:root { --f-serif: "Newsreader Variable", "Newsreader", Georgia, serif; --f-mono: "Martian Mono Variable", "Martian Mono", ui-monospace, monospace; }

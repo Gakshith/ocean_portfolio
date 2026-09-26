@@ -1,0 +1,36 @@
+/* Design tokens: verbatim from docs/design/06-final-plan.md "Design tokens". Lead-owned; change only via the plan. */
+:root {
+  /* ground */
+  --floor-0:#0E1312; --floor-1:#161C1A; --floor-2:#222A27; --floor-deep:#0A0E0D;
+  --exposure:#9CC8E8; --exposure-amt:0; /* S2 .12 · S3 .08 · S4 .06 · S5 .04 · S6 0 */
+  --line:#2E3733; --line-strong:#737E83;
+  /* sand + light (3D and stills; --sand-sun also the S5 pool) */
+  --sand-sun:#BAC4C2; --sand-shade:#6E7E80; --caustic:#E6F4FF;
+  /* text */
+  --light:#E8EEF0; --sand:#A7B5BB; --dim:#85939A; --ink:#0A1016;
+  /* action only: CTA fill, contact pads, bond-wire pulse, focus ring, hover on tappable sim parts */
+  --sea:#3D9DF2; --sea-glow:rgba(61,157,242,.35);
+  /* die layers, inside the die only */
+  --m1-copper:#D08A62; /* S4 */ --m2-violet:#A597DD; /* S3 */ --m3-oxide:#86C4A8; /* S5 */ --m5-al:#C3C9CC;
+  --block:var(--m5-al);
+  /* type */
+  --f-serif:"Newsreader","Iowan Old Style",Georgia,serif;
+  --f-mono:"Martian Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --t-display-xl:clamp(48px,4.4vw,64px); --t-display-l:clamp(34px,4.8vw,72px);
+  --t-display-m:clamp(26px,2.8vw,40px);  --t-lede:clamp(19px,1.5vw,22px);
+  --t-body:18px; --t-nav:16px; --t-small:15px; --t-tag:12px; --t-data:13px;
+  --lh-display:0.92; --lh-body:1.55; --track-display:-0.025em; --track-tag:0.08em;
+  /* space */
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px;
+  --s-7:48px; --s-8:64px; --s-9:96px; --s-10:128px; --s-11:192px;
+  --gutter:24px; --margin:clamp(16px,4.4vw,64px); --scribe:32px; --bar:56px; --bottombar:56px;
+  /* shape */
+  --r-0:0; --r-pill:999px;
+  --b-hair:1px solid var(--line); --b-ui:1px solid var(--line-strong); --b-block:2px solid var(--block);
+  --focus:0 0 0 2px var(--ink); /* outline:3px solid var(--sea); outline-offset:2px; box-shadow:var(--focus) */
+  --scrim:rgba(14,19,18,.86); --grain-opacity:.03;
+  /* motion */
+  --t-tap:80ms; --t-fast:120ms; --t-close:200ms; --t-ui:240ms; --t-read:320ms; --t-travel:900ms;
+  --e-out:cubic-bezier(0.16,1,0.3,1); --e-in:cubic-bezier(0.7,0,0.84,0);
+  /* camera: power3.inOut (scroll travel), power2.inOut (jumps); sims: steps() + short expo.out settle */
+}
