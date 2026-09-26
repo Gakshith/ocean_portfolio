@@ -271,6 +271,11 @@ Typed stubs: `src/scroll/{clock,scroll,windows,index}.ts` and the phase 2 fields
 - **R-P2-10 · Phone < 45 fps for 2s** stops the caustic passes and hard-swaps to `s1.avif` inside
   the pinned stage, with no layout change. `setHas3D(false)` is only for unrecoverable failure
   (init fails, or the context isn't restored within 3s).
+- **R-P2-11 · `s6.avif` is the SE-reef crop** (the die corner with the UART pad at the frozen S1
+  exposure), not a 0%-exposure frame, which would be a flat rectangle. It is a lazy, aria-hidden
+  backdrop at the S6 stage's left edge in both the scrub and the Still SVG, where the UART
+  hairline meets the baked pad. ≤ 25 KB. ~70% of the frame stays unlit, fading into
+  `--floor-deep` with no hard edge.
 
 ## Phase 2 gates (in addition to phase 1's)
 
