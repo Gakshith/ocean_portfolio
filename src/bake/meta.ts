@@ -27,11 +27,42 @@ export interface BakeMeta {
     uart: boolean
   }[]
   lum: { trace: number; pad: number; seal: number; strap: number; fill: number; core: number }
-  acceptance: { LF: number; LC: number; f16rms: number; cropRms: number; edgeDispTexels: number }
+  /** Measured by the bake on its CPU twin of the caustic pass (R-P2-05 amended). */
+  acceptance: {
+    LF: number
+    LC: number
+    /** RG16F vs f32, display scale: rms (the proof's GPU run reads 11.8%) and the proof's own
+     *  bar, the share of display pixels off by > 10% (C-09's "0.9%"). */
+    f16rms: number
+    f16PxOff10: number
+    /** Crop (slope 0 outside) vs the mirror-continued solution, over the tile. */
+    cropRms: number
+    /** Normal displacement on the tile edge, texels (Neumann: ~0). */
+    edgeDispTexels: number
+    /** Tangential displacement along the edge: a shear, harmless, stated so nobody is surprised. */
+    edgeTangentialTexels: number
+    /** Row-mean I from 3 to 20 texels inside the edge (sea = 1), its max deviation, the last 3
+     *  texels' max deviation, and the first 20 texels outside. */
+    bandI: number
+    bandMaxDev: number
+    last3TexelsMaxDev: number
+    outsideMaxDev: number
+    /** Letter / fill / core contrast measured on the shaded s1 still's pixels. */
+    s1Display: { LF: number; LC: number }
+    solve: { method: string; bandOfDieMean: number; schedule: number[][]; errFirst: number; errLast: number }
+  }
   stills: {
-    s1: { src: string; srcset: [number, string][] }
+    s1: { src: string; srcset: [number, string][]; w: number; h: number }
+    /** P = 0 shimmer; fetched only by the 3D loader, never by the Still path. */
     poster: string
     blocks: Record<'radio' | 'cpu' | 'memory', string>
+    /** The SE-reef crop around the UART pad (R-P2-11): the S6 stage's left-edge backdrop. */
     s6: string
+    s6Srcset: [number, string][]
+    s6Size: { w: number; h: number }
+    /** The UART pad centre as a fraction of the s6 image (x from left, y from top). */
+    s6Pad: { x: number; y: number }
+    /** Encoded sizes, bytes, by file name. */
+    bytes: Record<string, number>
   }
 }

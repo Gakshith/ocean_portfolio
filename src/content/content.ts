@@ -181,9 +181,8 @@ export const contact = {
 
 export const footer = {
   howLightHeading: 'How the light works',
-  /** Verbatim from the plan; the two references are linked where they are named. NOT rendered in
-   *  phase 1 (lead ruling 1): the Still site shows no refraction, so this waits for the step 5
-   *  bake and a truthful Still variant. */
+  /** Verbatim from the plan; the two references are linked where they are named. The footer shows
+   *  it only while the 3D renderer is live (has3D); the Still path shows howLightStill (R-P1-01). */
   howLight: {
     before:
       'The water in the opening scene is a surface solved in advance so that its refraction focuses sunlight into the layout, using the goal-based caustics method (',
@@ -192,5 +191,12 @@ export const footer = {
     ferraro: { label: 'Matt Ferraro’s “Magic Windows”', href: 'https://mattferraro.dev/posts/caustics-engineering' },
     after:
       '). Your browser refracts light through that surface every frame; nothing is cross-faded. Lithography does the same job with a mask and optics: shape the light, and the pattern prints. The die itself is illustrative, not a chip that was fabricated.',
+  },
+  /** Still-mode variant (lead, Q4), shown while 3D is off. It reuses the yue / middle / ferraro parts. */
+  howLightStill: {
+    before:
+      'The light in the opening image is refraction through a water surface solved in advance so that it focuses sunlight into the layout, using the goal-based caustics method (',
+    after:
+      '). This page shows that result as a still image, rendered offline from the same surface; with 3D on, your browser refracts it live, every frame. Lithography does the same job with a mask and optics: shape the light, and the pattern prints. The die itself is illustrative, not a chip that was fabricated.',
   },
 } as const

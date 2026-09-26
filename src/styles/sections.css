@@ -247,41 +247,16 @@ main > section.s1 {
   width: min(100%, calc(100svh - var(--bar) - var(--s-6) - var(--s1-clear)));
   aspect-ratio: 1;
 }
+/* The baked focused frame (canvas, or the <noscript> image). Transparent until painted. The
+   still carries 4 die units of lit sand around the die; the mask fades that margin into the page
+   (it ends just outside the seal ring, at 4.2%), so the plate never reads as a pasted square. */
 .hero-still {
+  display: block;
   width: 100%;
   height: 100%;
-}
-.hero-still .die-core {
-  fill: var(--floor-deep);
-}
-.hero-still .die-fill-cell {
-  fill: var(--caustic);
-  opacity: 0.12;
-}
-.hero-still .die-strap {
-  fill: var(--caustic);
-  opacity: 0.2;
-}
-.hero-still .die-seal rect {
-  stroke: var(--caustic);
-  opacity: 0.3;
-}
-.hero-still .die-pads rect {
-  fill: var(--caustic);
-  opacity: 0.35;
-}
-.hero-still .die-blocks rect {
-  fill: none;
-  stroke: var(--layer);
-  stroke-width: 0.4;
-  opacity: 0.35;
-}
-.hero-name {
-  fill: var(--caustic);
-}
-.hero-name-bloom {
-  fill: var(--caustic);
-  opacity: 0.55;
+  --m: linear-gradient(transparent, #000 3.6%, #000 96.4%, transparent);
+  mask: var(--m), linear-gradient(90deg, transparent, #000 3.6%, #000 96.4%, transparent);
+  mask-composite: intersect;
 }
 
 .plate {
@@ -765,6 +740,24 @@ main > section.s1 {
 .footer-links button[aria-pressed='true'] {
   background: var(--floor-2);
   border-color: var(--line-strong);
+}
+/* "How the light works" (Footer.tsx): full width under the links, 44px summary target. */
+.how-light {
+  flex-basis: 100%;
+  color: var(--sand);
+}
+.how-light p {
+  max-width: 68ch;
+}
+.how-light summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--light);
+  cursor: pointer;
+}
+.how-light a {
+  color: var(--light);
 }
 
 /* ---------- desktop ≥ 1100 ---------- */
