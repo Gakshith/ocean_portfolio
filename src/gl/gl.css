@@ -1,0 +1,89 @@
+/* 3D layer. Ships only with the lazy 3D chunk (R-P2-01): nothing here reaches entry CSS. Every
+   rule is scoped under html[data-gl], which only the 3D chunk sets (loading · live · frozen ·
+   failed), and which the chunk removes when 3D turns off. Tokens only. */
+
+html[data-gl] .gl-canvas,
+html[data-gl] .gl-poster {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+html[data-gl] .gl-poster {
+  object-fit: cover;
+}
+/* The first frame fades over the poster (400ms); nothing else about the canvas animates. */
+html[data-gl] .gl-canvas {
+  opacity: 0;
+  transition:
+    opacity 400ms var(--e-out),
+    filter var(--t-ui) var(--e-out);
+}
+html[data-gl='live'] .gl-canvas {
+  opacity: 1;
+}
+/* Surface Interrupt: the frozen scene dims behind the sheet. */
+html[data-gl][data-interrupt] .gl-canvas {
+  filter: brightness(0.32) saturate(0.5);
+}
+html[data-gl='failed'] .gl-canvas,
+html[data-gl='failed'] .gl-poster,
+html[data-gl='frozen'] .gl-canvas,
+html[data-gl='frozen'] .gl-poster {
+  display: none;
+}
+html[data-gl][data-calm='true'] .gl-canvas {
+  transition: none;
+}
+
+/* The page lets the light through the hero; the plate and bars stay solid. */
+html[data-gl]:not([data-gl='failed']) main {
+  position: relative;
+  z-index: 1;
+}
+html[data-gl='loading'] .s1,
+html[data-gl='live'] .s1 {
+  background: transparent;
+}
+html[data-gl='loading'] .s1-stage,
+html[data-gl='live'] .s1-stage {
+  visibility: hidden;
+}
+
+/* ADV_IND: desktop under the index; phone one mono line at the top of the plate. */
+html[data-gl] .gl-adv {
+  margin-top: var(--s-4);
+  font-family: var(--f-mono);
+  font-size: var(--t-tag);
+  font-stretch: 87.5%;
+  line-height: 1.55;
+  color: var(--dim);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+html[data-gl] .gl-ch {
+  padding: 0 2px;
+  color: var(--dim);
+}
+html[data-gl] .gl-ch[data-on] {
+  background: var(--line-strong);
+  color: var(--light);
+}
+@media (max-width: 767px) {
+  html[data-gl] .plate {
+    display: flex;
+    flex-direction: column;
+  }
+  html[data-gl] .plate [data-adv-slot] {
+    order: -1;
+  }
+  html[data-gl] .gl-adv {
+    margin: 0 0 var(--s-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
