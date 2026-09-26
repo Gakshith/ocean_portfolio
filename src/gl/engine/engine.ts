@@ -31,7 +31,7 @@ import {
 } from 'three/webgpu'
 import { uniform } from 'three/tsl'
 import type { Box } from '../../bake/meta'
-import { easeFocus, focusTarget, lerp, s1Camera, s1Light } from '../choreo'
+import { FpsCut, easeFocus, focusTarget, lerp, s1Camera, s1Light } from '../choreo'
 import { applyPose, fitS1, freeRegions, makeCamera, project, fits, type Rect, type S1Framing, type WBox } from '../framing'
 import { loadMasks, loadMeta, loadSlope, loadTraces } from './data'
 import { EXT, SKIRT_EXT, blurMaterial, causticMaterial, floorMaterial, makeUniforms, readbackMaterial, sandMaterial } from './shaders'
@@ -538,7 +538,7 @@ export async function createEngine(o: EngineOptions) {
   let first = true
   let frozen = false
   let forcedP: number | null = null
-  const fpsWin: number[] = []
+  const fpsCut = new FpsCut()
   // Phone cut 4 watches phones only (coarse pointers).
   const watchFps = o.coarse
   let lastNow = 0
@@ -599,20 +599,19 @@ export async function createEngine(o: EngineOptions) {
     }
     // Phone cut 4: < 45 fps for 2s during the focus → stop the caustic passes (R-P2-10).
     if (watchFps && moving && P < 1 && lastNow) {
-      fpsWin.push(now - lastNow)
-      let sum = 0
-      for (const d of fpsWin) sum += d
-      while (sum > 2000 && fpsWin.length > 1) sum -= fpsWin.shift()!
-      if (sum >= 1900 && (fpsWin.length / sum) * 1000 < 45) {
-        frozen = true
-        renderStatic()
-        hooks.freeze()
-      }
-    }
+      if (fpsCut.push(now - lastNow)) freeze()
+    } else if (!moving) fpsCut.reset()
     lastNow = moving ? now : 0
     return moving || easing || compMoving
   }
   const unsub = driver.add(frame)
+
+  function freeze() {
+    if (frozen) return
+    frozen = true
+    renderStatic()
+    hooks.freeze()
+  }
 
   /** Deterministic focused RT (t fixed, f = 1, no swell): hash loads, context restore, freeze. */
   function renderStatic() {
@@ -740,6 +739,17 @@ export async function createEngine(o: EngineOptions) {
       }
     },
     renderStatic,
+    /** Test hooks: the phone cut and a GPU loss, through the same paths the real events take. */
+    freeze,
+    loseContext() {
+      const be = renderer.backend as unknown as { gl?: WebGL2RenderingContext; device?: GPUDevice }
+      if (be.gl) be.gl.getExtension('WEBGL_lose_context')?.loseContext()
+      else {
+        // three ignores reason 'destroyed' (that's also dispose), so report it as a real loss
+        be.device?.destroy()
+        renderer.onDeviceLost({ api: 'WebGPU', message: 'test: device destroyed', reason: null, originalEvent: null })
+      }
+    },
     /** Re-run the tier warm-up now (diagnostics; doesn't change the tier). */
     warmUp: async () => {
       const r = await warmUp()

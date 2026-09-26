@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ADV_LINES, advData, crc, crc24, header, pdu } from './adv'
-import { TILT, ease3, easeFocus, focusTarget, range, s1Camera, s1Light } from './choreo'
+import { FpsCut, TILT, ease3, easeFocus, focusTarget, range, s1Camera, s1Light } from './choreo'
 import { applyPose, fitS1, fits, freeRegions, makeCamera, project } from './framing'
 
 describe('ADV_IND packet', () => {
@@ -99,4 +99,19 @@ describe('fitted framing (C-02)', () => {
       expect(fits(project(cam, die, vw, vh), c.region, 0)).toBe(true)
       expect(c.far).toBeGreaterThanOrEqual(c.near)
     })
+})
+
+describe('phone cut 4: < 45 fps for 2s', () => {
+  it('fires after 2s at 40 fps, not at 50 fps, not before 2s', () => {
+    const slow = new FpsCut()
+    let fired = false
+    for (let t = 0; t < 1800; t += 25) fired ||= slow.push(25)
+    expect(fired).toBe(false)
+    for (let t = 0; t < 400; t += 25) fired ||= slow.push(25)
+    expect(fired).toBe(true)
+    const ok = new FpsCut()
+    let f2 = false
+    for (let t = 0; t < 5000; t += 20) f2 ||= ok.push(20)
+    expect(f2).toBe(false)
+  })
 })

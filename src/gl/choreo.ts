@@ -68,3 +68,26 @@ export function s1Light(P: number, fShown: number): S1Light {
 /** Ease the shown focus toward its target: ~250ms (k = 10/s), never a snap. */
 export const easeFocus = (shown: number, target: number, dtSec: number) =>
   shown + (target - shown) * Math.min(1, dtSec * 10)
+
+/** Phone cut 4 (R-P2-10): true once the last 2s of focus frames averaged under 45 fps. Feed it
+ *  frame intervals (ms) only while the water moves in S1; reset() when it stops. */
+export class FpsCut {
+  private win: number[] = []
+  private sum = 0
+  private readonly minFps: number
+  private readonly windowMs: number
+  constructor(minFps = 45, windowMs = 2000) {
+    this.minFps = minFps
+    this.windowMs = windowMs
+  }
+  push(dtMs: number): boolean {
+    this.win.push(dtMs)
+    this.sum += dtMs
+    while (this.win.length > 1 && this.sum - this.win[0] >= this.windowMs) this.sum -= this.win.shift()!
+    return this.sum >= this.windowMs * 0.95 && (this.win.length / this.sum) * 1000 < this.minFps
+  }
+  reset() {
+    this.win = []
+    this.sum = 0
+  }
+}
