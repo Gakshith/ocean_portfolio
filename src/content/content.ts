@@ -181,9 +181,8 @@ export const contact = {
 
 export const footer = {
   howLightHeading: 'How the light works',
-  /** Verbatim from the plan; the two references are linked where they are named. NOT rendered in
-   *  phase 1 (lead ruling 1): the Still site shows no refraction, so this waits for the step 5
-   *  bake and a truthful Still variant. */
+  /** Verbatim from the plan; the two references are linked where they are named. The footer shows
+   *  it only while the 3D renderer is live (has3D); the Still path shows howLightStill (R-P1-01). */
   howLight: {
     before:
       'The water in the opening scene is a surface solved in advance so that its refraction focuses sunlight into the layout, using the goal-based caustics method (',
