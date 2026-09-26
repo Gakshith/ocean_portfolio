@@ -186,7 +186,7 @@ hold. Same change rule: `CONTRACT | change | why`, through the lead only.
 | Owner | Paths | Branch |
 |---|---|---|
 | lead | as phase 1, plus `src/gl/index.tsx` stub, the App mount, the DOM hooks below | `dev` |
-| bake_agent | `scripts/bake/**`, `public/bake/**`, `src/bake/**`, `src/scroll/**`, `src/state/**`, `src/chrome/**`, `src/sims/cybot/**`, `src/sections/S1Hero.tsx`, `src/svg/HeroStill.tsx` (delete), the `.s1-stage` / `.hero-still` rules in `src/styles/sections.css`, `src/sections/Footer.tsx` | `feat/bake` → `feat/scroll` |
+| bake_agent | `scripts/bake/**`, `public/bake/**`, `src/bake/**`, `src/scroll/**`, `src/state/**`, `src/chrome/**`, `src/sims/cybot/**`, `src/sections/S1Hero.tsx`, `src/svg/HeroStill.tsx` (delete), the `.s1-stage` / `.hero-still` rules in `src/styles/sections.css`, `src/sections/Footer.tsx`, the one `footer.howLightStill` entry in `src/content/content.ts` | `feat/bake` → `feat/scroll` |
 | webgl_agent | `src/gl/**` (engine, TSL shaders, loader, tiers, camera, reef, lazy `gl.css`, ADV_IND and lead-chip DOM) | `feat/hero` → `feat/reef` |
 | p2_reviewer | reviews only; holds the Playwright MCP browser | — |
 
@@ -287,7 +287,7 @@ Typed stubs: `src/scroll/{clock,scroll,windows,index}.ts` and the phase 2 fields
 ## Phase 2 gates (in addition to phase 1's)
 
 - Every number is labelled with its backend (WebGPU or WebGL2).
-- Step 5: `npm run bake -- --check` is byte-identical; RG16F precision ≤ 1% rms; letters ≥ 3× fill
+- Step 5: `npm run bake -- --check` is byte-identical; RG16F precision: pixels off by > 10% ≤ 1% (the proof's C-09 metric; its "0.9%" was this, not rms), with rms reported; letters ≥ 3× fill
   and ≥ 8× core on the baked field; poster and s1 ≤ 60 KB.
 - Step 7: `framingTest` passes at 1280×720, 1440×900, 1920×1080, 375×667 and 390×844; 60 fps
   during the focus on desktop; 0 idle frames; with 3D off the Still path is unchanged and
