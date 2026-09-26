@@ -283,6 +283,14 @@ Typed stubs: `src/scroll/{clock,scroll,windows,index}.ts` and the phase 2 fields
   backdrop at the S6 stage's left edge in both the scrub and the Still SVG, where the UART
   hairline meets the baked pad. ≤ 25 KB. ~70% of the frame stays unlit, fading into
   `--floor-deep` with no hard edge.
+- **R-P2-12 · No ScrollTrigger.** GSAP core (`gsap.ticker` is the one clock) and Lenis load in one
+  lazy engine chunk (`src/scroll/engine.ts`) after first paint, only when motion is live
+  (`!calm`). `clock` and `scrollStore` stay tiny static facades. The S1 pin is React-owned CSS
+  sticky (`.s1` gets 100vh + pinLen while `load3D`; `heroP = clamp(y / pinLen)`), not a
+  ScrollTrigger pin-spacer, which would mutate DOM that React owns. Progress comes from measured
+  section tops (one ResizeObserver), updated in the tick. The pin length uses a stable phone
+  viewport unit, no ancestor of `.s1` clips overflow, and unmount compensation is tested. The
+  seam exports are unchanged.
 
 ## Phase 2 gates (in addition to phase 1's)
 
