@@ -258,6 +258,10 @@ main > section.s1 {
   mask: var(--m), linear-gradient(90deg, transparent, #000 3.6%, #000 96.4%, transparent);
   mask-composite: intersect;
 }
+/* Without JS the <noscript> image is the still; the empty canvas must not take a second row. */
+html:not(.js) canvas.hero-still {
+  display: none;
+}
 
 .plate {
   grid-column: 1 / span 5;
@@ -755,6 +759,14 @@ main > section.s1 {
   min-height: 44px;
   color: var(--light);
   cursor: pointer;
+}
+/* display:flex drops the native marker, so the disclosure state is drawn as a text glyph. */
+.how-light summary::before {
+  content: '▸';
+  margin-right: var(--s-2);
+}
+.how-light[open] summary::before {
+  content: '▾';
 }
 .how-light a {
   color: var(--light);

@@ -32,7 +32,10 @@ function HeroStill() {
         g.transferFromImageBitmap(bmp)
         c.dataset.ready = ''
       })
-      .catch(() => {})
+      .catch((e) => {
+        // The still is decorative: the page stays whole without it.
+        if (import.meta.env.DEV) console.warn(e)
+      })
     return () => {
       live = false
     }

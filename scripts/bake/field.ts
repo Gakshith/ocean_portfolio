@@ -17,6 +17,16 @@ export const BAKE_SCHEDULE = [
   [2, 5, 0.6],
   [1.5, 14, 0.25],
 ] as const
+/** The offline stills' field (R-09): a 1024² tile, 13 texels per track, blur scales doubled, a
+ *  gentler stage 3 and a final σ = 2 stage. It resolves single-edged letters; the 512² solve
+ *  leaves ghost fold lines around the strokes. It never ships to the runtime. */
+export const STILL_SCHEDULE = [
+  [16, 3, 0.6],
+  [8, 3, 0.5],
+  [4, 6, 0.35],
+  [3, 10, 0.25],
+  [2, 8, 0.2],
+] as const
 
 export interface Field {
   N: number
@@ -32,7 +42,11 @@ export interface Field {
   ms: number
 }
 
-export function solveField(t: Target, onProgress?: (done: number, total: number, err: number) => void): Field {
+export function solveField(
+  t: Target,
+  onProgress?: (done: number, total: number, err: number) => void,
+  schedule: readonly (readonly [number, number, number])[] = BAKE_SCHEDULE,
+): Field {
   const N = t.N
   const M = 2 * N
   const mir = (v: number) => (v < N ? v : 2 * N - 1 - v)
@@ -40,7 +54,7 @@ export function solveField(t: Target, onProgress?: (done: number, total: number,
   for (let y = 0; y < M; y++) for (let x = 0; x < M; x++) T[y * M + x] = t.T[mir(y) * N + mir(x)]
   const tau = 2 / N // world size of one tile texel
   const t0 = performance.now()
-  const { h, a, errs } = solve({ N: M, target: T, D: DEPTH, eta: ETA, tau, schedule: BAKE_SCHEDULE, onProgress })
+  const { h, a, errs } = solve({ N: M, target: T, D: DEPTH, eta: ETA, tau, schedule, onProgress })
   const ms = Math.round(performance.now() - t0)
   const H = (x: number, y: number) => h[(((y % M) + M) % M) * M + (((x % M) + M) % M)]
   // Texel differences (= small-angle displacement in texels) and the world slope they imply.

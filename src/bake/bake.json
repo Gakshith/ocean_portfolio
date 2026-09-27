@@ -661,8 +661,41 @@
     "last3TexelsMaxDev": 0.036,
     "outsideMaxDev": 0.0962,
     "s1Display": {
-      "LF": 7.98,
-      "LC": 14.4
+      "LF": 10.12,
+      "LC": 27.4
+    },
+    "stillsField": {
+      "N": 1024,
+      "errLast": 0.443,
+      "LF": 8.14,
+      "LC": 26,
+      "schedule": [
+        [
+          16,
+          3,
+          0.6
+        ],
+        [
+          8,
+          3,
+          0.5
+        ],
+        [
+          4,
+          6,
+          0.35
+        ],
+        [
+          3,
+          10,
+          0.25
+        ],
+        [
+          2,
+          8,
+          0.2
+        ]
+      ]
     },
     "solve": {
       "method": "neumann-mirror-1024",
@@ -739,15 +772,15 @@
       "y": 0.5
     },
     "bytes": {
-      "s1-640.avif": 18733,
-      "s1-1024.avif": 34820,
-      "s1-1600.avif": 56844,
-      "poster.avif": 45893,
-      "block-radio.avif": 15666,
-      "block-cpu.avif": 31673,
-      "block-memory.avif": 35641,
-      "s6-240.avif": 2669,
-      "s6-480.avif": 6758
+      "s1-640.avif": 13945,
+      "s1-1024.avif": 20974,
+      "s1-1600.avif": 34454,
+      "poster.avif": 51548,
+      "block-radio.avif": 9197,
+      "block-cpu.avif": 15999,
+      "block-memory.avif": 19911,
+      "s6-240.avif": 2503,
+      "s6-480.avif": 4944
     }
   }
 }

@@ -49,6 +49,8 @@ export interface BakeMeta {
     outsideMaxDev: number
     /** Letter / fill / core contrast measured on the shaded s1 still's pixels. */
     s1Display: { LF: number; LC: number }
+    /** The offline stills' own 1024² field (R-09): it never ships to the runtime. */
+    stillsField: { N: number; errLast: number; LF: number; LC: number; schedule: number[][] }
     solve: { method: string; bandOfDieMean: number; schedule: number[][]; errFirst: number; errLast: number }
   }
   stills: {
