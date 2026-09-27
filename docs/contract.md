@@ -186,7 +186,7 @@ hold. Same change rule: `CONTRACT | change | why`, through the lead only.
 | Owner | Paths | Branch |
 |---|---|---|
 | lead | as phase 1, plus `src/gl/index.tsx` stub, the App mount, the DOM hooks below | `dev` |
-| bake_agent | `scripts/bake/**`, `public/bake/**`, `src/bake/**`, `src/scroll/**`, `src/state/**`, `src/chrome/**`, `src/sims/cybot/**`, `src/sections/S1Hero.tsx`, `src/svg/HeroStill.tsx` (delete), the `.s1-stage` / `.hero-still` rules in `src/styles/sections.css`, `src/sections/Footer.tsx`, the one `footer.howLightStill` entry in `src/content/content.ts` | `feat/bake` → `feat/scroll` |
+| bake_agent | `scripts/bake/**`, `public/bake/**`, `src/bake/**`, `src/svg/DieMap.tsx` + `src/svg/Atoll.tsx` (name geometry, R-P2-14), `src/scroll/**`, `src/state/**`, `src/chrome/**`, `src/sims/cybot/**`, `src/sections/S1Hero.tsx`, `src/svg/HeroStill.tsx` (delete), the `.s1-stage` / `.hero-still` rules in `src/styles/sections.css`, `src/sections/Footer.tsx`, the one `footer.howLightStill` entry in `src/content/content.ts` | `feat/bake` → `feat/scroll` |
 | webgl_agent | `src/gl/**` (engine, TSL shaders, loader, tiers, camera, reef, lazy `gl.css`, ADV_IND and lead-chip DOM) | `feat/hero` → `feat/reef` |
 | p2_reviewer | reviews only; holds the Playwright MCP browser | — |
 
@@ -211,7 +211,7 @@ their exports. Step 9 (sims on blocks) is assigned after step 8.
 | `public/bake/slope-512.f16` | 512², RG interleaved, IEEE half LE, no header, 1 MiB. Row 0 = south (GL order), col 0 = west. Covers p ∈ [-1,1]², texel centre p = -1 + (i+.5)·2/512. R = ∂h/∂x, G = ∂h/∂y (north-up; three z = -y). HalfFloat, NoColorSpace, Nearest, no flipY / premultiply / mips. Fetched with `?v=<sha8>`. |
 | `public/bake/slope-256.f16` | same format, 2×2 box average (low tier and phones) |
 | `public/bake/traces-512.u8` | 512² Uint8, same orientation: 255 · (15×15 box blur of letters ∪ straps), the residual-calm mask |
-| `public/bake/s1.avif` (+ `-640/-1024/-1600`) | the focused plan frame (Still, reduced motion, phone freeze). `fetchpriority=high`, ≤ 60 KB at the largest width, never out-paints the plate text |
+| `public/bake/s1-{640,1024,1600}.avif` (paths from `meta.stills`, never hard-coded) | the focused plan frame (Still, reduced motion, phone freeze). `fetchpriority=high`, ≤ 60 KB at the largest width, never out-paints the plate text |
 | `public/bake/poster.avif` | the P = 0 shimmer. Fetched only by webgl's loader, never on the Still path. ≤ 60 KB |
 | `public/bake/block-{radio,cpu,memory}.avif`, `s6.avif` | plan stills |
 | `public/bake/manifest.sha256` | `npm run bake -- --check` re-bakes and verifies byte-identical outputs |
@@ -291,6 +291,20 @@ Typed stubs: `src/scroll/{clock,scroll,windows,index}.ts` and the phase 2 fields
   section tops (one ResizeObserver), updated in the tick. The pin length uses a stable phone
   viewport unit, no ancestor of `.s1` clips overflow, and unmount compensation is tested. The
   seam exports are unchanged.
+- **R-P2-13 · Two controls, no overloaded toggle** (supersedes R-P2-02's single-toggle reading).
+  1. **Still** stays the motion switch. `aria-pressed = stillChosen || reducedMotion` (with
+     "reduced motion" as the reason). Pressing it sets an explicit Still, which means 3D off AND calm.
+  2. **Turn on 3D** is a separate button, shown only while 3D is off for an overridable reason. Its
+     visible line names the reason: "3D off · not on by default yet" / "· low device memory" /
+     "· data saver" / "· you chose Still". Pressing it has the `?3d=1` semantics, is stored, and
+     clears an explicit Still. With reduced motion or no WebGPU/WebGL2 it becomes a non-interactive
+     line ("3D off · reduced motion" / "· not supported here").
+
+  Placement: desktop, the bottom-right cluster; phone, the sheet row; footer, both. `calm` stays
+  `stillChosen || reducedMotion`, so the default path keeps sim autoplay (each sim has its own Pause).
+- **R-P2-14 · One name geometry.** The Still-path S2 die map (`src/svg/DieMap.tsx`) and S7 atoll
+  (`src/svg/Atoll.tsx`) draw the name from `bake.json`'s letter box (~82 die units), the same as the
+  bake and the 3D. Owner: bake_agent, in step 6.
 
 ## Phase 2 gates (in addition to phase 1's)
 
