@@ -88,6 +88,8 @@ export function makeUniforms() {
     skirtOn: uniform(0),
     /** 1 = the sand's ripples and grain; 0 flattens them (test path: seam profiles see light only). */
     sandAmt: uniform(1),
+    /** Slope lookup at the mesh vertices: 0 nearest texel, 1 bilinear between texel centres. */
+    slopeBilinear: uniform(1),
   }
 }
 export type Uniforms = ReturnType<typeof makeUniforms>
@@ -139,7 +141,15 @@ export function causticMaterial(U: Uniforms, o: CausticOpts) {
     if (o.surface === 'lagoon') {
       const n = o.slopeN!
       const u = pw.add(1).mul(0.5)
-      const e = textureLoad(o.slope!, ivec2(clamp(floor(u.mul(n)), 0, n - 1))).rg
+      // Vertex i sits on texel corners (p = -1 + i·2/n) while the bake defines slope at texel
+      // centres; bilinear resamples it where the vertex actually is.
+      const tl = (x: N, y: N) => textureLoad(o.slope!, ivec2(clamp(x, 0, n - 1) as N, clamp(y, 0, n - 1) as N)).rg
+      const q = u.mul(n).sub(0.5)
+      const i0 = floor(q)
+      const fr = q.sub(i0)
+      const bil = mix(mix(tl(i0.x, i0.y), tl(i0.x.add(1), i0.y), fr.x), mix(tl(i0.x, i0.y.add(1)), tl(i0.x.add(1), i0.y.add(1)), fr.x), fr.y)
+      const near = tl(floor(u.x.mul(n)), floor(u.y.mul(n)))
+      const e = mix(near, bil, U.slopeBilinear)
       const wide = textureLoad(o.traces!, ivec2(clamp(floor(u.mul(512)), 0, 511))).r
       const calm = float(1).sub(smoothstep(0.02, 0.22, wide))
       // Hard crop (R-P2-05): the lagoon mesh covers exactly [-1,1]², so the engineered slope is 0
@@ -222,6 +232,8 @@ export function sandMaterial() {
 
 export interface FloorOpts {
   sand: Texture
+  /** traces-512 (R8, GL order): the letters + straps keep-out, which the metal never crosses. */
+  traces: Texture
   die: Texture
   sea: Texture
   skirt: Texture
@@ -347,9 +359,10 @@ export function floorMaterial(U: Uniforms, o: FloorOpts) {
     // --- dispersion (high tier, while focused): 3 samples of the one RT along the light
     // gradient, taken from screen derivatives and pulled back to world space (C-08) ---
     If(U.dispersion.mul(U.f).greaterThan(0.001), () => {
-      const gx = dFdx(Idie)
-      const gy = dFdy(Idie)
-      const gw = dFdx(p).mul(gx).add(dFdy(p).mul(gy))
+      // The light gradient from the smooth lod-3 mip (the raw one jitters per pixel and frays
+      // the edges), pulled back from screen to world space.
+      const Is = dieTex.sample(dUV).level(float(3)).r
+      const gw = dFdx(p).mul(dFdx(Is)).add(dFdy(p).mul(dFdy(Is)))
       const dir = normalize(gw.add(1e-7)).mul(0.0035).mul(U.f)
       const Ir = I.add(wDie.mul(dieTex.sample(rtUV(p.add(dir), EXT)).r.sub(Idie)))
       const Ib = I.add(wDie.mul(dieTex.sample(rtUV(p.sub(dir), EXT)).r.sub(Idie)))
@@ -365,7 +378,14 @@ export function floorMaterial(U: Uniforms, o: FloorOpts) {
     const fwc = fwidth(cc)
     If(U.metal.greaterThan(0.001).and(r.lessThan(1)), () => {
       const lay = metalLayout(cc, fwc)
-      const la = lay.w.mul(float(1).sub(smoothstep(1.2, 2.5, I))).mul(0.35).mul(U.metal)
+      // Keep-out: no block metal inside the letters' and straps' wide mask (as the Still bake).
+      const tq = p.add(1).mul(0.5 * 512).sub(0.5)
+      const t0 = floor(tq)
+      const tf = tq.sub(t0)
+      const tr = (x: N, y: N) => textureLoad(o.traces, ivec2(clamp(x, 0, 511) as N, clamp(y, 0, 511) as N)).r
+      const wide = mix(mix(tr(t0.x, t0.y), tr(t0.x.add(1), t0.y), tf.x), mix(tr(t0.x, t0.y.add(1)), tr(t0.x.add(1), t0.y.add(1)), tf.x), tf.y)
+      const keep = float(1).sub(smoothstep(0.02, 0.22, wide))
+      const la = lay.w.mul(float(1).sub(smoothstep(1.2, 2.5, I))).mul(0.35).mul(U.metal).mul(keep)
       col.assign(mix(col, lay.xyz, la))
     })
 

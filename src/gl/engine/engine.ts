@@ -284,11 +284,12 @@ export async function createEngine(o: EngineOptions) {
     const hDir = uniform(new Vector2())
     const vDir = uniform(new Vector2())
     // The finite sun blurs every RT by the same world σ, whatever its density.
-    const step = (SUN_SIGMA * (size / (2 * ext))) / 1.75 / size
+    const step = ((SUN_SIGMA * (size / (2 * ext))) / 1.75 / size) * sunScale
     hDir.value.set(step, 0)
     vDir.value.set(0, step)
     return { raw, tmp, out, hDir, vDir, h: blurMaterial(raw.texture, hDir), v: blurMaterial(tmp.texture, vDir), ext }
   }
+  let sunScale = 1
   let die!: Set3
   let sea!: Set3
   let skirt!: Set3
@@ -334,6 +335,7 @@ export async function createEngine(o: EngineOptions) {
   const floorMat = () =>
     floorMaterial(U, {
       sand: sandRT!.texture,
+      traces,
       die: die.out.texture,
       sea: sea.out.texture,
       skirt: skirt.out.texture,
@@ -751,6 +753,22 @@ export async function createEngine(o: EngineOptions) {
       }
     },
     renderStatic,
+    /** Test hook: isolate the stages that shape letter edges. */
+    edgeDebug(o: { dispersion?: 0 | 1; sun?: number; bilinear?: 0 | 1 }) {
+      if (o.dispersion !== undefined) U.dispersion.value = o.dispersion
+      if (o.bilinear !== undefined) U.slopeBilinear.value = o.bilinear
+      if (o.sun !== undefined) {
+        sunScale = o.sun
+        for (const s2 of [die, sea, skirt]) {
+          const size = s2.raw.width
+          const step = ((SUN_SIGMA * (size / (2 * s2.ext))) / 1.75 / size) * sunScale
+          s2.hDir.value.set(step, 0)
+          s2.vDir.value.set(0, step)
+        }
+      }
+      dirty = causticsStale = true
+      driver.invalidate()
+    },
     /** Test hook: flatten the sand albedo so a screenshot profile measures the light alone. */
     flatSand(on: boolean) {
       U.sandAmt.value = on ? 0 : 1
