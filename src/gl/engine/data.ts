@@ -1,24 +1,12 @@
-// Seam 1 inputs: bake.json (bundled with this chunk, content-hashed by Vite) and the binaries in
-// public/bake/, fetched with ?v=<sha8>. Until bake_agent's PR lands, dev builds read a scratch mock
-// from public/__glmock/ (never committed, never shipped); production then has no meta and the
-// engine reports a failure, so the Still path stays.
+// Seam 1 inputs: bake.json (bundled with this chunk, so Vite content-hashes it) and the binaries
+// in public/bake/, fetched with ?v=<sha8>.
 import { DataTexture, HalfFloatType, NearestFilter, NoColorSpace, RGFormat, RedFormat, UnsignedByteType, ClampToEdgeWrapping } from 'three/webgpu'
+import bake from '../../bake/bake.json'
 import type { BakeMeta } from '../../bake/meta'
 
 const base = import.meta.env.BASE_URL
-
-// A glob so the build doesn't fail while bake.json doesn't exist yet.
-const bundled = import.meta.glob<{ default: BakeMeta }>('../../bake/bake.json')
-
-export async function loadMeta(): Promise<{ meta: BakeMeta; dir: string }> {
-  const load = bundled['../../bake/bake.json']
-  if (load) return { meta: (await load()).default, dir: `${base}bake/` }
-  if (import.meta.env.DEV) {
-    const r = await fetch(`${base}__glmock/bake.json`)
-    if (r.ok) return { meta: (await r.json()) as BakeMeta, dir: `${base}__glmock/` }
-  }
-  throw new Error('no bake.json')
-}
+export const meta = bake as unknown as BakeMeta
+const dir = `${base}bake/`
 
 async function fetchBin(url: string, bytes: number): Promise<ArrayBuffer> {
   const r = await fetch(url)
@@ -31,7 +19,7 @@ async function fetchBin(url: string, bytes: number): Promise<ArrayBuffer> {
 const v = (sha: string) => `?v=${sha.slice(0, 8)}`
 
 /** RG16F slope field, GL order (row 0 = south), nearest, no colour space, no mips. */
-export async function loadSlope(meta: BakeMeta, dir: string, n: 512 | 256) {
+export async function loadSlope(n: 512 | 256) {
   const sha = n === 512 ? meta.sha256.slope512 : meta.sha256.slope256
   const buf = await fetchBin(`${dir}slope-${n}.f16${v(sha)}`, n * n * 2 * 2)
   const t = new DataTexture(new Uint16Array(buf), n, n, RGFormat, HalfFloatType)
@@ -39,7 +27,7 @@ export async function loadSlope(meta: BakeMeta, dir: string, n: 512 | 256) {
 }
 
 /** The residual-calm mask: 512² R8, 255 · wide traces. */
-export async function loadTraces(meta: BakeMeta, dir: string) {
+export async function loadTraces() {
   const buf = await fetchBin(`${dir}traces-512.u8${v(meta.sha256.traces)}`, 512 * 512)
   const t = new DataTexture(new Uint8Array(buf), 512, 512, RedFormat, UnsignedByteType)
   return prep(t)
@@ -57,11 +45,12 @@ function prep(t: DataTexture) {
   return t
 }
 
-/** Test path only (contrastTest): 512² masks in canvas order, bit 0 letters · 1 fill · 2 core.
- *  Dev reads the scratch mock's masks; once bake_agent's shared target.ts lands the test builds
- *  them from it, so the masks match the bake exactly. */
-export async function loadMasks(dir: string): Promise<Uint8Array> {
-  const r = await fetch(`${dir}masks-512.u8`)
-  if (!r.ok) throw new Error('no masks for contrastTest')
-  return new Uint8Array(await r.arrayBuffer())
+/** Test path only (contrastTest): 512² masks in canvas order, bit 0 letters · 1 fill · 2 core,
+ *  built by bake_agent's own target builder, so they are exactly the bake's masks. */
+export async function loadMasks(): Promise<Uint8Array> {
+  const [{ makeTarget }, glyphs, fp] = await Promise.all([import('../../bake/target'), import('../../content/glyphs.json'), import('../../svg/floorplan')])
+  const t = makeTarget(glyphs.default, fp, 512)
+  const m = new Uint8Array(512 * 512)
+  for (let i = 0; i < m.length; i++) m[i] = (t.letters[i] ? 1 : 0) | (t.fill[i] ? 2 : 0) | (t.core[i] ? 4 : 0)
+  return m
 }

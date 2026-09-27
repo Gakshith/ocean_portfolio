@@ -33,7 +33,7 @@ import { uniform } from 'three/tsl'
 import type { Box } from '../../bake/meta'
 import { FpsCut, easeFocus, focusTarget, lerp, s1Camera, s1Light } from '../choreo'
 import { applyPose, fitS1, freeRegions, makeCamera, project, fits, type Rect, type S1Framing, type WBox } from '../framing'
-import { loadMasks, loadMeta, loadSlope, loadTraces } from './data'
+import { loadMasks, loadSlope, loadTraces, meta } from './data'
 import { EXT, SKIRT_EXT, blurMaterial, causticMaterial, floorMaterial, makeUniforms, readbackMaterial, sandMaterial } from './shaders'
 
 export type TierName = 'high' | 'low'
@@ -196,9 +196,8 @@ export async function createEngine(o: EngineOptions) {
   }
 
   // ---------- data ----------
-  const { meta, dir } = await loadMeta()
   let tierName: TierName = o.tier && o.tier !== 'auto' ? o.tier : o.coarse ? 'low' : 'high'
-  const [slopeHi, traces] = await Promise.all([loadSlope(meta, dir, TIERS[tierName].slope), loadTraces(meta, dir)])
+  const [slopeHi, traces] = await Promise.all([loadSlope(TIERS[tierName].slope), loadTraces()])
   let slopes: Partial<Record<512 | 256, DataTexture>> = { [TIERS[tierName].slope]: slopeHi }
   hooks.milestone(3)
 
@@ -492,7 +491,7 @@ export async function createEngine(o: EngineOptions) {
     if (name === tierName) return
     tierName = name
     const T = TIERS[name]
-    if (!slopes[T.slope]) slopes = { ...slopes, [T.slope]: await loadSlope(meta, dir, T.slope) }
+    if (!slopes[T.slope]) slopes = { ...slopes, [T.slope]: await loadSlope(T.slope) }
     await bakeSand()
     build()
     await compileAll()
@@ -697,7 +696,7 @@ export async function createEngine(o: EngineOptions) {
     },
     async contrastTest(given?: Uint8Array) {
       // masks: 512², canvas order (row 0 = north); bit 0 letters, bit 1 fill, bit 2 core
-      const masks = given ?? (await loadMasks(dir))
+      const masks = given ?? (await loadMasks())
       renderStatic()
       const N = 512
       const rb = new RenderTarget(N, N, { type: FloatType, format: RGBAFormat, depthBuffer: false })
@@ -752,6 +751,12 @@ export async function createEngine(o: EngineOptions) {
       }
     },
     renderStatic,
+    /** Test hook: flatten the sand albedo so a screenshot profile measures the light alone. */
+    flatSand(on: boolean) {
+      U.sandAmt.value = on ? 0 : 1
+      dirty = true
+      driver.invalidate()
+    },
     /** Test hooks: the phone cut and a GPU loss, through the same paths the real events take. */
     freeze,
     loseContext() {

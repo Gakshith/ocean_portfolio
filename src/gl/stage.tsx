@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom'
 import { setHas3D } from '../state/motion'
 import { ADV_LINES, ADV_PHONE, CONNECT_SHORT, GAVE_UP, connectLine } from './adv'
 import type { Driver, Engine, EngineOptions } from './engine/engine'
+import bake from '../bake/bake.json'
 import './gl.css'
 
 type Phase = 'loading' | 'live' | 'frozen' | 'failed'
@@ -149,7 +150,7 @@ export function Stage({ t0, driver }: { t0: number; driver: Driver }) {
 
   return (
     <>
-      <img className="gl-poster" src={`${import.meta.env.BASE_URL}bake/poster.avif`} alt="" aria-hidden="true" decoding="async" onError={(e) => (e.currentTarget.hidden = true)} />
+      <img className="gl-poster" src={`${import.meta.env.BASE_URL}${bake.stills.poster}`} alt="" aria-hidden="true" decoding="async" onError={(e) => (e.currentTarget.hidden = true)} />
       <canvas ref={canvas} className="gl-canvas" aria-hidden="true" />
       {slot &&
         adv.length > 0 &&

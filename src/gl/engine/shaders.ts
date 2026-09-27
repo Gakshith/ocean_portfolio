@@ -86,6 +86,8 @@ export function makeUniforms() {
     dispersion: uniform(1),
     bloomLv: uniform(2),
     skirtOn: uniform(0),
+    /** 1 = the sand's ripples and grain; 0 flattens them (test path: seam profiles see light only). */
+    sandAmt: uniform(1),
   }
 }
 export type Uniforms = ReturnType<typeof makeUniforms>
@@ -339,7 +341,7 @@ export function floorMaterial(U: Uniforms, o: FloorOpts) {
     const glow = g3.add(g5).mul(wDie)
 
     // --- sand: the baked periodic albedo factor (mipmaps take care of the grain far away) ---
-    const alb = mix(C.shade, C.sun, sandTex.sample(p.mul(0.5)).r.mul(0.72).add(0.36))
+    const alb = mix(C.shade, C.sun, mix(float(0.5), sandTex.sample(p.mul(0.5)).r.mul(0.72).add(0.36), U.sandAmt))
 
     const c = vec3(I, I, I).toVar()
     // --- dispersion (high tier, while focused): 3 samples of the one RT along the light
