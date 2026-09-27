@@ -305,6 +305,13 @@ Typed stubs: `src/scroll/{clock,scroll,windows,index}.ts` and the phase 2 fields
 - **R-P2-14 · One name geometry.** The Still-path S2 die map (`src/svg/DieMap.tsx`) and S7 atoll
   (`src/svg/Atoll.tsx`) draw the name from `bake.json`'s letter box (~82 die units), the same as the
   bake and the 3D. Owner: bake_agent, in step 6.
+- **R-P2-15 · 1024² field for the high tier (provisional, R-09 invoked).** Measured: the 512² solve
+  itself ghosts strokes at 6.5 texels/track (not f16, not the renderer); the 1024² solve is
+  single-edged. Offline stills use 1024². Live: the high tier loads `slope-1024.f16`. Low tier and
+  phones get `slope-512.f16`: whichever renders the name better, a 2×2 downsample of the 1024
+  solve or the native 512 solve. Loads after first paint. Re-rule if the high-tier transfer is
+  > 4.5 MB or the focus drops below 60 fps. The floor shader masks metal out of the letters'
+  keep-out, the same as the Still.
 
 ## Phase 2 gates (in addition to phase 1's)
 
