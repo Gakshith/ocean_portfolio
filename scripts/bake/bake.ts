@@ -14,7 +14,7 @@ import G from '../../src/content/glyphs.json' with { type: 'json' }
 import * as fp from '../../src/svg/floorplan.ts'
 import { BAND_OF_DIE_MEAN, LUM, TEXELS_PER_TRACK, makeTarget, tracesMask } from '../../src/bake/target.ts'
 import type { BakeMeta, Box } from '../../src/bake/meta.ts'
-import { BAKE_SCHEDULE, DEPTH, ETA, STILL_SCHEDULE, downsample2, packRG16F, solveField, toF32, unpackRG16F } from './field.ts'
+import { DEPTH, ETA, FIELD_SCHEDULE, downsample2, downsampleField, packRG16F, solveField, toF32, unpackRG16F } from './field.ts'
 import { contrast, precision, seam, tileIntensity } from './metrics.ts'
 import { FOCUSED, HOLD, shade, swell, toBytes, type MetalBlock } from './shade.ts'
 
@@ -44,15 +44,21 @@ export async function bake(): Promise<Map<string, Uint8Array>> {
   const out = new Map<string, Uint8Array>()
   const t = makeTarget(G, fp, N)
   log(`target: die mean ${t.dieMean.toFixed(4)}, band ${BAND_OF_DIE_MEAN} × die mean`)
-  const field = solveField(t, (d, n, e) => process.stderr.write(`\rsolve ${d}/${n} err ${e}   `))
-  log(`\nsolve: ${field.ms} ms, err ${field.errs[0]} → ${field.errs[field.errs.length - 1]}`)
+  // One solve, at 1024² (13 texels per track, R-P2-15). The runtime fields are it averaged down:
+  // a native 512² solve leaves ghost fold lines around the strokes; this one does not.
+  const t2 = makeTarget(G, fp, 2 * N)
+  const f2 = solveField(t2, (d, n, e) => process.stderr.write(`\rsolve 1024² ${d}/${n} err ${e}   `))
+  log(`\nsolve: ${f2.ms} ms, err ${f2.errs[0]} → ${f2.errs[f2.errs.length - 1]}`)
+  const field = downsampleField(f2)
 
   // --- the field -------------------------------------------------------------------------
+  const slope1024 = packRG16F(f2.gx, f2.gy, 2 * N)
   const slope512 = packRG16F(field.gx, field.gy, N)
   const slope256 = packRG16F(downsample2(field.gx, N), downsample2(field.gy, N), N / 2)
   const wide = tracesMask(t)
   const traces = new Uint8Array(N * N)
   for (let j = 0; j < N; j++) for (let x = 0; x < N; x++) traces[j * N + x] = Math.round(255 * wide[(N - 1 - j) * N + x])
+  out.set('public/bake/slope-1024.f16', slope1024)
   out.set('public/bake/slope-512.f16', slope512)
   out.set('public/bake/slope-256.f16', slope256)
   out.set('public/bake/traces-512.u8', traces)
@@ -68,12 +74,12 @@ export async function bake(): Promise<Map<string, Uint8Array>> {
   log(`contrast LF ${con.LF.toFixed(2)} LC ${con.LC.toFixed(1)} · f16 ${(pre.rms * 100).toFixed(1)}% rms, ${(pre.pxOff10 * 100).toFixed(2)}% px off >10%`)
   log(`seam: band I ${sm.bandI.toFixed(3)} (±${sm.bandMaxDev.toFixed(3)}), last 3 texels ${sm.last3TexelsMaxDev.toFixed(3)}, outside ${sm.outsideMaxDev.toFixed(3)}, crop vs full ${(sm.cropRms * 100).toFixed(2)}% · edge normal ${field.edgeNormalTexels.toFixed(3)} / tangential ${field.edgeTangentialTexels.toFixed(1)} texels`)
 
-  // --- the stills' field (R-09: offline only, never shipped) ------------------------------
-  const t2 = makeTarget(G, fp, 2 * N)
-  const f2 = solveField(t2, (d, n, e) => process.stderr.write(`\rstills solve ${d}/${n} err ${e}   `), STILL_SCHEDULE)
-  const stillSlope = { N: 2 * N, gx: f2.gx, gy: f2.gy }
+  // --- the high tier's own field, and the stills' ---------------------------------------
+  // The stills render from slope-1024.f16 itself, the file the high tier ships, so the footer's
+  // "a surface solved the same way" is literal on every tier (R-P2-08).
+  const stillSlope = { N: 2 * N, ...unpackRG16F(slope1024, 2 * N) }
   const c2 = contrast(t2, tileIntensity(stillSlope))
-  log(`\nstills field 1024²: ${f2.ms} ms, err ${f2.errs[f2.errs.length - 1]}, LF ${c2.LF.toFixed(2)} LC ${c2.LC.toFixed(1)}`)
+  log(`slope-1024 (f16): LF ${c2.LF.toFixed(2)} LC ${c2.LC.toFixed(1)}`)
 
   // --- geometry in world p-space -----------------------------------------------------------
   const s = (t.die.s * 2) / N
@@ -89,7 +95,7 @@ export async function bake(): Promise<Map<string, Uint8Array>> {
   // Stills: the 1024² field through the live floor, its die RT at ~the output's density (2048²).
   const still = (b: Box, W: number, look = FOCUSED, fade?: (x: number, y: number) => number) => {
     const v = view(b, W)
-    const rgb = shade({ view: v, slope: stillSlope, look, blocks: metalBlocks, meshHalf: RT_EXT, meshStep: 2 / stillSlope.N, rt: { res: 2048, half: RT_EXT }, fade })
+    const rgb = shade({ view: v, slope: stillSlope, look, blocks: metalBlocks, meshHalf: RT_EXT, meshStep: 2 / stillSlope.N, rt: { res: 2048, half: RT_EXT }, fade, traces: { N, wide } })
     return { v, rgb: toBytes(rgb) }
   }
   const sizes: Record<string, number> = {}
@@ -167,7 +173,8 @@ export async function bake(): Promise<Map<string, Uint8Array>> {
   const sha = (b: Uint8Array) => createHash('sha256').update(b).digest('hex')
   const meta: BakeMeta = {
     version: 1,
-    sha256: { slope512: sha(slope512), slope256: sha(slope256), traces: sha(traces) },
+    sha256: { slope1024: sha(slope1024), slope512: sha(slope512), slope256: sha(slope256), traces: sha(traces) },
+    fields: { 1024: 'bake/slope-1024.f16', 512: 'bake/slope-512.f16', 256: 'bake/slope-256.f16' },
     optics: { depth: DEPTH, eta: ETA },
     tile: { N, world: [-1, 1], texel: 2 / N, rtExt: RT_EXT },
     lagoon: { slopeZeroOutside: 1, seamAt: 3 },
@@ -194,11 +201,12 @@ export async function bake(): Promise<Map<string, Uint8Array>> {
       last3TexelsMaxDev: +sm.last3TexelsMaxDev.toFixed(4),
       outsideMaxDev: +sm.outsideMaxDev.toFixed(4),
       s1Display: s1Contrast,
-      stillsField: { N: 2 * N, errLast: f2.errs[f2.errs.length - 1], LF: +c2.LF.toFixed(2), LC: +c2.LC.toFixed(1), schedule: STILL_SCHEDULE.map((r) => [...r]) },
+      stillsFrom: sha(slope1024),
+      field1024: { LF: +c2.LF.toFixed(2), LC: +c2.LC.toFixed(1) },
       solve: {
-        method: 'neumann-mirror-1024',
+        method: 'neumann-mirror-2048, shipped 512²/256² = 2×2/4×4 box of the 1024² solve',
         bandOfDieMean: BAND_OF_DIE_MEAN,
-        schedule: BAKE_SCHEDULE.map((r) => [...r]),
+        schedule: FIELD_SCHEDULE.map((r) => [...r]),
         errFirst: field.errs[0],
         errLast: field.errs[field.errs.length - 1],
       },

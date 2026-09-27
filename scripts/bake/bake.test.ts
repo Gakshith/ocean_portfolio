@@ -11,7 +11,7 @@ import * as fp from '../../src/svg/floorplan'
 import { makeTarget, TEXELS_PER_TRACK, type Target } from '../../src/bake/target'
 import meta from '../../src/bake/bake.json'
 import stills from '../../src/bake/stills.json'
-import { downsample2, fromHalf, packRG16F, solveField, toF32, toHalf, unpackRG16F, type Field } from './field'
+import { downsample2, downsampleField, fromHalf, packRG16F, solveField, toF32, toHalf, unpackRG16F, type Field } from './field'
 import { contrast, precision, seam, tileIntensity } from './metrics'
 
 const ROOT = join(__dirname, '../..')
@@ -20,14 +20,17 @@ const sha = (b: Uint8Array) => createHash('sha256').update(b).digest('hex')
 const N = 512
 
 let t: Target
+let f2: Field
 let field: Field
 let shipped: { N: number; gx: Float64Array; gy: Float64Array }
 
+// One solve at 1024² (R-P2-15); the shipped 512² and 256² fields are it averaged down.
 beforeAll(() => {
   t = makeTarget(G, fp, N)
-  field = solveField(t)
+  f2 = solveField(makeTarget(G, fp, 2 * N))
+  field = downsampleField(f2)
   shipped = { N, ...unpackRG16F(pub('slope-512.f16'), N) }
-}, 300_000)
+}, 900_000)
 
 describe('RG16F encoding', () => {
   it('rounds to nearest even exactly like the platform half type', () => {
@@ -38,6 +41,11 @@ describe('RG16F encoding', () => {
 
 describe('the shipped field', () => {
   it('is what a fresh solve produces, byte for byte', () => {
+    expect(sha(packRG16F(f2.gx, f2.gy, 2 * N))).toBe(meta.sha256.slope1024)
+    expect(sha(pub('slope-1024.f16'))).toBe(meta.sha256.slope1024)
+    expect(pub('slope-1024.f16').length).toBe(4 * N * N * 4)
+    // The stills are rendered from exactly this file (R-P2-08: one surface on every tier).
+    expect(meta.acceptance.stillsFrom).toBe(meta.sha256.slope1024)
     const fresh = packRG16F(field.gx, field.gy, N)
     expect(sha(fresh)).toBe(meta.sha256.slope512)
     expect(sha(pub('slope-512.f16'))).toBe(meta.sha256.slope512)

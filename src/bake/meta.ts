@@ -7,7 +7,9 @@ export type Box = { x0: number; y0: number; x1: number; y1: number }
 
 export interface BakeMeta {
   version: 1
-  sha256: { slope512: string; slope256: string; traces: string }
+  sha256: { slope1024: string; slope512: string; slope256: string; traces: string }
+  /** Every shipped slope field by resolution (R-P2-15): 1024 for the high tier, 512, 256. */
+  fields: Record<1024 | 512 | 256, string>
   optics: { depth: number; eta: number }
   tile: { N: 512; world: [number, number]; texel: number; rtExt: number }
   lagoon: { slopeZeroOutside: number; seamAt: number }
@@ -49,8 +51,10 @@ export interface BakeMeta {
     outsideMaxDev: number
     /** Letter / fill / core contrast measured on the shaded s1 still's pixels. */
     s1Display: { LF: number; LC: number }
-    /** The offline stills' own 1024² field (R-09): it never ships to the runtime. */
-    stillsField: { N: number; errLast: number; LF: number; LC: number; schedule: number[][] }
+    /** sha256 of the field the stills were rendered from: always slope-1024.f16's. */
+    stillsFrom: string
+    /** slope-1024.f16 (high tier) measured on its own. */
+    field1024: { LF: number; LC: number }
     solve: { method: string; bandOfDieMean: number; schedule: number[][]; errFirst: number; errLast: number }
   }
   stills: {
