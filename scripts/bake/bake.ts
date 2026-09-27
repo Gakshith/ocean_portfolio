@@ -14,9 +14,9 @@ import G from '../../src/content/glyphs.json' with { type: 'json' }
 import * as fp from '../../src/svg/floorplan.ts'
 import { BAND_OF_DIE_MEAN, LUM, TEXELS_PER_TRACK, makeTarget, tracesMask } from '../../src/bake/target.ts'
 import type { BakeMeta, Box } from '../../src/bake/meta.ts'
-import { BAKE_SCHEDULE, DEPTH, ETA, downsample2, packRG16F, solveField, toF32, unpackRG16F } from './field.ts'
+import { BAKE_SCHEDULE, DEPTH, ETA, STILL_SCHEDULE, downsample2, packRG16F, solveField, toF32, unpackRG16F } from './field.ts'
 import { contrast, precision, seam, tileIntensity } from './metrics.ts'
-import { FOCUSED, shade, swell, toBytes, type MetalBlock } from './shade.ts'
+import { FOCUSED, HOLD, shade, swell, toBytes, type MetalBlock } from './shade.ts'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..')
 const PUB = join(ROOT, 'public/bake')
@@ -68,6 +68,13 @@ export async function bake(): Promise<Map<string, Uint8Array>> {
   log(`contrast LF ${con.LF.toFixed(2)} LC ${con.LC.toFixed(1)} · f16 ${(pre.rms * 100).toFixed(1)}% rms, ${(pre.pxOff10 * 100).toFixed(2)}% px off >10%`)
   log(`seam: band I ${sm.bandI.toFixed(3)} (±${sm.bandMaxDev.toFixed(3)}), last 3 texels ${sm.last3TexelsMaxDev.toFixed(3)}, outside ${sm.outsideMaxDev.toFixed(3)}, crop vs full ${(sm.cropRms * 100).toFixed(2)}% · edge normal ${field.edgeNormalTexels.toFixed(3)} / tangential ${field.edgeTangentialTexels.toFixed(1)} texels`)
 
+  // --- the stills' field (R-09: offline only, never shipped) ------------------------------
+  const t2 = makeTarget(G, fp, 2 * N)
+  const f2 = solveField(t2, (d, n, e) => process.stderr.write(`\rstills solve ${d}/${n} err ${e}   `), STILL_SCHEDULE)
+  const stillSlope = { N: 2 * N, gx: f2.gx, gy: f2.gy }
+  const c2 = contrast(t2, tileIntensity(stillSlope))
+  log(`\nstills field 1024²: ${f2.ms} ms, err ${f2.errs[f2.errs.length - 1]}, LF ${c2.LF.toFixed(2)} LC ${c2.LC.toFixed(1)}`)
+
   // --- geometry in world p-space -----------------------------------------------------------
   const s = (t.die.s * 2) / N
   const o = -1 + (t.die.d0 * 2) / N
@@ -79,9 +86,11 @@ export async function bake(): Promise<Map<string, Uint8Array>> {
 
   // --- stills --------------------------------------------------------------------------------
   const view = (b: Box, W: number) => ({ ...b, W, H: Math.round((W * (b.y1 - b.y0)) / (b.x1 - b.x0)) })
+  // Stills: the 1024² field through the live floor, its die RT at ~the output's density (2048²).
   const still = (b: Box, W: number, look = FOCUSED, fade?: (x: number, y: number) => number) => {
     const v = view(b, W)
-    return { v, rgb: toBytes(shade({ view: v, slope: shipped, look, blocks: metalBlocks, meshHalf: RT_EXT, fade })) }
+    const rgb = shade({ view: v, slope: stillSlope, look, blocks: metalBlocks, meshHalf: RT_EXT, meshStep: 2 / stillSlope.N, rt: { res: 2048, half: RT_EXT }, fade })
+    return { v, rgb: toBytes(rgb) }
   }
   const sizes: Record<string, number> = {}
   const put = (name: string, buf: Uint8Array) => {
@@ -89,8 +98,9 @@ export async function bake(): Promise<Map<string, Uint8Array>> {
     sizes[name] = buf.length
   }
 
-  // S1: the focused frame, plan view, the die plus 4 die units (the SVG still's viewBox).
-  const s1 = still(du(-4, -4, 104, 104), 1600)
+  // S1: the hold (P 0.45–0.55): focused, camera flat over the die, the name alone in light, no
+  // metal yet. Plan view, the die plus 4 die units (the page masks that margin into the ground).
+  const s1 = still(du(-4, -4, 104, 104), 1600, HOLD)
   const s1Budget = 60_000
   const s1Set: [number, string][] = []
   for (const w of [640, 1024, 1600]) {
@@ -101,10 +111,21 @@ export async function bake(): Promise<Map<string, Uint8Array>> {
   }
   const s1Contrast = displayContrast(s1.rgb, s1.v, t)
 
-  // Poster: P = 0, the sunlit shimmer (swell only, sand at full ambient), 16:10, cover-cropped.
-  // The swell is analytic, so its mesh runs 4× finer than the die's: no faceted cusps.
-  const pv = { x0: -2, x1: 2, y0: -1.25, y1: 1.25, W: 1600, H: 1000 }
-  const posterRgb = toBytes(shade({ view: pv, slope: null, look: { f: 0, amb: 0.35, exp: 1.6, bloom: 0, rise: 0, swell: swell(0) }, blocks: [], meshHalf: 2.4, meshStep: 2 / 2048 }))
+  // Poster: P = 0, the live opening frame (webgl_agent's camera at 1440×900: fov 35°, tilt 28°,
+  // fitted view offset), the swell at t = 0, the die RT plus the folded sea RT, the lens falloff.
+  // One file, cover-cropped at every viewport; the perspective breaks up the tile repeat.
+  const pv = { x0: 0, x1: 1, y0: 0, y1: 1, W: 1600, H: 1000 }
+  const posterRgb = toBytes(
+    shade({
+      view: pv,
+      slope: null,
+      look: { f: 0, amb: 0.35, exp: 1.6, bloom: 0, rise: 0, swell: swell(0) },
+      blocks: [],
+      meshHalf: RT_EXT,
+      pixelToWorld: openingCamera(pv.W, pv.H),
+      vignette: true,
+    }),
+  )
   const poster = await avif(posterRgb, pv.W, pv.H, 60_000)
   put('poster.avif', poster.buf)
   log(`poster: ${poster.buf.length} B (q${poster.quality})`)
@@ -173,6 +194,7 @@ export async function bake(): Promise<Map<string, Uint8Array>> {
       last3TexelsMaxDev: +sm.last3TexelsMaxDev.toFixed(4),
       outsideMaxDev: +sm.outsideMaxDev.toFixed(4),
       s1Display: s1Contrast,
+      stillsField: { N: 2 * N, errLast: f2.errs[f2.errs.length - 1], LF: +c2.LF.toFixed(2), LC: +c2.LC.toFixed(1), schedule: STILL_SCHEDULE.map((r) => [...r]) },
       solve: {
         method: 'neumann-mirror-1024',
         bandOfDieMean: BAND_OF_DIE_MEAN,
@@ -200,6 +222,37 @@ export async function bake(): Promise<Map<string, Uint8Array>> {
   const manifest = [...out].filter(([k]) => k.startsWith('public/')).map(([k, v]) => `${sha(v)}  ${k.slice('public/bake/'.length)}`)
   out.set('public/bake/manifest.sha256', new TextEncoder().encode(manifest.join('\n') + '\n'))
   return out
+}
+
+/** webgl's P = 0 camera at the 1440×900 reference (three.js conventions: up (0,0,−1), camera
+ *  south of the die looking north, setViewOffset(1440, 900, −306.27, −28, 1440, 900)). Maps an
+ *  output pixel to the floor point it sees, p = (x, −z); null above the horizon. */
+function openingCamera(W: number, H: number) {
+  const fullW = 1440
+  const fullH = 900
+  const offX = -306.27
+  const offY = -28
+  const pos = [0, 2.6245, 1.3955]
+  const tanH = Math.tan(((35 / 2) * Math.PI) / 180)
+  const aspect = fullW / fullH
+  const norm = (v: number[]) => {
+    const l = Math.hypot(v[0], v[1], v[2])
+    return v.map((c) => c / l)
+  }
+  const cross = (a: number[], b: number[]) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+  const z = norm(pos)
+  const x = norm(cross([0, 0, -1], z))
+  const y = cross(z, x)
+  return (u: number, v: number): [number, number] | null => {
+    const nx = (((u * fullW) / W + offX) / fullW) * 2 - 1
+    const ny = 1 - (((v * fullH) / H + offY) / fullH) * 2
+    const dx = nx * tanH * aspect
+    const dy = ny * tanH
+    const d = [0, 1, 2].map((i) => x[i] * dx + y[i] * dy - z[i])
+    if (d[1] >= 0) return null
+    const k = -pos[1] / d[1]
+    return [pos[0] + d[0] * k, -(pos[2] + d[2] * k)]
+  }
 }
 
 function smoothstep(a: number, b: number, x: number) {

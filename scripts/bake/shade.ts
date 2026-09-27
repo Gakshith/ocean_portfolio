@@ -39,6 +39,9 @@ export interface Look {
 }
 /** P ≥ 0.9: focused, stopped down, bloom on, metal at 35% (the frozen frame). */
 export const FOCUSED: Look = { f: 1, amb: 0.02, exp: 0.42, bloom: 1, rise: 1 }
+/** P 0.45–0.55, the hold: focused and stopped down, the camera flat over the die, no metal yet.
+ *  The S1 still uses this frame: the name alone, printed in light. */
+export const HOLD: Look = { ...FOCUSED, rise: 0 }
 
 export interface MetalBlock {
   layer: 'm1-copper' | 'm2-violet' | 'm3-oxide'
@@ -50,19 +53,26 @@ export interface MetalBlock {
 }
 
 const fract = (x: number) => x - Math.floor(x)
+const mod = (x: number, m: number) => x - m * Math.floor(x / m)
 const hash = (x: number, y: number) => fract(Math.sin(x * 127.1 + y * 311.7) * 43758.5453)
-function noise(x: number, y: number) {
+/** Value noise whose lattice wraps every `period` cells (webgl's noiseP), so the tile repeats. */
+function noiseP(x: number, y: number, period: number) {
   const ix = Math.floor(x)
   const iy = Math.floor(y)
   let fx = x - ix
   let fy = y - iy
   fx = fx * fx * (3 - 2 * fx)
   fy = fy * fy * (3 - 2 * fy)
-  const a = hash(ix, iy)
-  const b = hash(ix + 1, iy)
-  const c = hash(ix, iy + 1)
-  const d = hash(ix + 1, iy + 1)
-  return (a + (b - a) * fx) * (1 - fy) + (c + (d - c) * fx) * fy
+  const h = (i: number, j: number) => hash(mod(ix + i, period), mod(iy + j, period))
+  return (h(0, 0) + (h(1, 0) - h(0, 0)) * fx) * (1 - fy) + (h(0, 1) + (h(1, 1) - h(0, 1)) * fx) * fy
+}
+/** The sand's albedo factor, periodic over the 2×2 tile (webgl's sandMaterial, un-quantised). */
+export function sandT(px: number, py: number): number {
+  const x = mod(px, 2)
+  const y = mod(py, 2)
+  const rip = Math.sin(x * 12 * Math.PI + y * 3 * Math.PI + noiseP(x * 6, y * 6, 12) * 5) * 0.5 + 0.5
+  const grain = hash(mod(Math.floor(x * 700), 1400), mod(Math.floor(y * 700), 1400))
+  return rip * noiseP(x * 3 + 2, y * 3 + 2, 6) * 0.22 + 0.5 + grain * 0.14
 }
 const smooth = (a: number, b: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
@@ -91,6 +101,34 @@ function box(src: Float64Array, W: number, H: number, r: number): Float64Array {
       s += t[Math.min(H - 1, y + R + 1) * W + x] - t[Math.max(0, y - R) * W + x]
     }
   }
+  return o
+}
+
+/** Separable Gaussian blur (σ in pixels, ±3σ taps, edges clamped). */
+function gauss(src: Float64Array, W: number, H: number, sigma: number): Float64Array {
+  const R = Math.max(1, Math.ceil(sigma * 3))
+  const k: number[] = []
+  let sum = 0
+  for (let d = -R; d <= R; d++) {
+    const w = Math.exp(-(d * d) / (2 * sigma * sigma))
+    k.push(w)
+    sum += w
+  }
+  for (let i = 0; i < k.length; i++) k[i] /= sum
+  const t = new Float64Array(W * H)
+  const o = new Float64Array(W * H)
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      let a = 0
+      for (let d = -R; d <= R; d++) a += src[y * W + Math.min(W - 1, Math.max(0, x + d))] * k[d + R]
+      t[y * W + x] = a
+    }
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      let a = 0
+      for (let d = -R; d <= R; d++) a += t[Math.min(H - 1, Math.max(0, y + d)) * W + x] * k[d + R]
+      o[y * W + x] = a
+    }
   return o
 }
 
@@ -132,65 +170,143 @@ export interface ShadeInput {
   blocks: readonly MetalBlock[]
   /** Mesh half extent (world); must cover the view plus the light's reach. */
   meshHalf: number
-  /** Vertex spacing (world). The die's is the slope texel (2/512); an analytic swell can go finer. */
+  /** Vertex spacing (world). The die's is the slope texel (2/512); the sea mesh runs coarser. */
   meshStep?: number
+  /** The die's caustic render target, as the GPU pass has it: res² over [-half, half]. */
+  rt?: { res: number; half: number }
+  /** Output pixel centre (x, y in view pixels) → world p-space; default is the plan view. */
+  pixelToWorld?: (x: number, y: number) => [number, number] | null
   /** Optional fade to --floor-deep: returns 0..1 (1 = fully deep) per world point. */
   fade?: (x: number, y: number) => number
+  /** The camera's 8% lens falloff (full-frame renders only, e.g. the poster). */
+  vignette?: boolean
 }
 
-/** Linear RGB, W×H, canvas order. */
+/** The die RT of the high tier (1280² over ±1.25, 512 RT px per world unit). */
+export const DIE_RT = { res: 1280, half: 1.25 }
+
+export interface CausticRT {
+  res: number
+  half: number
+  /** Sun-disc blurred intensity, and the bloom glow (mip 3 · 0.10 + mip 5 · 0.07). */
+  I: Float64Array
+  glow: Float64Array
+}
+
+/** The caustic pass into its RT, then the sun disc (7 taps) and the bloom mips, in RT space. */
+export function causticRT(inp: Pick<ShadeInput, 'slope' | 'look' | 'meshHalf' | 'meshStep'>, rt: { res: number; half: number } = DIE_RT): CausticRT {
+  const { res, half } = rt
+  const raw = renderCaustic({ x0: -half, x1: half, y0: -half, y1: half, W: res, H: res }, {
+    slope: inp.slope,
+    f: inp.look.f,
+    meshHalf: inp.meshHalf,
+    meshStep: inp.meshStep ?? 2 / 512,
+    extra: inp.look.swell,
+  })
+  // The sun is a 0.53° disc, not a point: its image blurs the caustic. The live pass uses a
+  // separable Gaussian of σ = D·0.0093·0.5·0.6 world units on every RT; so does this.
+  const sigma = 2.0 * 0.0093 * 0.5 * 0.6 * (res / (2 * half))
+  const I = gauss(raw, res, res, sigma)
+  // mip 3 and mip 5 of the RT: 8 and 32 RT texels wide.
+  const g3 = box(raw, res, res, 4)
+  const g5 = box(raw, res, res, 16)
+  const glow = new Float64Array(res * res)
+  for (let i = 0; i < glow.length; i++) glow[i] = g3[i] * 0.1 + g5[i] * 0.07
+  return { res, half, I, glow }
+}
+
+/** Bilinear read of an RT at world p (the floor shader's texture2D). Outside: the flat sea, I = 1. */
+function readRT(rt: CausticRT, A: Float64Array, px: number, py: number, outside: number): number {
+  const s = rt.res / (2 * rt.half)
+  const fx = (px + rt.half) * s - 0.5
+  const fy = (rt.half - py) * s - 0.5
+  if (fx < -0.5 || fy < -0.5 || fx > rt.res - 0.5 || fy > rt.res - 0.5) return outside
+  return bil(A, rt.res, rt.res, fx, fy)
+}
+
+/** The proof's foldI: sum the light every neighbouring 2-unit tile throws at p. */
+function fold(rt: CausticRT, A: Float64Array, px: number, py: number): number {
+  const tx = Math.floor((px + 1) / 2)
+  const ty = Math.floor((py + 1) / 2)
+  const ux = px - 2 * tx
+  const uy = py - 2 * ty
+  let acc = 0
+  for (let i = -1; i <= 1; i++)
+    for (let j = -1; j <= 1; j++) {
+      const qx = ux - 2 * i
+      const qy = uy - 2 * j
+      if (Math.abs(qx) <= rt.half && Math.abs(qy) <= rt.half) acc += readRT(rt, A, qx, qy, 0)
+    }
+  return acc
+}
+
+/** The sea RT of the high tier (640² over ±1.25, a 256² mesh over one periodic tile). */
+export const SEA_RT = { res: 640, half: 1.25, meshStep: 2 / 256 }
+
+/** Linear RGB, W×H, canvas order. The composition is webgl's floorMaterial, term for term. */
 export function shade(inp: ShadeInput): Float64Array {
   const { view, look } = inp
+  const die = causticRT(inp, inp.rt ?? DIE_RT)
+  // While the sea moves (the swell), the floor outside the die RT is the folded periodic sea RT;
+  // once it has stopped (every focused still), it is flat sand at I = 1.
+  const sea = look.swell
+    ? causticRT({ slope: null, look, meshHalf: 1, meshStep: SEA_RT.meshStep }, SEA_RT)
+    : null
   const SS = 2
   const W = view.W * SS
   const H = view.H * SS
-  const big = { ...view, W, H }
-  const I0 = renderCaustic(big, { slope: inp.slope, f: look.f, meshHalf: inp.meshHalf, meshStep: inp.meshStep ?? 2 / 512, extra: look.swell })
-  const ppw = W / (view.x1 - view.x0) // pixels per world unit
-  // The sun is a 0.53° disc, not a point: its image blurs the caustic by ~D·0.0093 (7 taps).
-  const rs = 2.0 * 0.0093 * 0.5 * ppw
-  const I = new Float64Array(W * H)
-  for (let y = 0; y < H; y++)
-    for (let x = 0; x < W; x++) {
-      let s = I0[y * W + x] * 2
-      for (let k = 0; k < 6; k++) s += bil(I0, W, H, x + rs * Math.cos(k * 1.0472), y + rs * Math.sin(k * 1.0472))
-      I[y * W + x] = s / 8
-    }
-  // Bloom: the RT's mip 3 and mip 5 (1280² over 2.5 world → 8 and 32 RT texels wide).
-  const g3 = box(I0, W, H, ((8 / 512) * ppw) / 2)
-  const g5 = box(I0, W, H, ((32 / 512) * ppw) / 2)
+  const toWorld =
+    inp.pixelToWorld ??
+    ((x: number, y: number): [number, number] => [
+      view.x0 + (x / view.W) * (view.x1 - view.x0),
+      view.y1 - (y / view.H) * (view.y1 - view.y0),
+    ])
   const out = new Float64Array(view.W * view.H * 3)
   for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
-      const i = y * W + x
-      const px = view.x0 + (x + 0.5) / ppw
-      const py = view.y1 - (y + 0.5) / ppw
-      const rip = Math.sin(px * 38 + py * 9 + noise(px * 6, py * 6) * 5) * 0.5 + 0.5
-      const grain = hash(Math.floor(px * 700), Math.floor(py * 700))
-      const m = 0.5 + 0.22 * rip * noise(px * 3 + 2, py * 3 + 2) + 0.14 * grain
-      const c = I[i]
-      const glow = (g3[i] * 0.1 + g5[i] * 0.07) * look.bloom
-      const inTile = Math.abs(px) < 1 && Math.abs(py) < 1
-      const lay = inTile && look.rise > 0 ? metal(inp.blocks, px, py) : null
+      const o = ((y >> 1) * view.W + (x >> 1)) * 3
+      const u = (x + 0.5) / SS
+      const v = (y + 0.5) / SS
+      const pw = toWorld(u, v)
+      if (!pw) {
+        for (let ch = 0; ch < 3; ch++) out[o + ch] += C.floor[ch] / (SS * SS)
+        continue
+      }
+      const [px, py] = pw
+      const r = Math.max(Math.abs(px), Math.abs(py))
+      const wDie = 1 - smooth(1.15, 1.25, r)
+      const Idie = readRT(die, die.I, px, py, 0)
+      const outer = sea ? fold(sea, sea.I, px, py) : 1
+      const c = outer + (Idie - outer) * wDie
+      const glow = readRT(die, die.glow, px, py, 0) * wDie * look.bloom
+      const m = sandT(px, py)
+      const lay = r < 1 && look.rise > 0 ? metal(inp.blocks, px, py) : null
       const la = lay ? lay[1] * (1 - smooth(1.2, 2.5, c)) * 0.35 * look.rise : 0
       const fd = inp.fade ? inp.fade(px, py) : 0
-      const o = ((y >> 1) * view.W + (x >> 1)) * 3
+      const far = smooth(5, 9, Math.hypot(px, py)) // the far field fades to the unlit floor
+      const lens = inp.vignette ? 1 - smooth(0.35, 1, Math.hypot(u / view.W - 0.5, v / view.H - 0.5) * 1.4) * 0.08 : 1
       for (let ch = 0; ch < 3; ch++) {
         const alb = C.shade[ch] + (C.sun[ch] - C.shade[ch]) * m
-        let v = alb * (look.amb * C.cool[ch] + c * C.light[ch]) + glow * C.light[ch]
-        v = Math.pow(1 - Math.exp(-v * look.exp), 1.3)
-        if (lay) v = v + (lay[0][ch] - v) * la
-        v = v + (C.deep[ch] - v) * fd
-        out[o + ch] += v / (SS * SS)
+        let val = alb * (look.amb * C.cool[ch] + c * C.light[ch]) + glow * C.light[ch]
+        val = Math.pow(1 - Math.exp(-val * look.exp), 1.3)
+        if (lay) val = val + (lay[0][ch] - val) * la
+        val = val + (C.floor[ch] - val) * far
+        val = Math.min(1, val * lens)
+        val = val + (C.deep[ch] - val) * fd
+        out[o + ch] += val / (SS * SS)
       }
     }
   return out
 }
 
-/** Linear → the proof's output encoding (pow 1/2.2), 8-bit RGB. */
+/** Linear → sRGB 8-bit (the exact curve the renderer's output encoding applies). */
 export function toBytes(lin: Float64Array): Uint8Array {
   const b = new Uint8Array(lin.length)
-  for (let i = 0; i < lin.length; i++) b[i] = Math.max(0, Math.min(255, Math.round(255 * Math.pow(Math.max(0, lin[i]), 1 / 2.2))))
+  for (let i = 0; i < lin.length; i++) {
+    const v = Math.min(1, Math.max(0, lin[i]))
+    const e = v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055
+    b[i] = Math.round(255 * e)
+  }
   return b
 }
 
