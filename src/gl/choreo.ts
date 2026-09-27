@@ -1,5 +1,6 @@
 // SM-1 choreography: everything in the hero is a pure function of the S1 pin progress P
 // (plan S1 "Motion", 03-motion SM-1 timing table). No three.js here, so it unit-tests cheaply.
+import { OPENING_TILT_DEG } from './pose'
 
 export const clamp01 = (x: number) => Math.min(1, Math.max(0, x))
 /** Progress of x through [a, b], clamped. */
@@ -11,7 +12,7 @@ export const ease2 = (x: number) => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x +
 export const smooth = (x: number) => x * x * (3 - 2 * x)
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 
-export const TILT = (28 * Math.PI) / 180
+export const TILT = (OPENING_TILT_DEG * Math.PI) / 180
 
 /** The focus the scroll asks for: 0 → 1 over P 0.05 → 0.45, power3.inOut. */
 export const focusTarget = (P: number) => ease3(range(P, 0.05, 0.45))

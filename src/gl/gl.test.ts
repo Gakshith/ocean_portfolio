@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { ADV_LINES, advData, crc, crc24, header, pdu } from './adv'
 import { FpsCut, TILT, ease3, easeFocus, focusTarget, range, s1Camera, s1Light } from './choreo'
 import { applyPose, fitS1, fits, freeRegions, makeCamera, project } from './framing'
+import { FOV_DEG, OPENING_POSE } from './pose'
 
 describe('ADV_IND packet', () => {
   it('is a legacy ADV_IND with a random static address, 17/31 bytes of AdvData', () => {
@@ -113,5 +114,26 @@ describe('phone cut 4: < 45 fps for 2s', () => {
     let f2 = false
     for (let t = 0; t < 5000; t += 20) f2 ||= ok.push(20)
     expect(f2).toBe(false)
+  })
+})
+
+describe('the P 0 opening pose the poster is baked from (src/gl/pose.ts)', () => {
+  it('the fitted 1440×900 framing reproduces OPENING_POSE', async () => {
+    const bake = (await import('../bake/bake.json')).default
+    const d = bake.die.box
+    const m = 0.016 // the engine's die margin
+    const regions = freeRegions(1440, 900, 56, 900, { x0: 63, y0: 304, x1: 596.546875, y1: 772 })
+    const c = fitS1(makeCamera(), bake.letters.box, { x0: d.x0 - m, y0: d.y0 - m, x1: d.x1 + m, y1: d.y1 + m }, regions, TILT, 1440, 900)!
+    expect(c.region.name).toBe('right of plate')
+    expect(c.near).toBeCloseTo(OPENING_POSE.dist, 6)
+    expect(c.cx).toBeCloseTo(OPENING_POSE.screen.x, 4)
+    expect(c.cy).toBeCloseTo(OPENING_POSE.screen.y, 4)
+    expect(c.target).toEqual({ x: 0, y: 0 })
+    const cam = makeCamera()
+    applyPose(cam, { tx: 0, ty: 0, dist: c.near, tilt: TILT, cx: c.cx, cy: c.cy }, 1440, 900)
+    OPENING_POSE.position.forEach((v, i) => expect(cam.position.getComponent(i)).toBeCloseTo(v, 6))
+    expect(cam.view!.offsetX).toBeCloseTo(OPENING_POSE.viewOffset[2], 4)
+    expect(cam.view!.offsetY).toBeCloseTo(OPENING_POSE.viewOffset[3], 4)
+    expect(cam.fov).toBe(FOV_DEG)
   })
 })

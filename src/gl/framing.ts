@@ -4,6 +4,7 @@
 // two distances is a pure vertical move. Every camera stop (S1 letters, S1 die, S2 die, S7 south
 // half, and the step-9 blocks) is "this world box in that DOM rect".
 import { PerspectiveCamera, Vector3 } from 'three/webgpu'
+import { FAR, FOV_DEG, NEAR, UP } from './pose'
 
 /** Screen px, y down. */
 export interface Rect {
@@ -32,11 +33,9 @@ export interface Pose {
   cy: number
 }
 
-export const FOV = 35
-
 export function makeCamera() {
-  const cam = new PerspectiveCamera(FOV, 1, 0.05, 80)
-  cam.up.set(0, 0, -1)
+  const cam = new PerspectiveCamera(FOV_DEG, 1, NEAR, FAR)
+  cam.up.set(UP[0], UP[1], UP[2])
   return cam
 }
 
