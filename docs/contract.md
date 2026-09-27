@@ -262,7 +262,7 @@ Typed stubs: `src/scroll/{clock,scroll,windows,index}.ts` and the phase 2 fields
 
 - **R-P2-01 · Entry budget.** Entry HTML+CSS was 29.3 / 30 KB gzip at the freeze. All gl and
   loader CSS ships lazily with the 3D chunk (`src/gl/gl.css`, every rule scoped under
-  `html[data-still="false"]`). New entry CSS must fit the headroom. The reviewer gates on it.
+  `html[data-gl]`, which follows the chunk's lifecycle: live, frozen, failed). New entry CSS must fit the headroom. The reviewer gates on it.
 - **R-P2-02 · The toggle shows the effective state**, plus why 3D is off (`off3D`). The phase 1
   "Still OFF" while `data-still=true` goes away.
 - **R-P2-03 · `?3d=1` = pressing "Turn on 3D".** It overrides the default-off gate, the
@@ -312,6 +312,15 @@ Typed stubs: `src/scroll/{clock,scroll,windows,index}.ts` and the phase 2 fields
   solve or the native 512 solve. Loads after first paint. Re-rule if the high-tier transfer is
   > 4.5 MB or the focus drops below 60 fps. The floor shader masks metal out of the letters'
   keep-out, the same as the Still.
+- **R-P2-16 · No long tasks before the 3D default flips.** Flipping `DEFAULT_3D` to true requires,
+  in a prod build with a longtask observer from chunk start to live: 0 tasks > 50 ms, 3 runs per
+  backend. (At #9 review: up to 324 ms on WebGL2, 51–93 ms on WebGPU.) WebGL2 without
+  `KHR_parallel_shader_compile` starts on the low tier or stays Still. Not a merge gate while
+  `DEFAULT_3D = false`.
+- **R-P2-17 · Honest footer after a freeze.** `html[data-gl="frozen"|"failed"]` shows the Still
+  variant of "How the light works", even though `has3D` stays true (R-P2-10).
+- **R-P2-18 · `?gltest`** (`window.__gl`: freeze, loseContext, setTier) is a named test hook until
+  step 10, then DEV-only.
 
 ## Phase 2 gates (in addition to phase 1's)
 
