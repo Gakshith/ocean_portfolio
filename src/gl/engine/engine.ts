@@ -36,6 +36,9 @@ import { applyPose, fitS1, freeRegions, makeCamera, project, fits, sealGap, seal
 import { loadMasks, loadSlope, loadTraces, meta } from './data'
 import { EXT, SKIRT_EXT, blurMaterial, causticMaterial, floorMaterial, makeUniforms, readbackMaterial, sandMaterial } from './shaders'
 
+// Module evaluated (three.js included): the first stage of the R-P2-16 long-task window.
+performance.mark('gl:engine')
+
 export type TierName = 'high' | 'low'
 export const TIERS = {
   high: { lagoon: 512, sea: 256, skirt: 192, dieRT: 1280, seaRT: 640, skirtRT: 832, disp: 1, bloom: 2, dpr: 2, slope: 512 as const },
@@ -185,6 +188,7 @@ export async function createEngine(o: EngineOptions) {
     hooks.lost()
   }
   renderer.setClearColor(COLORS.floor, 1)
+  performance.mark('gl:init')
   hooks.milestone(2)
 
   // Half-float RTs: always on WebGPU; on WebGL2 they need EXT_color_buffer_(half_)float. Without
@@ -202,6 +206,7 @@ export async function createEngine(o: EngineOptions) {
   let tierName: TierName = o.tier && o.tier !== 'auto' ? o.tier : o.coarse || serialCompile ? 'low' : 'high'
   const [slopeHi, traces] = await Promise.all([loadSlope(TIERS[tierName].slope), loadTraces()])
   let slopes: Partial<Record<512 | 256, DataTexture>> = { [TIERS[tierName].slope]: slopeHi }
+  performance.mark('gl:data')
   hooks.milestone(3)
 
   // ---------- scenes ----------
@@ -226,8 +231,10 @@ export async function createEngine(o: EngineOptions) {
   const rampSkirt = additive(causticMaterial(U, { surface: 'ramp', ext: SKIRT_EXT }))
   const seaMat = additive(causticMaterial(U, { surface: 'sea', ext: EXT }))
 
-  /** The source meshes for the current tier. Each carries the world rect of its sources. */
-  const buildMeshes = () => {
+  /** The source meshes for the current tier. Each carries the world rect of its sources. Built
+   *  one geometry per task (the lagoon lattice alone is ~1.6M indices), so none makes a long task. */
+  const buildMeshes = async () => {
+    performance.mark('gl:meshes')
     for (const sc of [dieScene, seaScene, skirtScene])
       for (const m of [...sc.children] as Mesh[]) {
         m.geometry.dispose()
@@ -237,23 +244,25 @@ export async function createEngine(o: EngineOptions) {
     const hL = 2 / T.lagoon
     const hS = 2 / T.sea
     const hK = 2 / T.skirt
-    const add = (sc: Scene, geo: BufferGeometry & { userData: { rect?: WBox } }, mat: Material, cull: boolean) => {
+    const add = async (sc: Scene, geo: BufferGeometry & { userData: { rect?: WBox } }, mat: Material, cull: boolean) => {
       const m = new Mesh(geo, mat)
       m.frustumCulled = false
       m.userData.rect = geo.userData.rect
       m.userData.cull = cull
       sc.add(m)
+      await yieldTask()
     }
     // die RT: the lagoon + the ring-1 rim, so it's complete out to |p|∞ = 1.25
-    add(dieScene, lattice(-1, -1, 1, 1, hL), lagoonMat(T.slope, EXT), false)
-    for (const g of ring(1, EXT + REACH, hK)) add(dieScene, g, rampDie, true)
+    await add(dieScene, lattice(-1, -1, 1, 1, hL), lagoonMat(T.slope, EXT), false)
+    for (const g of ring(1, EXT + REACH, hK)) await add(dieScene, g, rampDie, true)
     // sea RT: one periodic tile
-    add(seaScene, lattice(-1, -1, 1, 1, hS), seaMat, false)
+    await add(seaScene, lattice(-1, -1, 1, 1, hS), seaMat, false)
     // skirt RT: ring 1, the lagoon's rim and ring 2's rim
     for (let j = -1; j <= 1; j++)
-      for (let i = -1; i <= 1; i++) if (i || j) add(skirtScene, lattice(2 * i - 1, 2 * j - 1, 2 * i + 1, 2 * j + 1, hK), rampSkirt, true)
-    for (const g of ring(1 - REACH, 1, hL)) add(skirtScene, g, lagoonMat(T.slope, SKIRT_EXT), true)
-    for (const g of ring(3, SKIRT_EXT + REACH, hK)) add(skirtScene, g, rampSkirt, true)
+      for (let i = -1; i <= 1; i++) if (i || j) await add(skirtScene, lattice(2 * i - 1, 2 * j - 1, 2 * i + 1, 2 * j + 1, hK), rampSkirt, true)
+    for (const g of ring(1 - REACH, 1, hL)) await add(skirtScene, g, lagoonMat(T.slope, SKIRT_EXT), true)
+    for (const g of ring(3, SKIRT_EXT + REACH, hK)) await add(skirtScene, g, rampSkirt, true)
+    performance.mark('gl:meshes:done')
   }
 
   /** Hide source meshes whose light can't reach the screen. */
@@ -353,15 +362,15 @@ export async function createEngine(o: EngineOptions) {
   floor.frustumCulled = false
   floorScene.add(floor)
 
-  const build = () => {
-    buildMeshes()
+  const build = async () => {
+    await buildMeshes()
     for (const s of [die, sea, skirt]) if (s) for (const r of [s.raw, s.tmp, s.out]) r.dispose()
     allocRTs()
     const old = floor.material as Material
     floor.material = floorMat()
     old.dispose()
   }
-  build()
+  await build()
 
   // ---------- compile, yielding between materials (no long task > 50ms while interactive) ----------
   // Pipelines are keyed by the target's format, so each pass compiles against the RT it really
@@ -535,7 +544,7 @@ export async function createEngine(o: EngineOptions) {
     const T = TIERS[name]
     if (!slopes[T.slope]) slopes = { ...slopes, [T.slope]: await loadSlope(T.slope) }
     await bakeSand()
-    build()
+    await build()
     await compileAll()
     await prime()
     if (started) resize()
