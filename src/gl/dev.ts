@@ -1,6 +1,7 @@
 // DEV ONLY (`?gldev`, dynamically imported under import.meta.env.DEV, so it never ships).
 // Stands in for bake_agent's clock and scroll store until they merge: a rAF loop that sleeps
 // when every frame fn returns falsy, and P from scrollY over a 120vh / 100vh pin.
+import { pauseBus } from '../state/pause'
 import type { Driver } from './engine/engine'
 
 type Fn = (t: number, dt: number) => boolean | void
@@ -12,6 +13,11 @@ export function devDriver(): Driver {
   let forced: number | null = null
   const tick = (now: number) => {
     raf = 0
+    // Like the real clock: frame fns never run while the Interrupt (or a hidden tab) pauses.
+    if (pauseBus.isPaused()) {
+      last = 0
+      return
+    }
     const dt = last ? now - last : 16.7
     last = now
     let more = false
@@ -24,6 +30,9 @@ export function devDriver(): Driver {
   }
   addEventListener('scroll', wake, { passive: true })
   addEventListener('resize', wake)
+  pauseBus.subscribe((paused) => {
+    if (!paused) wake()
+  })
   ;(window as unknown as { __glDevP: (v: number | null) => void }).__glDevP = (v) => {
     forced = v
     wake()
