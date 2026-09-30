@@ -53,6 +53,12 @@ html[data-gl='live'] .s1-stage {
   visibility: hidden;
 }
 
+/* Text never sits on live caustics: the scroll cue gets an ink chip. */
+html[data-gl] .scroll-cue {
+  background: var(--floor-0);
+  padding: var(--s-1) var(--s-2);
+}
+
 /* ADV_IND: desktop under the index; phone one mono line at the top of the plate. */
 html[data-gl] .gl-adv {
   margin-top: var(--s-4);
