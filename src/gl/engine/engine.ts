@@ -32,7 +32,7 @@ import {
 import { uniform } from 'three/tsl'
 import type { Box } from '../../bake/meta'
 import { FpsCut, easeFocus, focusTarget, lerp, s1Camera, s1Light } from '../choreo'
-import { applyPose, fitS1, freeRegions, makeCamera, project, fits, type Rect, type S1Framing, type WBox } from '../framing'
+import { applyPose, fitS1, freeRegions, makeCamera, project, fits, sealGap, sealOk, type Rect, type S1Framing, type WBox } from '../framing'
 import { loadMasks, loadSlope, loadTraces, meta } from './data'
 import { EXT, SKIRT_EXT, blurMaterial, causticMaterial, floorMaterial, makeUniforms, readbackMaterial, sandMaterial } from './shaders'
 
@@ -196,7 +196,10 @@ export async function createEngine(o: EngineOptions) {
   }
 
   // ---------- data ----------
-  let tierName: TierName = o.tier && o.tier !== 'auto' ? o.tier : o.coarse ? 'low' : 'high'
+  // R-P2-16: WebGL2 without KHR_parallel_shader_compile links synchronously; start it low.
+  const serialCompile =
+    backendName === 'WebGL2' && !(renderer.backend as unknown as { extensions: { has(n: string): boolean } }).extensions.has('KHR_parallel_shader_compile')
+  let tierName: TierName = o.tier && o.tier !== 'auto' ? o.tier : o.coarse || serialCompile ? 'low' : 'high'
   const [slopeHi, traces] = await Promise.all([loadSlope(TIERS[tierName].slope), loadTraces()])
   let slopes: Partial<Record<512 | 256, DataTexture>> = { [TIERS[tierName].slope]: slopeHi }
   hooks.milestone(3)
@@ -323,8 +326,9 @@ export async function createEngine(o: EngineOptions) {
       wrapT: RepeatWrapping,
       colorSpace: NoColorSpace,
     })
-    await renderer.compileAsync(sandScene, oCam)
     renderer.setRenderTarget(sandRT)
+    await renderer.compileAsync(sandScene, oCam)
+    await yieldTask()
     renderer.render(sandScene, oCam)
     renderer.setRenderTarget(null)
   }
@@ -360,20 +364,28 @@ export async function createEngine(o: EngineOptions) {
   build()
 
   // ---------- compile, yielding between materials (no long task > 50ms while interactive) ----------
+  // Pipelines are keyed by the target's format, so each pass compiles against the RT it really
+  // draws into; compiled against the canvas, the first real draw would build them synchronously.
   const compileAll = async () => {
-    for (const [i, sc] of [dieScene, seaScene, skirtScene].entries()) {
+    for (const [i, [sc, set]] of ([[dieScene, die], [seaScene, sea], [skirtScene, skirt]] as const).entries()) {
       performance.mark(`gl:compile:caustic${i}`)
+      renderer.setRenderTarget(set.raw)
       await renderer.compileAsync(sc, oCam)
       await yieldTask()
     }
     hooks.milestone(4)
-    for (const s of [die, sea, skirt])
-      for (const m of [s.h, s.v]) {
+    for (const s2 of [die, sea, skirt])
+      for (const [m, target] of [
+        [s2.h, s2.tmp],
+        [s2.v, s2.out],
+      ] as const) {
         blurQuad.material = m
+        renderer.setRenderTarget(target)
         await renderer.compileAsync(blurScene, oCam)
         await yieldTask()
       }
     performance.mark('gl:compile:floor')
+    renderer.setRenderTarget(null)
     await renderer.compileAsync(floorScene, cam)
     performance.mark('gl:compile:done')
     await yieldTask()
@@ -407,6 +419,34 @@ export async function createEngine(o: EngineOptions) {
     renderer.setClearColor(COLORS.floor, 1)
     causticUpdates++
   }
+
+  /** First draw of every pass, one task each: any lazy GPU work (RT storage, mip pipelines, a
+   *  link the driver deferred) lands in its own short task, never in one long first frame. */
+  const prime = async () => {
+    for (const [s2, sc] of [
+      [die, dieScene],
+      [sea, seaScene],
+      [skirt, skirtScene],
+    ] as const) {
+      renderer.setRenderTarget(s2.raw)
+      renderer.clear()
+      renderer.render(sc, oCam)
+      await yieldTask()
+      blurQuad.material = s2.h
+      renderer.setRenderTarget(s2.tmp)
+      renderer.render(blurScene, oCam)
+      await yieldTask()
+      blurQuad.material = s2.v
+      renderer.setRenderTarget(s2.out)
+      renderer.render(blurScene, oCam)
+      await yieldTask()
+    }
+    renderer.setRenderTarget(null)
+    renderer.setClearColor(COLORS.floor, 1)
+    renderer.render(floorScene, cam)
+    await yieldTask()
+  }
+  await prime()
 
   const W = { w: innerWidth, h: innerHeight }
   let started = false
@@ -442,7 +482,7 @@ export async function createEngine(o: EngineOptions) {
     if (plate && driver.heroP() < 1) plateRect = plate
     else if (plate && !plateRect) plateRect = { ...plate, y0: plate.y0 + scrollY, y1: plate.y1 + scrollY }
     const regions = freeRegions(vw, vh, top, bottom, plateRect)
-    compT = fitS1(cam, letters, dieBoxM, regions, s1Camera(0).tilt, vw, vh) ?? compT
+    compT = fitS1(cam, letters, dieBoxM, regions, s1Camera(0).tilt, vw, vh, meta.seal.outer, plateRect) ?? compT
     if (!comp && compT) comp = { ...compT }
   }
   measure()
@@ -497,10 +537,12 @@ export async function createEngine(o: EngineOptions) {
     await bakeSand()
     build()
     await compileAll()
+    await prime()
     if (started) resize()
   }
   if (!o.tier || o.tier === 'auto') {
-    if (!o.coarse) {
+    if (serialCompile) warm = { ms: 0, method: 'no-parallel-compile' }
+    else if (!o.coarse) {
       warm = await warmUp()
       if (warm.ms > 6) await setTier('low')
     } else warm = { ms: 0, method: 'coarse-pointer' }
@@ -687,6 +729,14 @@ export async function createEngine(o: EngineOptions) {
       applyPose(cam, poseAt(1, comp), W.w, W.h)
       const r = project(cam, dieBoxM, W.w, W.h)
       checks.push({ P: 1, what: 'die', bbox: [r.x0, r.y0, r.x1, r.y1].map(Math.round), inside: fits(r, g, 0) })
+      // The seal ring never sits tangent to the plate (≥ 32 px clear or ≥ 48 px under), at the
+      // hold and at the rise end.
+      for (const P of [0.5, 1]) {
+        applyPose(cam, poseAt(P, comp), W.w, W.h)
+        const gap = sealGap(cam, meta.seal.outer, g, plateRect, W.w, W.h)
+        const s = project(cam, meta.seal.outer, W.w, W.h)
+        checks.push({ P, what: `seal gap ${Number.isFinite(gap) ? Math.round(gap) : '∞'} px`, bbox: [s.x0, s.y0, s.x1, s.y1].map(Math.round), inside: sealOk(gap) })
+      }
       dirty = true
       driver.invalidate()
       return {

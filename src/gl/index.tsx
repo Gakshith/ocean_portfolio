@@ -32,6 +32,7 @@ export function Gl3D() {
     const t0 = performance.now()
     let cancelled = false
     const cancelIdle = idle(() => {
+      performance.mark('gl:chunk')
       const driver = import.meta.env.DEV && dev ? import('./dev').then((m) => m.devDriver()) : import('./driver').then((m) => m.clockDriver)
       Promise.all([import('./stage'), driver]).then(([m, d]) => {
         if (!cancelled) setLoaded({ Stage: m.Stage, driver: d, t0 })

@@ -86,6 +86,7 @@ export function Stage({ t0, driver }: { t0: number; driver: Driver }) {
           firstFrame: (ms) => {
             if (!alive) return
             firstSeen = true
+            performance.mark('gl:live')
             lostAt = 0
             setConnect({ ms, collapsed: false })
             setTimeout(() => alive && setConnect((c) => (c ? { ...c, collapsed: true } : c)), COLLAPSE_MS)
