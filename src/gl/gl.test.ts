@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { ADV_LINES, advData, crc, crc24, header, pdu } from './adv'
 import { FpsCut, TILT, ease3, easeFocus, focusTarget, range, s1Camera, s1Light } from './choreo'
-import { applyPose, fitS1, fits, freeRegions, makeCamera, project } from './framing'
+import { applyPose, fitS1, fits, freeRegions, makeCamera, project, sealGap, sealOk } from './framing'
 import { FOV_DEG, OPENING_POSE } from './pose'
 
 describe('ADV_IND packet', () => {
@@ -84,20 +84,24 @@ describe('fitted framing (C-02)', () => {
     [375, 667, { x0: 16, y0: 300, x1: 359, y1: 598 }],
     [390, 844, { x0: 16, y0: 440, x1: 374, y1: 775 }],
   ]
+  const seal = { x0: -0.889, y0: -0.889, x1: 0.889, y1: 0.889 }
   for (const [vw, vh, plate] of cases)
-    it(`letters fit through the hold and the die fits at P 1 at ${vw}×${vh}`, () => {
+    it(`letters fit through the hold, the die fits at P 1 and the seal clears the plate at ${vw}×${vh}`, () => {
       const cam = makeCamera()
       const bottom = vw < 768 ? vh - 56 : vh
       const regions = freeRegions(vw, vh, 56, bottom, plate)
-      const c = fitS1(cam, letters, die, regions, TILT, vw, vh)!
+      const c = fitS1(cam, letters, die, regions, TILT, vw, vh, seal, plate)!
       expect(c).toBeTruthy()
       for (const P of [0.3, 0.45, 0.5, 0.55]) {
         const { tilt } = s1Camera(P)
         applyPose(cam, { tx: c.target.x, ty: c.target.y, dist: c.near, tilt, cx: c.cx, cy: c.cy }, vw, vh)
         expect(fits(project(cam, letters, vw, vh), c.region, 0)).toBe(true)
       }
+      applyPose(cam, { tx: c.target.x, ty: c.target.y, dist: c.near, tilt: 0, cx: c.cx, cy: c.cy }, vw, vh)
+      expect(sealOk(sealGap(cam, seal, c.region, plate, vw, vh))).toBe(true)
       applyPose(cam, { tx: c.target.x, ty: c.target.y, dist: c.far, tilt: 0, cx: c.cx, cy: c.cy }, vw, vh)
       expect(fits(project(cam, die, vw, vh), c.region, 0)).toBe(true)
+      expect(sealOk(sealGap(cam, seal, c.region, plate, vw, vh))).toBe(true)
       expect(c.far).toBeGreaterThanOrEqual(c.near)
     })
 })
@@ -122,8 +126,10 @@ describe('the P 0 opening pose the poster is baked from (src/gl/pose.ts)', () =>
     const bake = (await import('../bake/bake.json')).default
     const d = bake.die.box
     const m = 0.016 // the engine's die margin
-    const regions = freeRegions(1440, 900, 56, 900, { x0: 63, y0: 304, x1: 596.546875, y1: 772 })
-    const c = fitS1(makeCamera(), bake.letters.box, { x0: d.x0 - m, y0: d.y0 - m, x1: d.x1 + m, y1: d.y1 + m }, regions, TILT, 1440, 900)!
+    const plate = { x0: 63, y0: 304, x1: 596.546875, y1: 772 }
+    const regions = freeRegions(1440, 900, 56, 900, plate)
+    // exactly the engine's call: the seal ring and the plate feed the tangency nudge
+    const c = fitS1(makeCamera(), bake.letters.box, { x0: d.x0 - m, y0: d.y0 - m, x1: d.x1 + m, y1: d.y1 + m }, regions, TILT, 1440, 900, bake.seal.outer, plate)!
     expect(c.region.name).toBe('right of plate')
     expect(c.near).toBeCloseTo(OPENING_POSE.dist, 6)
     expect(c.cx).toBeCloseTo(OPENING_POSE.screen.x, 4)

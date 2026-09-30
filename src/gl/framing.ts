@@ -76,27 +76,38 @@ export function fits(r: Rect, g: Rect, margin: number) {
 
 export const center = (b: WBox) => ({ x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2 })
 
-/** Smallest distance at which `box` (+margin) fits `g` for every tilt, looking at the box centre. */
-export function fitDist(cam: PerspectiveCamera, box: WBox, g: Rect, margin: number, tilts: number[], vw: number, vh: number) {
-  const c = center(box)
-  const cx = (g.x0 + g.x1) / 2
-  const cy = (g.y0 + g.y1) / 2
+/** Smallest distance at which `ok(dist)` holds (it must stay true further out). */
+function searchDist(ok: (dist: number) => boolean) {
   let lo = 0.2
   let hi = 80
   for (let it = 0; it < 40; it++) {
     const mid = (lo + hi) / 2
-    let ok = true
-    for (const tilt of tilts) {
-      applyPose(cam, { tx: c.x, ty: c.y, dist: mid, tilt, cx, cy }, vw, vh)
-      if (!fits(project(cam, box, vw, vh), g, margin)) {
-        ok = false
-        break
-      }
-    }
-    if (ok) hi = mid
+    if (ok(mid)) hi = mid
     else lo = mid
   }
   return hi
+}
+
+/** Smallest distance at which `box` (+margin) fits `g` for every tilt, looking at the box centre,
+ *  with the target landing at (cx, cy) (default: the centre of `g`). */
+export function fitDist(
+  cam: PerspectiveCamera,
+  box: WBox,
+  g: Rect,
+  margin: number,
+  tilts: number[],
+  vw: number,
+  vh: number,
+  cx = (g.x0 + g.x1) / 2,
+  cy = (g.y0 + g.y1) / 2,
+) {
+  const c = center(box)
+  return searchDist((dist) =>
+    tilts.every((tilt) => {
+      applyPose(cam, { tx: c.x, ty: c.y, dist, tilt, cx, cy }, vw, vh)
+      return fits(project(cam, box, vw, vh), g, margin)
+    }),
+  )
 }
 
 /** Candidate free regions for the S1 framing: the viewport between the bars, minus the plate,
@@ -121,8 +132,24 @@ export interface S1Framing {
   target: { x: number; y: number }
 }
 
-/** The S1 composition: the letters (+6%) fit at tilts 0° and 14° for the near pose, and the die
- *  (+4%) fits for the far pose. The region that gives the largest die wins. */
+/** The seal ring must never read as cropped by the plate: at rest it clears the plate edge by
+ *  SEAL_CLEAR px, or tucks SEAL_UNDER px under it. */
+export const SEAL_CLEAR = 32
+export const SEAL_UNDER = 48
+
+/** Signed px from the plate edge to the seal's facing edge: > 0 clear of the plate, < 0 under it. */
+export function sealGap(cam: PerspectiveCamera, seal: WBox, region: { name: string }, plate: Rect | null, vw: number, vh: number) {
+  if (!plate) return Infinity
+  const r = project(cam, seal, vw, vh)
+  if (region.name === 'right of plate') return r.x0 - plate.x1
+  if (region.name === 'above plate') return plate.y0 - r.y1
+  return Infinity
+}
+export const sealOk = (gap: number) => gap >= SEAL_CLEAR - 0.5 || gap <= -SEAL_UNDER + 0.5
+
+/** The S1 composition: the letters (+6%) fit at tilts 0° and 14° for the near pose; the lens shift
+ *  is nudged if the seal ring would sit tangent to the plate; the die (+4%) fits for the far pose
+ *  with the seal clear of the plate. The region that gives the largest die wins. */
 export function fitS1(
   cam: PerspectiveCamera,
   letters: WBox,
@@ -131,21 +158,57 @@ export function fitS1(
   tilt: number,
   vw: number,
   vh: number,
+  seal: WBox | null = null,
+  plate: Rect | null = null,
 ): S1Framing | null {
   let best: S1Framing | null = null
   const t = center(letters)
+  const pose = (dist: number, tl: number, cx: number, cy: number) => applyPose(cam, { tx: t.x, ty: t.y, dist, tilt: tl, cx, cy }, vw, vh)
+  const lettersIn = (g: Rect, dist: number, cx: number, cy: number) =>
+    [0, tilt * 0.5].every((tl) => {
+      pose(dist, tl, cx, cy)
+      return fits(project(cam, letters, vw, vh), g, 0)
+    })
   for (const g of regions) {
     // The lens shift centres on the letters; the die is looked at from the same target, so
     // the rise stays vertical. Fit the die around that same target.
+    let cx = (g.x0 + g.x1) / 2
+    let cy = (g.y0 + g.y1) / 2
     const near = fitDist(cam, letters, g, 0.06, [0, tilt * 0.5], vw, vh)
+    // Seal tangency at the hold: shift the lens by the smaller move that keeps the letters in.
+    if (seal && plate) {
+      pose(near, 0, cx, cy)
+      const gap = sealGap(cam, seal, g, plate, vw, vh)
+      if (!sealOk(gap)) {
+        const horiz = g.name === 'right of plate'
+        // right of plate: +m moves the seal away (right); above plate: −m moves it away (up)
+        const moves = [SEAL_CLEAR - gap, -(SEAL_UNDER + gap)].sort((a, b) => Math.abs(a) - Math.abs(b))
+        for (const m of moves) {
+          const ncx = horiz ? cx + m : cx
+          const ncy = horiz ? cy : cy - m
+          if (lettersIn(g, near, ncx, ncy)) {
+            cx = ncx
+            cy = ncy
+            break
+          }
+        }
+      }
+    }
     const dieAround: WBox = {
       x0: Math.min(die.x0, 2 * t.x - die.x1),
       x1: Math.max(die.x1, 2 * t.x - die.x0),
       y0: Math.min(die.y0, 2 * t.y - die.y1),
       y1: Math.max(die.y1, 2 * t.y - die.y0),
     }
-    const far = Math.max(near, fitDist(cam, dieAround, g, 0.04, [0], vw, vh))
-    if (!best || far < best.far) best = { region: g, cx: (g.x0 + g.x1) / 2, cy: (g.y0 + g.y1) / 2, near, far, target: t }
+    const far = Math.max(
+      near,
+      searchDist((dist) => {
+        pose(dist, 0, cx, cy)
+        if (!fits(project(cam, dieAround, vw, vh), g, 0.04)) return false
+        return !seal || !plate || sealGap(cam, seal, g, plate, vw, vh) >= SEAL_CLEAR - 0.5
+      }),
+    )
+    if (!best || far < best.far) best = { region: g, cx, cy, near, far, target: t }
   }
   return best
 }
