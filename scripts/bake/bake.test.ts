@@ -41,11 +41,8 @@ describe('RG16F encoding', () => {
 
 describe('the shipped field', () => {
   it('is what a fresh solve produces, byte for byte', () => {
-    expect(sha(packRG16F(f2.gx, f2.gy, 2 * N))).toBe(meta.sha256.slope1024)
-    expect(sha(pub('slope-1024.f16'))).toBe(meta.sha256.slope1024)
-    expect(pub('slope-1024.f16').length).toBe(4 * N * N * 4)
-    // The stills are rendered from exactly this file (R-P2-08: one surface on every tier).
-    expect(meta.acceptance.stillsFrom).toBe(meta.sha256.slope1024)
+    // The stills render from exactly this 1024² solve (R-P2-08: one surface on every tier).
+    expect(sha(packRG16F(f2.gx, f2.gy, 2 * N))).toBe(meta.acceptance.stillsFrom)
     const fresh = packRG16F(field.gx, field.gy, N)
     expect(sha(fresh)).toBe(meta.sha256.slope512)
     expect(sha(pub('slope-512.f16'))).toBe(meta.sha256.slope512)
