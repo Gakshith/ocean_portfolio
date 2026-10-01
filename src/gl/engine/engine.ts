@@ -663,7 +663,9 @@ export async function createEngine(o: EngineOptions) {
       const cur = projectPoints(chipCam, pose, leads, W.w, W.h)
       const chips = reef.contacts.map((_, k) => {
         const inside = !!win && cur[k].x >= win.x0 - 8 && cur[k].x <= win.x1 + 8 && cur[k].y >= win.y0 - 8 && cur[k].y <= win.y1 + 8
-        return { dx: +(cur[k].x - at[k].x).toFixed(1), dy: +(cur[k].y - at[k].y + rs.chip[k].dy).toFixed(1), o: inside ? +rs.chip[k].opacity.toFixed(3) : 0 }
+        // a hidden chip goes home: an offset it can't show would still widen the page
+        if (!inside || rs.chip[k].opacity === 0) return { dx: 0, dy: 0, o: 0 }
+        return { dx: +(cur[k].x - at[k].x).toFixed(1), dy: +(cur[k].y - at[k].y + rs.chip[k].dy).toFixed(1), o: +rs.chip[k].opacity.toFixed(3) }
       })
       const key = JSON.stringify(chips)
       if (key !== chipsLast) {
@@ -831,7 +833,7 @@ export async function createEngine(o: EngineOptions) {
       return causticUpdates
     },
     get state() {
-      return { P: forcedP ?? tk.heroP, f: fShown, frozen, comp, tick: tk, pose: lastPose, jumping: jumping !== null }
+      return { P: forcedP ?? tk.heroP, f: fShown, frozen, comp, tick: tk, pose: lastPose, jumping: jumping !== null, reef: { powerAt, twinK, twin: [...twin], calm } }
     },
     setP(v: number | null) {
       forcedP = v
