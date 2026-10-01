@@ -94,6 +94,8 @@ export function makeUniforms() {
      *  floor paints --floor-0 outside, so section text keeps its Still contrast. winOn 0 = full bleed. */
     win: uniform(new Vector4(0, 0, 1, 1)),
     winOn: uniform(0),
+    /** Falloff into --floor-0 inside the frame's edge, px (R-P2-20); 1 = a crisp antialiased edge. */
+    winFeather: uniform(1),
     vp: uniform(new Vector2(1, 1)),
   }
 }
@@ -398,14 +400,21 @@ export function floorMaterial(U: Uniforms, o: FloorOpts) {
     col.assign(mix(col, C.floor, smoothstep(5, 9, length(p))))
     const v = length(screenUV.sub(0.5)).mul(1.4)
     col.assign(col.mul(float(1).sub(smoothstep(0.35, 1, v).mul(0.08))))
-    // the stop's frame: exactly --floor-0 outside it, a 1 px antialiased edge
-    const sp = screenUV.mul(U.vp)
-    const span = (a: N, b: N, x: N) => smoothstep(a.sub(0.5), a.add(0.5), x).mul(float(1).sub(smoothstep(b.sub(0.5), b.add(0.5), x)))
-    const inWin = span(U.win.x, U.win.z, sp.x).mul(span(U.win.y, U.win.w, sp.y))
-    col.assign(mix(C.floor, min(col, vec3(1, 1, 1)), mix(float(1), inWin, U.winOn)))
+    col.assign(mix(C.floor, min(col, vec3(1, 1, 1)), windowMask(U)))
     return vec4(col, 1)
   })()
   return m
+}
+
+/** The stop's frame (R-P2-20): 1 inside, 0 outside, feathered in from its edge (a rounded
+ *  falloff, so the die reads as lit in its place, not a box cut into the page). Floor and reef
+ *  share it, so nothing lights outside the frame. */
+export function windowMask(U: Uniforms): N {
+  const sp = screenUV.mul(U.vp)
+  const half = U.win.zw.sub(U.win.xy).mul(0.5)
+  const q = abs(sp.sub(U.win.xy.add(half))).sub(half)
+  const d = length(max(q, vec2(0, 0))).add(min(max(q.x, q.y), 0))
+  return mix(float(1), smoothstep(float(0), U.winFeather, d.negate()), U.winOn)
 }
 
 /** Test-only: the raw die RT over the tile [-1,1]² into a float target, for contrastTest. */

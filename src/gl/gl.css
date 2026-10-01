@@ -58,12 +58,31 @@ html[data-gl='live'] .s1-stage {
    viewBoxes exactly, so a block or pad link sits on its 3D twin. Only once live: while loading the
    poster (the hero's first frame) is behind them. */
 html[data-gl='live'] :is(.s2, .s6, .s7),
-html[data-gl='live'] .diemap-frame {
+html[data-gl='live'] .diemap-frame,
+html[data-gl='live'] .s6-stage .sim-cy__stage {
   background: transparent;
 }
 html[data-gl='live'] .diemap,
 html[data-gl='live'] .s7-atoll .atoll {
   opacity: 0;
+}
+
+/* SM-2: the lead chips ride the 3D leads (the engine's offsets from their Still place) and
+   surface with the power-up; a chip that isn't showing can't be hovered. */
+html[data-gl='live'] #contact .lead {
+  transform: translate(-50%, -50%) translate(var(--gl-dx, 0px), var(--gl-dy, 0px));
+  opacity: var(--gl-o, 0);
+}
+html[data-gl='live'] #contact .lead:not([data-gl-on]) {
+  pointer-events: none;
+}
+/* Twins: one contact's row, pad and chip light together (≤ 120 ms in the 3D, the same frame). */
+html[data-gl='live'] #contact:is([data-twin='1']) [data-pad='1'],
+html[data-gl='live'] #contact:is([data-twin='2']) [data-pad='2'],
+html[data-gl='live'] #contact:is([data-twin='3']) [data-pad='3'],
+html[data-gl='live'] #contact:is([data-twin='4']) [data-pad='4'],
+html[data-gl='live'] #contact:is([data-twin='5']) [data-pad='5'] {
+  --on: 1;
 }
 
 /* Text never sits on live caustics: the scroll cue gets an ink chip. */

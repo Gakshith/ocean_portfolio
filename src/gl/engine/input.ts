@@ -5,7 +5,7 @@ import type { Rect } from '../framing'
 import type { SectionId } from '../../state/sections'
 
 /** Elements the camera frames into (`data-gl-stage`). S3–S5 surfaces arrive in step 9. */
-export type StageId = 'about' | 'contact'
+export type StageId = 'about' | 'cybot' | 'contact'
 
 /** Re-measured only when layout changes (resize, a watched element resizing, fonts ready). */
 export interface Layout {

@@ -34,7 +34,9 @@ import type { Box } from '../../bake/meta'
 import { FpsCut, ease2, ease3, easeFocus, focusTarget, lerp, s1Camera, s1Light } from '../choreo'
 import { DIE_MARGIN, LETTERS_MARGIN, applyPose, center, fitS1, fits, freeRegions, makeCamera, project, sealGap, sealOk, type Pose, type Rect, type S1Framing, type WBox } from '../framing'
 import { reefFromMeta } from '../reef'
-import { JUMP_MS, MARGIN_OF, STOP_OF, defaultRect, jumpPose, stopBoxes, stopPose, travelPose } from '../stops'
+import { packet, reefState } from '../ringwave'
+import { createReef3D } from './reef3d'
+import { JUMP_MS, MARGIN_OF, STOP_OF, defaultRect, jumpPose, projectPoints, stopBoxes, stopPose, travelPose } from '../stops'
 import type { SectionId } from '../../state/sections'
 import { loadMasks, loadSlope, loadTraces, meta } from './data'
 import { toViewport, type Jump, type Layout, type Tick } from './input'
@@ -58,6 +60,8 @@ export interface Hooks {
   freeze(): void
   /** GPU device or context lost. The caller disposes and may try to re-create. */
   lost(): void
+  /** SM-2 lead chips, per contact k = 1..5: offset from their dwell place (px) and opacity. */
+  reef?(s: { chips: { dx: number; dy: number; o: number }[] }): void
 }
 
 export interface EngineOptions {
@@ -68,6 +72,8 @@ export interface EngineOptions {
   /** Ask the clock for a tick (the engine draws only inside frame()). */
   invalidate(): void
   hooks: Hooks
+  /** Calm (reduced motion or Still): jumps cut and the S7 pads rest lit. */
+  calm?: boolean
   /** 'auto' runs the warm-up on fine pointers and picks low on coarse ones. */
   tier?: TierName | 'auto'
   forceWebGL?: boolean
@@ -364,6 +370,10 @@ export async function createEngine(o: EngineOptions) {
   floor.rotation.x = -Math.PI / 2
   floor.frustumCulled = false
   floorScene.add(floor)
+  // SM-2: the reef's pads, contact outlines and bond wires over the floor (compiled with it)
+  const reef = reefFromMeta(meta)
+  const reef3 = createReef3D(reef, U)
+  floorScene.add(...reef3.objects)
 
   const build = async () => {
     await buildMeshes()
@@ -568,19 +578,18 @@ export async function createEngine(o: EngineOptions) {
   }
 
   // ---------- camera path after the hero (C0–C5): a world box fitted into its rect ----------
-  const reef = reefFromMeta(meta)
   const boxes = stopBoxes(meta, reef)
   // A plan-view fit is translation-invariant under the lens shift, so the distance depends only
   // on the rect's size: dwells pan 1:1 with the page by moving the lens centre, no search.
   const distCache = new Map<string, number>()
   const stopRect = (id: Exclude<SectionId, 'top'>, y: number): Rect => {
-    const st = id === 'about' || id === 'contact' ? L.stages[id] : undefined
+    const st = id === 'about' || id === 'contact' || id === 'cybot' ? L.stages[id] : undefined
     return st ? toViewport(st, y) : defaultRect(L.vw, L.top, L.bottom)
   }
   /** A stop's camera pose and its frame (the hero's frame is the whole viewport). */
-  type View = { pose: Pose; win: Rect }
+  type View = { pose: Pose; win: Rect; feather: number }
   const viewOf = (id: SectionId, P: number, y: number): View => {
-    if (id === 'top') return { pose: poseAt(P, comp!), win: { x0: 0, y0: 0, x1: L.vw, y1: L.vh } }
+    if (id === 'top') return { pose: poseAt(P, comp!), win: { x0: 0, y0: 0, x1: L.vw, y1: L.vh }, feather: 1 }
     const stop = STOP_OF[id]
     const r = stopRect(id, y)
     const box = boxes[stop]
@@ -588,8 +597,10 @@ export async function createEngine(o: EngineOptions) {
     let dist = distCache.get(key)
     if (dist === undefined) distCache.set(key, (dist = stopPose(cam, box, r, L.vw, L.vh, MARGIN_OF[stop]).dist))
     const c = center(box)
-    return { pose: { tx: c.x, ty: c.y, dist, tilt: 0, cx: (r.x0 + r.x1) / 2, cy: (r.y0 + r.y1) / 2 }, win: r }
+    // S2 draws its own frame (.diemap-frame): align to it crisply; elsewhere feather (R-P2-20)
+    return { pose: { tx: c.x, ty: c.y, dist, tilt: 0, cx: (r.x0 + r.x1) / 2, cy: (r.y0 + r.y1) / 2 }, win: r, feather: stop === 'C0' ? 1 : FEATHER }
   }
+  const FEATHER = 40
   const lerpRect = (a: Rect, b: Rect, e: number): Rect => ({ x0: lerp(a.x0, b.x0, e), y0: lerp(a.y0, b.y0, e), x1: lerp(a.x1, b.x1, e), y1: lerp(a.y1, b.y1, e) })
   let jumping: { from: View; to: SectionId; t0: number } | null = null
   let lastPose: Pose | null = null
@@ -597,9 +608,70 @@ export async function createEngine(o: EngineOptions) {
   const samePose = (a: Pose, b: Pose) => a.tx === b.tx && a.ty === b.ty && a.dist === b.dist && a.tilt === b.tilt && a.cx === b.cx && a.cy === b.cy
   /** A jump flies from wherever the camera is (≤ 900 ms, power2.inOut), or cuts when instant. */
   const jump = (j: Jump) => {
-    jumping = j.instant || !lastPose ? null : { from: { pose: { ...lastPose }, win: { ...(lastWin ?? { x0: 0, y0: 0, x1: L.vw, y1: L.vh }) } }, to: j.to, t0: -1 }
+    jumping = j.instant || !lastPose ? null : { from: { pose: { ...lastPose }, win: { ...(lastWin ?? { x0: 0, y0: 0, x1: L.vw, y1: L.vh }) }, feather: U.winFeather.value }, to: j.to, t0: -1 }
     dirty = true
     invalidate()
+  }
+
+  // ---------- SM-2: the reef lights (once, when S7's top reaches 70% of the viewport) ----------
+  const contactRing = reef.contacts.map((c) => c.pad.ring)
+  let calm = o.calm ?? false
+  let powerAt: number | null = null
+  let twinK: number | null = null
+  const twin = new Float32Array(5)
+  /** Packet start per contact (ms, clock time); -1 = starts on the next frame. */
+  const packetAt = [-Infinity, -Infinity, -Infinity, -Infinity, -Infinity]
+  let reefWas = false
+  let chipsLast = ''
+  const chipCam = makeCamera()
+  /** Hover / focus on any twin of contact k (row, pad, lead, chip): light all four, fire a packet. */
+  const setTwin = (k: number | null) => {
+    if (k === twinK) return
+    twinK = k
+    if (k) packetAt[k - 1] = -1
+    invalidate()
+  }
+  const setCalm = (c: boolean) => {
+    calm = c
+    dirty = true
+    invalidate()
+  }
+  /** One frame of reef state; true while it's animating. */
+  const stepReef = (now: number, dtMs: number, P: number, pose: Pose, win: Rect | null) => {
+    const s7 = L.sections.contact
+    if (powerAt === null && s7 !== undefined && tk.heroP >= 1 && s7 - tk.y <= 0.7 * L.vh) powerAt = now
+    const rs = reefState(powerAt === null ? null : now - powerAt, contactRing, calm)
+    let twinMoving = false
+    for (let k = 0; k < 5; k++) {
+      const target = twinK === k + 1 ? 1 : 0
+      // ≤ 120 ms in, 200 ms out; instant when calm
+      const stepK = calm ? 1 : dtMs / (target > twin[k] ? 120 : 200)
+      twin[k] = target > twin[k] ? Math.min(target, twin[k] + stepK) : Math.max(target, twin[k] - stepK)
+      if (twin[k] !== target) twinMoving = true
+    }
+    const pk = packetAt.map((t0, k) => {
+      if (t0 === -1) packetAt[k] = t0 = now
+      return packet(now - t0, calm)
+    })
+    reef3.update(rs.pad, rs.outline, rs.wire, twin, pk)
+    // the DOM lead chips ride the 3D leads: offset from their dwell place under the current pose
+    const st = L.stages.contact
+    if (st && hooks.reef) {
+      const leads = reef.contacts.map((c) => c.lead)
+      const dwell = viewOf('contact', P, tk.y).pose
+      const at = projectPoints(chipCam, dwell, leads, W.w, W.h)
+      const cur = projectPoints(chipCam, pose, leads, W.w, W.h)
+      const chips = reef.contacts.map((_, k) => {
+        const inside = !!win && cur[k].x >= win.x0 - 8 && cur[k].x <= win.x1 + 8 && cur[k].y >= win.y0 - 8 && cur[k].y <= win.y1 + 8
+        return { dx: +(cur[k].x - at[k].x).toFixed(1), dy: +(cur[k].y - at[k].y + rs.chip[k].dy).toFixed(1), o: inside ? +rs.chip[k].opacity.toFixed(3) : 0 }
+      })
+      const key = JSON.stringify(chips)
+      if (key !== chipsLast) {
+        chipsLast = key
+        hooks.reef({ chips })
+      }
+    }
+    return (powerAt !== null && !rs.done) || twinMoving || pk.some((p) => p !== null)
   }
 
   // ---------- frame loop (the one clock) ----------
@@ -671,20 +743,26 @@ export async function createEngine(o: EngineOptions) {
       const to = viewOf(jumping.to, P, tk.y)
       pose = jumpPose(jumping.from.pose, to.pose, u)
       win = jumping.to === 'top' && u >= 1 ? null : lerpRect(jumping.from.win, to.win, ease2(u))
+      U.winFeather.value = lerp(jumping.from.feather, to.feather, ease2(u))
       if (u >= 1) jumping = null
     } else if (forcedP !== null || tk.heroP < 1 || (tk.from === 'top' && tk.to === 'top')) pose = poseAt(P, comp)
     else {
       const a = viewOf(tk.from, P, tk.y)
       const b = viewOf(tk.to, P, tk.y)
       pose = travelPose(a.pose, b.pose, tk.t)
-      win = lerpRect(a.win, b.win, ease3(Math.min(1, Math.max(0, tk.t))))
+      const e = ease3(Math.min(1, Math.max(0, tk.t)))
+      win = lerpRect(a.win, b.win, e)
+      U.winFeather.value = lerp(a.feather, b.feather, e)
     }
     U.winOn.value = win ? 1 : 0
     if (win) U.win.value.set(win.x0, win.y0, win.x1, win.y1)
     U.vp.value.set(W.w, W.h)
     const winMoved = (win === null) !== (lastWin === null) || (win !== null && lastWin !== null && (win.x0 !== lastWin.x0 || win.y0 !== lastWin.y0 || win.x1 !== lastWin.x1 || win.y1 !== lastWin.y1))
     lastWin = win
-    const posed = !lastPose || !samePose(pose, lastPose) || winMoved
+    const reefOn = stepReef(now, dtMs, P, pose, win)
+    const reefDraw = reefOn || reefWas
+    reefWas = reefOn
+    const posed = !lastPose || !samePose(pose, lastPose) || winMoved || reefDraw
     const changed = dirty || P !== lastP || easing || compMoving || moving || causticsStale || posed
     if (!changed) return false
     beginFrame()
@@ -710,7 +788,7 @@ export async function createEngine(o: EngineOptions) {
       if (fpsCut.push(now - lastNow)) freeze()
     } else if (!moving) fpsCut.reset()
     lastNow = moving ? now : 0
-    return moving || easing || compMoving || jumping !== null
+    return moving || easing || compMoving || jumping !== null || reefOn
   }
 
   function freeze() {
@@ -946,7 +1024,10 @@ export async function createEngine(o: EngineOptions) {
     frame,
     setLayout,
     jump,
+    setTwin,
+    setCalm,
     dispose() {
+      reef3.dispose()
       renderer.dispose()
     },
   }

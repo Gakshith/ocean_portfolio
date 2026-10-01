@@ -26,6 +26,41 @@ const ONE_LINE = '(max-width: 767px), (max-height: 799px)'
 
 const loadEngine = () => import('./engine/engine')
 
+/** SM-2 twins: hover or focus on any data-pad element in S7 (row, pad, lead chip) lights all of
+ *  that contact's twins, in the DOM (#contact[data-twin], gl.css) and in the 3D. The same DOM
+ *  state the Still path's twinning reads (R-P2-22), so the two can't disagree. */
+function watchTwins(e: Pick<Engine, 'setTwin'>): () => void {
+  const sec = document.getElementById('contact')
+  if (!sec) return () => {}
+  let hover: number | null = null
+  let focus: number | null = null
+  const padOf = (t: EventTarget | null) => {
+    const el = t instanceof Element ? t.closest<HTMLElement>('[data-pad]') : null
+    return el && sec.contains(el) ? Number(el.dataset.pad) : null
+  }
+  const sync = () => {
+    const k = hover ?? focus
+    if (k) sec.dataset.twin = String(k)
+    else delete sec.dataset.twin
+    e.setTwin(k)
+  }
+  const over = (ev: PointerEvent) => ((hover = padOf(ev.target)), sync())
+  const out = (ev: PointerEvent) => ((hover = padOf(ev.relatedTarget)), sync())
+  const fin = (ev: FocusEvent) => ((focus = padOf(ev.target)), sync())
+  const fout = (ev: FocusEvent) => ((focus = padOf(ev.relatedTarget)), sync())
+  sec.addEventListener('pointerover', over)
+  sec.addEventListener('pointerout', out)
+  sec.addEventListener('focusin', fin)
+  sec.addEventListener('focusout', fout)
+  return () => {
+    sec.removeEventListener('pointerover', over)
+    sec.removeEventListener('pointerout', out)
+    sec.removeEventListener('focusin', fin)
+    sec.removeEventListener('focusout', fout)
+    delete sec.dataset.twin
+  }
+}
+
 /** `load` is the engine chunk; tests pass a fake one. */
 export function Stage({ t0, driver, load = loadEngine }: { t0: number; driver: Driver; load?: () => Promise<{ createEngine: (o: EngineOptions) => Promise<Engine> }> }) {
   const canvas = useRef<HTMLCanvasElement>(null)
@@ -85,10 +120,14 @@ export function Stage({ t0, driver, load = loadEngine }: { t0: number; driver: D
       const unJump = onJump((to: SectionId, info?: { from: SectionId; instant: boolean }) =>
         e.jump({ from: info?.from ?? to, to, instant: info?.instant ?? motionStore.get().calm }),
       )
+      const unCalm = motionStore.subscribe((m) => e.setCalm(m.calm))
+      const unTwins = watchTwins(e)
       detach = () => {
         unFrame()
         unWatch()
         unJump()
+        unCalm()
+        unTwins()
         detach = () => {}
       }
     }
@@ -116,6 +155,7 @@ export function Stage({ t0, driver, load = loadEngine }: { t0: number; driver: D
         t0,
         coarse: matchMedia('(pointer: coarse)').matches,
         tier: (qs.get('tier') as EngineOptions['tier']) ?? 'auto',
+        calm: motionStore.get().calm,
         forceWebGL: qs.get('gl') === 'webgl2',
         hooks: {
           milestone: (k) => alive && setMilestone((m) => Math.max(m, k)),
@@ -130,6 +170,17 @@ export function Stage({ t0, driver, load = loadEngine }: { t0: number; driver: D
             setHas3D(true)
           },
           freeze: () => alive && setPhase('frozen'),
+          reef: ({ chips }) => {
+            // the lead chips ride the 3D leads (gl.css reads these; their place is the Still's)
+            chips.forEach((c, i) => {
+              for (const el of document.querySelectorAll<HTMLElement>(`#contact .lead[data-pad="${i + 1}"]`)) {
+                el.style.setProperty('--gl-dx', `${c.dx}px`)
+                el.style.setProperty('--gl-dy', `${c.dy}px`)
+                el.style.setProperty('--gl-o', String(c.o))
+                el.toggleAttribute('data-gl-on', c.o >= 0.5)
+              }
+            })
+          },
           lost: () => {
             // Device or context lost: rebuild from scratch (the first frame re-renders the RTs
             // deterministically). Unrecoverable after 3s → the Still path.
