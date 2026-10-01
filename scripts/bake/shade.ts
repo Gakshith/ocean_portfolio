@@ -132,6 +132,11 @@ function gauss(src: Float64Array, W: number, H: number, sigma: number): Float64A
   return o
 }
 
+/** Bilinear read of a tile mask (canvas order) at world p, clamped to the tile. */
+function sampleMask(m: { N: number; wide: Float64Array }, px: number, py: number): number {
+  return bil(m.wide, m.N, m.N, ((px + 1) / 2) * m.N - 0.5, ((1 - py) / 2) * m.N - 0.5)
+}
+
 /** Bilinear sample with clamped edges. */
 function bil(A: Float64Array, W: number, H: number, x: number, y: number) {
   x = Math.min(W - 1, Math.max(0, x))
@@ -180,6 +185,8 @@ export interface ShadeInput {
   fade?: (x: number, y: number) => number
   /** The camera's 8% lens falloff (full-frame renders only, e.g. the poster). */
   vignette?: boolean
+  /** traces-512 as floats 0..1 (canvas order): the metal keep-out, as webgl ramps it. */
+  traces?: { N: number; wide: Float64Array }
 }
 
 /** The die RT of the high tier (1280² over ±1.25, 512 RT px per world unit). */
@@ -281,7 +288,9 @@ export function shade(inp: ShadeInput): Float64Array {
       const glow = readRT(die, die.glow, px, py, 0) * wDie * look.bloom
       const m = sandT(px, py)
       const lay = r < 1 && look.rise > 0 ? metal(inp.blocks, px, py) : null
-      const la = lay ? lay[1] * (1 - smooth(1.2, 2.5, c)) * 0.35 * look.rise : 0
+      // The lit name masks the lower layers: webgl's keep-out ramp over the wide traces mask.
+      const keep = lay && inp.traces ? 1 - smooth(0.02, 0.22, sampleMask(inp.traces, px, py)) : 1
+      const la = lay ? lay[1] * keep * 0.35 * look.rise : 0
       const fd = inp.fade ? inp.fade(px, py) : 0
       const far = smooth(5, 9, Math.hypot(px, py)) // the far field fades to the unlit floor
       const lens = inp.vignette ? 1 - smooth(0.35, 1, Math.hypot(u / view.W - 0.5, v / view.H - 0.5) * 1.4) * 0.08 : 1

@@ -1,9 +1,13 @@
 {
   "version": 1,
   "sha256": {
-    "slope512": "6c328013068c841828f0c0c86b6e6ec949232fb256fbfce334c68dc0afd1468f",
-    "slope256": "7db86ae3cbad59169d3c83f9b9121752d321cab20d00d51491d33a82574d8b34",
+    "slope512": "7dfe5d1ada1ad8fc3a48750110cde77d82cc1687ad929964e6805a648096707c",
+    "slope256": "9d0bf793d445ad4c0f4a3499e58f96d03615aa7279c95b414eb35d55f2e46047",
     "traces": "7ede0ae7ecfc5979d2758a3c48abd2bd5494b0736de3cdca9091207946aaf7d6"
+  },
+  "fields": {
+    "256": "bake/slope-256.f16",
+    "512": "bake/slope-512.f16"
   },
   "optics": {
     "depth": 2,
@@ -649,26 +653,29 @@
     "core": 0.02
   },
   "acceptance": {
-    "LF": 9.01,
-    "LC": 21.6,
-    "f16rms": 0.0698,
-    "f16PxOff10": 0.0035,
-    "cropRms": 0.0089,
-    "edgeDispTexels": 0.271,
-    "edgeTangentialTexels": 32.9,
-    "bandI": 0.9972,
-    "bandMaxDev": 0.0041,
-    "last3TexelsMaxDev": 0.036,
-    "outsideMaxDev": 0.0962,
+    "LF": 10.51,
+    "LC": 25.1,
+    "f16rms": 0.0138,
+    "f16PxOff10": 0.0003,
+    "cropRms": 0.0069,
+    "edgeDispTexels": 0.135,
+    "edgeTangentialTexels": 33.3,
+    "bandI": 1.0015,
+    "bandMaxDev": 0.0028,
+    "last3TexelsMaxDev": 0.0421,
+    "outsideMaxDev": 0.0873,
     "s1Display": {
-      "LF": 10.12,
-      "LC": 27.4
+      "LF": 10.22,
+      "LC": 27.3
     },
-    "stillsField": {
-      "N": 1024,
-      "errLast": 0.443,
-      "LF": 8.14,
-      "LC": 26,
+    "stillsFrom": "7b04793c21b14ce67881dd70724c773ea7aa3c4b0bdd0f54df3f5aa220785f6d",
+    "field1024": {
+      "LF": 8.21,
+      "LC": 25.9
+    },
+    "solve": {
+      "method": "neumann-mirror-2048, shipped 512²/256² = 2×2/4×4 box of the 1024² solve",
+      "bandOfDieMean": 0.81,
       "schedule": [
         [
           16,
@@ -695,35 +702,9 @@
           8,
           0.2
         ]
-      ]
-    },
-    "solve": {
-      "method": "neumann-mirror-1024",
-      "bandOfDieMean": 0.77,
-      "schedule": [
-        [
-          8,
-          3,
-          0.6
-        ],
-        [
-          4,
-          3,
-          0.6
-        ],
-        [
-          2,
-          5,
-          0.6
-        ],
-        [
-          1.5,
-          14,
-          0.25
-        ]
       ],
-      "errFirst": 1.155,
-      "errLast": 0.524
+      "errFirst": 1.146,
+      "errLast": 0.441
     }
   },
   "stills": {
@@ -772,15 +753,15 @@
       "y": 0.5
     },
     "bytes": {
-      "s1-640.avif": 13945,
-      "s1-1024.avif": 20974,
-      "s1-1600.avif": 34454,
+      "s1-640.avif": 13828,
+      "s1-1024.avif": 20760,
+      "s1-1600.avif": 34213,
       "poster.avif": 51548,
-      "block-radio.avif": 9197,
-      "block-cpu.avif": 15999,
-      "block-memory.avif": 19911,
-      "s6-240.avif": 2503,
-      "s6-480.avif": 4944
+      "block-radio.avif": 8819,
+      "block-cpu.avif": 14889,
+      "block-memory.avif": 18580,
+      "s6-240.avif": 2499,
+      "s6-480.avif": 4904
     }
   }
 }

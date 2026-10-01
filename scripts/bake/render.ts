@@ -1,7 +1,7 @@
 // CPU twin of the proof's caustic pass (and so of webgl's): a grid mesh refracts vertical light
 // through the surface by exact Snell (GLSL refract), and each triangle's intensity is its area
 // ratio I = a0 / (max(a1, a0·0.015) + 1e-8), rasterised additively at pixel centres (no MSAA),
-// exactly like the RT pass. Slope is sampled nearest from the tile, and is 0 outside [-1, 1]
+// exactly like the RT pass. Slope is sampled bilinearly between texel centres, and is 0 outside [-1, 1]
 // (the contract). Coordinates: world p-space, y north-up; outputs are canvas order (row 0 = north).
 import { DEPTH, ETA } from './field.ts'
 
@@ -51,13 +51,21 @@ export function renderCaustic(view: View, o: CausticOpts): Float64Array {
       const py = -o.meshHalf + j * o.meshStep
       let gx = 0
       let gy = 0
-      if (S && f !== 0) {
-        if (Math.abs(px) <= 1 + 1e-9 && Math.abs(py) <= 1 + 1e-9) {
-          const col = Math.min(S.N - 1, Math.floor(((px + 1) / 2) * S.N))
-          const row = S.N - 1 - Math.min(S.N - 1, Math.floor(((py + 1) / 2) * S.N))
-          gx = S.gx[row * S.N + col] * f
-          gy = S.gy[row * S.N + col] * f
-        }
+      if (S && f !== 0 && Math.abs(px) <= 1 + 1e-9 && Math.abs(py) <= 1 + 1e-9) {
+        // Bilinear between texel centres at the vertex's true position, clamped to the tile
+        // (webgl's lagoon mesh samples it the same way).
+        const u = Math.min(S.N - 1, Math.max(0, ((px + 1) / 2) * S.N - 0.5))
+        const v = Math.min(S.N - 1, Math.max(0, ((1 - py) / 2) * S.N - 0.5)) // canvas rows, north down
+        const x0 = Math.floor(u)
+        const y0 = Math.floor(v)
+        const x1 = Math.min(S.N - 1, x0 + 1)
+        const y1 = Math.min(S.N - 1, y0 + 1)
+        const fx = u - x0
+        const fy = v - y0
+        const at = (A: Float64Array) =>
+          (A[y0 * S.N + x0] * (1 - fx) + A[y0 * S.N + x1] * fx) * (1 - fy) + (A[y1 * S.N + x0] * (1 - fx) + A[y1 * S.N + x1] * fx) * fy
+        gx = at(S.gx) * f
+        gy = at(S.gy) * f
       }
       if (o.extra) {
         const [ex, ey] = o.extra(px, py)

@@ -27,10 +27,10 @@ export const LUM = { trace: 1.0, pad: 0.35, seal: 0.3, strap: 0.2, fill: 0.2, co
 /** Proof-measured sharpness: texels per glyph track at N = 512 (R-09). */
 export const TEXELS_PER_TRACK = 6.5
 /** The band between the die edge and the tile edge, as a fraction of the die's mean. The die
- *  can't fully darken its core and exports the excess into the band; 0.77 is calibrated so the
- *  solved band lands at I = 1.00, the open sea's level, with the tile solved under Neumann
- *  boundaries (scripts/bake/field.ts). The proof's torus solve used 0.85. */
-export const BAND_OF_DIE_MEAN = 0.77
+ *  can't fully darken its core and exports the excess into the band; 0.81 is calibrated so the
+ *  solved band lands at I = 1.00, the open sea's level, for the 1024² Neumann solve
+ *  (scripts/bake/field.ts; 0.80 → 0.992, 0.82 → 1.012). The proof's torus solve used 0.85. */
+export const BAND_OF_DIE_MEAN = 0.81
 
 export interface Target {
   N: number

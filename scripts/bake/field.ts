@@ -9,18 +9,10 @@ import type { Target } from '../../src/bake/target.ts'
 
 export const DEPTH = 2.0
 export const ETA = 1.333
-/** The proof's schedule with a longer, gentler last stage: at step 0.5 the mirrored domain
- *  diverges in the last stage (err 0.56 → 1.15); 14 × 0.25 converges and keeps LF ≈ 9. */
-export const BAKE_SCHEDULE = [
-  [8, 3, 0.6],
-  [4, 3, 0.6],
-  [2, 5, 0.6],
-  [1.5, 14, 0.25],
-] as const
-/** The offline stills' field (R-09): a 1024² tile, 13 texels per track, blur scales doubled, a
- *  gentler stage 3 and a final σ = 2 stage. It resolves single-edged letters; the 512² solve
- *  leaves ghost fold lines around the strokes. It never ships to the runtime. */
-export const STILL_SCHEDULE = [
+/** The one solve's schedule (R-P2-15), on a 1024² tile at 13 texels per track: the proof's stages
+ *  with blur scales doubled, a gentler stage 3 and a final σ = 2 stage. It resolves single-edged
+ *  letters; a 512² solve leaves ghost fold lines around the strokes. */
+export const FIELD_SCHEDULE = [
   [16, 3, 0.6],
   [8, 3, 0.5],
   [4, 6, 0.35],
@@ -45,7 +37,7 @@ export interface Field {
 export function solveField(
   t: Target,
   onProgress?: (done: number, total: number, err: number) => void,
-  schedule: readonly (readonly [number, number, number])[] = BAKE_SCHEDULE,
+  schedule: readonly (readonly [number, number, number])[] = FIELD_SCHEDULE,
 ): Field {
   const N = t.N
   const M = 2 * N
@@ -85,14 +77,57 @@ export function solveField(
       tan = Math.max(tan, vertical ? ay : ax)
     }
 
-  // Nearest texel of the mirrored domain for a world point, sampled exactly like the GPU samples
-  // the shipped tile (uv = (p + 1) / 2, texel floor(uv·N), canvas row N − 1 − that).
-  const full = (px: number, py: number): [number, number] => {
-    const X = Math.floor(((px + 1) / 2) * N)
-    const Y = N - 1 - Math.floor(((py + 1) / 2) * N)
-    return [k * dx(X, Y), k * dy(X, Y)]
-  }
+  // The slope continued past the tile by the mirror symmetry, sampled bilinearly between texel
+  // centres exactly as the shipped tile is (reference renders only).
+  const full = (px: number, py: number): [number, number] => bilerp(px, py, N, (X, Y) => [k * dx(X, Y), k * dy(X, Y)])
   return { N, gx, gy, full, errs, edgeNormalTexels: nrm, edgeTangentialTexels: tan, ms }
+}
+
+/** Bilinear between texel centres of an N² tile (canvas rows, north down) at world p. */
+function bilerp(px: number, py: number, N: number, at: (X: number, Y: number) => [number, number]): [number, number] {
+  const u = ((px + 1) / 2) * N - 0.5
+  const v = ((1 - py) / 2) * N - 0.5
+  const x0 = Math.floor(u)
+  const y0 = Math.floor(v)
+  const fx = u - x0
+  const fy = v - y0
+  const a = at(x0, y0)
+  const b = at(x0 + 1, y0)
+  const cc = at(x0, y0 + 1)
+  const d = at(x0 + 1, y0 + 1)
+  const mix = (i: 0 | 1) => (a[i] * (1 - fx) + b[i] * fx) * (1 - fy) + (cc[i] * (1 - fx) + d[i] * fx) * fy
+  return [mix(0), mix(1)]
+}
+
+/** A field at half the resolution: 2×2 box-averaged slopes (R-P2-15: the shipped 512² field is
+ *  the 1024² solve averaged down, which renders single-edged letters where a native 512² solve
+ *  ghosts). Displacements are restated in the coarse field's texels. */
+export function downsampleField(f: Field): Field {
+  const N = f.N / 2
+  const c = 2 / f.N // one fine texel, world
+  // Coarse texel (X, Y canvas) = the mean of its four fine children, then bilinear like the tile.
+  const coarse = (X: number, Y: number): [number, number] => {
+    let gx = 0
+    let gy = 0
+    for (const i of [0, 1])
+      for (const j of [0, 1]) {
+        const [a, b] = f.full(-1 + (2 * X + i + 0.5) * c, 1 - (2 * Y + j + 0.5) * c)
+        gx += a / 4
+        gy += b / 4
+      }
+    return [gx, gy]
+  }
+  const full = (px: number, py: number): [number, number] => bilerp(px, py, N, coarse)
+  return {
+    N,
+    gx: downsample2(f.gx, f.N),
+    gy: downsample2(f.gy, f.N),
+    full,
+    errs: f.errs,
+    edgeNormalTexels: f.edgeNormalTexels / 2,
+    edgeTangentialTexels: f.edgeTangentialTexels / 2,
+    ms: f.ms,
+  }
 }
 
 /** IEEE 754 binary16, round to nearest even (what an RG16F upload stores). */
