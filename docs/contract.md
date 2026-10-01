@@ -199,8 +199,9 @@ their exports. Step 9 (sims on blocks) is assigned after step 8.
   client render; all 3D work runs in effects.
 - `data-gl-avoid` on the S1 plate, the top bar (`.c-bar`) and the phone bottom bar (`.c-bbar`):
   the fitted framing's free region excludes these.
-- `data-gl-stage="about"` on the S2 die-map frame, `data-gl-stage="contact"` on the S7 stage
-  (S3–S5 surfaces added in step 9): the die or block lands in this rect.
+- `data-gl-stage="about"` on the S2 die-map frame, `data-gl-stage="cybot"` on the S6 stage
+  (`.s6-stage`, the C4 frame), `data-gl-stage="contact"` on the S7 stage (S3–S5 surfaces added in
+  step 9): the die or block lands in this rect.
 - `<div data-adv-slot aria-hidden="true">` is the last child of the S1 plate (ADV_IND portal).
 - S7 rows already carry `data-pad="1..5"`.
 
@@ -331,6 +332,16 @@ Typed stubs: `src/scroll/{clock,scroll,windows,index}.ts` and the phase 2 fields
   need the lens to drift sideways during the rise (D-06: one straight vertical rise). The S1
   fit checks the letters at a 6% margin over every focus tilt; it never uses margin 0. Revisit
   on Akash's real phones.
+- **R-P2-20 · Past S1 the 3D shows only through the stage windows.** The canvas draws the die inside
+  the current stop's `data-gl-stage` rect (interpolated during travel), with a feathered edge
+  rather than a hard pasted box, and paints `--floor-0` (the section's ground) outside it. So text
+  never sits on the 3D and keeps its exact Still contrast. In 3D, `gl.css` makes the opaque S6
+  stage panel transparent so the course draws over the open sea.
+- **R-P2-21 · Travel windows clamp to the document.** Every `TRAVEL` window end is
+  `min(end, docH − vh)`, so the last travel (cybot>contact) reaches t = 1 and C5 arrives.
+- **R-P2-22 · Still-path twinning.** S7 rows ↔ atoll pads ↔ lead chips light together in Still too
+  (plan S7 "The twinning still works"), with `:has()` CSS in `sections.css`. The 3D path's twins and
+  packet are webgl's.
 
 ## Phase 2 gates (in addition to phase 1's)
 

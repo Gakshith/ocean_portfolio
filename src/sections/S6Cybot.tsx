@@ -32,7 +32,7 @@ export function S6Cybot() {
           </a>
         </p>
       </div>
-      <div className="s6-stage">
+      <div className="s6-stage" data-gl-stage="cybot">
         <CybotStill headingId="cybot-title" />
       </div>
     </section>
