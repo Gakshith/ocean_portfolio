@@ -20,8 +20,8 @@ const GIVE_UP_MS = 8000
 const COLLAPSE_MS = 1200
 const RESTORE_MS = 3000
 // One ADV line, advancing in place, on phones and on desktops under 800 px tall: there the
-// bottom-aligned plate has no room above it for the full log, which pushed it under the fixed
-// die-map (1280×720: 77 px). Mirrors the media queries in gl.css.
+// bottom-aligned plate has no room above it for the full log's panel (gl.css). Taller desktops
+// show the full log on top of the plate while loading; nothing ever moves the name.
 const ONE_LINE = '(max-width: 767px), (max-height: 799px)'
 
 const loadEngine = () => import('./engine/engine')
@@ -243,7 +243,7 @@ export function Stage({ t0, driver, load = loadEngine }: { t0: number; driver: D
       {slot &&
         adv.length > 0 &&
         createPortal(
-          <div className="gl-adv">
+          <div className="gl-adv" data-full={!oneLine && !gaveUp && !connect?.collapsed ? '' : undefined}>
             {adv.map((line, i) => (
               <div key={i} className={i === 0 && !oneLine && line === ADV_LINES[0] ? 'gl-adv-ch' : undefined}>
                 {i === 0 && !oneLine && line === ADV_LINES[0] ? (
