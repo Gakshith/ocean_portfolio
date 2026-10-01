@@ -236,8 +236,23 @@ main > section {
 .s1 {
   --s1-clear: calc(var(--s-4) + 96px + var(--s-4));
 }
-main > section.s1 {
+main section.s1 {
   padding: calc(var(--bar) + var(--s-6)) var(--margin) var(--s1-clear);
+}
+/* The S1 pin (R-P2-12), while the 3D path runs: 100svh of hero plus the pin in large-viewport
+   units, so a phone's URL bar never changes its length. No ancestor may clip overflow. */
+.s1-track--pin {
+  --pin: 120lvh;
+  height: calc(100svh + var(--pin));
+}
+.s1-track--pin > .s1 {
+  position: sticky;
+  top: 0;
+}
+@media (max-width: 767px) {
+  .s1-track--pin {
+    --pin: 100lvh;
+  }
 }
 .s1-stage {
   grid-column: 6 / -1;
@@ -916,7 +931,7 @@ html:not(.js) canvas.hero-still {
   main > section {
     padding: var(--s-8) var(--margin);
   }
-  main > section.s1 {
+  main section.s1 {
     padding: calc(var(--bar) + var(--s-3)) var(--margin) calc(var(--bottombar) + env(safe-area-inset-bottom) + var(--s-3));
     row-gap: var(--s-3);
   }
