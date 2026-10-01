@@ -226,7 +226,10 @@ describe('Tide Pool', () => {
     await user.click(screen.getByRole('button', { name: 'Try an example' }))
     await user.type(screen.getByLabelText('Teach a new class'), 'kelp')
     await user.click(screen.getByRole('button', { name: 'Teach from this drawing' }))
-    expect(screen.getByText('New class “kelp” taught from one drawing.')).toBeTruthy()
+    // The visible note (the polite live region repeats it one animation frame later, so the
+    // count of matches depends on timing; the note itself does not).
+    const taught = screen.getAllByText('New class “kelp” taught from one drawing.')
+    expect(taught.some((el) => el.classList.contains('sim-note'))).toBe(true)
     expect(screen.getByText('4 of 6 classes')).toBeTruthy()
     expect(screen.getByText(/RAM used: 4 classes × 64 RAMs × 16 addresses = 4,096 bits/)).toBeTruthy()
   })
