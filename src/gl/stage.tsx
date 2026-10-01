@@ -15,6 +15,10 @@ const ARM_MS = 300
 const GIVE_UP_MS = 8000
 const COLLAPSE_MS = 1200
 const RESTORE_MS = 3000
+// One ADV line, advancing in place, on phones and on desktops under 800 px tall: there the
+// bottom-aligned plate has no room above it for the full log, which pushed it under the fixed
+// die-map (1280×720: 77 px). Mirrors the media queries in gl.css.
+const ONE_LINE = '(max-width: 767px), (max-height: 799px)'
 
 export function Stage({ t0, driver }: { t0: number; driver: Driver }) {
   const canvas = useRef<HTMLCanvasElement>(null)
@@ -24,12 +28,12 @@ export function Stage({ t0, driver }: { t0: number; driver: Driver }) {
   const [connect, setConnect] = useState<null | { ms: number; collapsed: boolean }>(null)
   const [gaveUp, setGaveUp] = useState(false)
   const [slot] = useState(() => document.querySelector('[data-adv-slot]'))
-  const [phone, setPhone] = useState(() => matchMedia('(max-width: 767px)').matches)
+  const [oneLine, setOneLine] = useState(() => matchMedia(ONE_LINE).matches)
   const [hop, setHop] = useState(0)
 
   useEffect(() => {
-    const mq = matchMedia('(max-width: 767px)')
-    const sync = () => setPhone(mq.matches)
+    const mq = matchMedia(ONE_LINE)
+    const sync = () => setOneLine(mq.matches)
     mq.addEventListener('change', sync)
     return () => mq.removeEventListener('change', sync)
   }, [])
@@ -135,13 +139,13 @@ export function Stage({ t0, driver }: { t0: number; driver: Driver }) {
     }
   }, [t0, driver])
 
-  const lines: string[] = phone ? [ADV_PHONE[Math.max(0, milestone - 1)]] : ADV_LINES.slice(0, Math.max(1, milestone))
+  const lines: string[] = oneLine ? [ADV_PHONE[Math.max(0, milestone - 1)]] : ADV_LINES.slice(0, Math.max(1, milestone))
   const adv: string[] = gaveUp
     ? [GAVE_UP]
     : connect
       ? connect.collapsed
         ? [CONNECT_SHORT]
-        : phone
+        : oneLine
           ? [connectLine(connect.ms)]
           : [...lines, connectLine(connect.ms)]
       : armed
@@ -158,8 +162,8 @@ export function Stage({ t0, driver }: { t0: number; driver: Driver }) {
         createPortal(
           <div className="gl-adv">
             {adv.map((line, i) => (
-              <div key={i} className={i === 0 && !phone && line === ADV_LINES[0] ? 'gl-adv-ch' : undefined}>
-                {i === 0 && !phone && line === ADV_LINES[0] ? (
+              <div key={i} className={i === 0 && !oneLine && line === ADV_LINES[0] ? 'gl-adv-ch' : undefined}>
+                {i === 0 && !oneLine && line === ADV_LINES[0] ? (
                   <>
                     ADV_IND ch{' '}
                     {[37, 38, 39].map((c, k) => (
