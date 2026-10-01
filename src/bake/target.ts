@@ -7,6 +7,10 @@
 // from the tile edge (the proof's layout); die units (floorplan.ts, 0–100) map linearly onto it.
 // Every texel constant below is the proof's value at N = 512, scaled by N / 512.
 
+import { dieTexels, TEXELS_PER_TRACK } from './die.ts'
+
+export { dieTexels, nameWidthDieUnits, TEXELS_PER_TRACK } from './die.ts'
+
 export interface GlyphSet {
   grid: number[]
   via: number
@@ -24,8 +28,6 @@ export interface FloorplanInput {
 
 /** Target luminance (C-03). */
 export const LUM = { trace: 1.0, pad: 0.35, seal: 0.3, strap: 0.2, fill: 0.2, core: 0.02 } as const
-/** Proof-measured sharpness: texels per glyph track at N = 512 (R-09). */
-export const TEXELS_PER_TRACK = 6.5
 /** The band between the die edge and the tile edge, as a fraction of the die's mean. The die
  *  can't fully darken its core and exports the excess into the band; 0.81 is calibrated so the
  *  solved band lands at I = 1.00, the open sea's level, for the 1024² Neumann solve
@@ -50,13 +52,6 @@ export interface Target {
   /** Mean of T over the die and over the whole tile. */
   dieMean: number
   tileMean: number
-}
-
-/** Die geometry in texels for an N² tile. */
-export function dieTexels(N: number) {
-  const d0 = Math.round(N * 0.05)
-  const d1 = N - d0
-  return { d0, d1, s: (d1 - d0) / 100 }
 }
 
 export function makeTarget(G: GlyphSet, fp: FloorplanInput, N = 512): Target {
