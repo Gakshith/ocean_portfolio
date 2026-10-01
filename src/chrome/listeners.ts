@@ -1,6 +1,7 @@
 // Global listeners for the chrome: in-page jumps, R / ? / Esc, Back, hash changes, and
 // section tracking. Installed once by <Chrome/> after hydration.
 import { useEffect } from 'react'
+import { bootScroll } from '../scroll'
 import { jumpTo } from '../state/jump'
 import { isSectionId, trackSections } from '../state/nav'
 import { closeInterrupt, closeOverlay, handlePopState, openInterrupt, openKeys, uiStore } from '../state/ui'
@@ -59,12 +60,14 @@ function onHashChange() {
 export function useGlobalListeners() {
   useEffect(() => {
     const stopTracking = trackSections(() => uiStore.get().overlay !== 'interrupt')
+    const stopScroll = bootScroll()
     document.addEventListener('click', onClick)
     document.addEventListener('keydown', onKeyDown)
     window.addEventListener('popstate', handlePopState)
     window.addEventListener('hashchange', onHashChange)
     return () => {
       stopTracking()
+      stopScroll()
       document.removeEventListener('click', onClick)
       document.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('popstate', handlePopState)
