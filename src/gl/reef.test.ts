@@ -4,9 +4,11 @@ import { describe, expect, it } from 'vitest'
 import bake from '../bake/bake.json'
 import type { BakeMeta } from '../bake/meta'
 import { fits, makeCamera, project } from './framing'
-import { LEADS, reefFromMeta } from './reef'
+import { dieToWorld, reefFromMeta } from './reef'
+import { ATOLL_VIEW, LEAD_Y, leadX } from '../svg/geometry'
+import { travelAt } from './dev'
 import { RING, RING_END, packet, reefState } from './ringwave'
-import { STOP_MARGIN, jumpPose, projectPoints, stopBoxes, stopPose, travelPose } from './stops'
+import { DIEMAP_VIEW, MARGIN_OF, defaultRect, jumpPose, projectPoints, stopBoxes, stopPose, travelPose, type StopId } from './stops'
 
 const meta = bake as unknown as BakeMeta
 const reef = reefFromMeta(meta)
@@ -39,12 +41,22 @@ describe('the reef (S7 data from bake.json)', () => {
   })
   it('runs each bond wire from its pad down to a lead below the die, leads in order', () => {
     for (const c of reef.contacts) {
-      expect(c.wire.y1).toBeLessThan(meta.die.box.y0)
-      expect(c.wire.y0).toBeLessThan(c.pad.y)
+      const [a, , , z] = c.wire.pts
+      expect(a.y).toBeLessThan(c.pad.y)
+      expect(a.x).toBeCloseTo(c.pad.x, 9)
+      expect(z.y).toBeLessThan(meta.die.box.y0)
+      expect(z.x).toBeCloseTo(c.lead.x, 9)
+      expect(c.lead.y).toBeLessThan(z.y)
       expect(c.wire.len).toBeGreaterThan(0)
-      expect(c.lead.y).toBe(LEADS.y)
     }
     for (let k = 1; k < 5; k++) expect(reef.contacts[k].lead.x).toBeGreaterThan(reef.contacts[k - 1].lead.x)
+  })
+  it('is the Still atoll geometry (R-P2-14): leads at leadX/LEAD_Y, the die map viewBox pinned', () => {
+    const w = dieToWorld(meta.die.box)
+    for (const c of reef.contacts) expect(c.lead).toEqual(w(leadX(c.k), LEAD_Y))
+    const src = readFileSync(join(__dirname, '../svg/DieMap.tsx'), 'utf8')
+    const v = DIEMAP_VIEW
+    expect(src).toContain(`viewBox="${v.x} ${v.y} ${v.w} ${v.h}"`)
   })
   it('has the UART pad on the east edge, near the SE corner', () => {
     const u = reef.pads.filter((p) => p.uart)
@@ -113,19 +125,42 @@ describe('camera stops C0–C5 (fit a world box into a rect)', () => {
   it('fits every stop box inside its rect with the margin, in plan view', () => {
     const cam = makeCamera()
     for (const [id, box] of Object.entries(boxes)) {
-      const p = stopPose(cam, box, rect, vw, vh)
+      const m = MARGIN_OF[id as StopId]
+      const p = stopPose(cam, box, rect, vw, vh, m)
       expect(p.tilt).toBe(0)
       const cam2 = makeCamera()
       projectPoints(cam2, p, [], vw, vh)
-      expect(fits(project(cam2, box, vw, vh), rect, STOP_MARGIN * 0.999), id).toBe(true)
+      expect(fits(project(cam2, box, vw, vh), { x0: rect.x0 - 0.5, y0: rect.y0 - 0.5, x1: rect.x1 + 0.5, y1: rect.y1 + 0.5 }, m * 0.999), id).toBe(true)
     }
+  })
+  it('C5 lands the Still atoll exactly on its box: pads and lead chips where the SVG and CSS put them', () => {
+    // a 1440-wide desktop atoll box with the viewBox aspect
+    const a = { x0: 700, y0: 200, x1: 1380, y1: 200 + (680 * ATOLL_VIEW.h) / ATOLL_VIEW.w }
+    const cam = makeCamera()
+    const p = stopPose(cam, boxes.C5, a, vw, vh, 0)
+    const r = project(makeCamera(), boxes.C5, vw, vh)
+    void r
+    const pts = projectPoints(cam, p, reef.contacts.map((c) => c.lead), vw, vh)
+    for (const [i, c] of reef.contacts.entries()) {
+      // leadPosition(): left = (leadX − v.x) / v.w, top = (LEAD_Y − v.y) / v.h of the box
+      const ex = a.x0 + ((leadX(c.k) - ATOLL_VIEW.x) / ATOLL_VIEW.w) * (a.x1 - a.x0)
+      const ey = a.y0 + ((LEAD_Y - ATOLL_VIEW.y) / ATOLL_VIEW.h) * (a.y1 - a.y0)
+      expect(Math.abs(pts[i].x - ex)).toBeLessThan(0.5)
+      expect(Math.abs(pts[i].y - ey)).toBeLessThan(0.5)
+    }
+  })
+  it('puts stops without a stage hook in the right half (desktop) or the upper band (phone)', () => {
+    expect(defaultRect(1440, 56, 900)).toEqual({ x0: 720, y0: 80, x1: 1416, y1: 876 })
+    const ph = defaultRect(375, 56, 611)
+    expect(ph.x0).toBe(16)
+    expect(ph.y1).toBeLessThan(611 / 2 + 56)
   })
   it('C5 frames the south half: contact pads, wires and leads, the name cropped at the top', () => {
     const b = boxes.C5
     for (const c of reef.contacts) {
       expect(c.pad.y).toBeGreaterThan(b.y0)
       expect(c.pad.y).toBeLessThan(b.y1)
-      expect(c.lead.y - c.lead.h).toBeGreaterThan(b.y0)
+      expect(c.lead.y).toBeGreaterThan(b.y0)
     }
     expect(b.y1).toBeGreaterThan(meta.letters.box.y0)
     expect(b.y1).toBeLessThan(meta.letters.box.y1)
@@ -149,6 +184,32 @@ describe('camera stops C0–C5 (fit a world box into a rect)', () => {
     expect(l4.x).toBeLessThan(rect.x1)
     expect(l4.x).toBeGreaterThan(l0.x)
     expect(Math.abs(l0.y - l4.y)).toBeLessThan(0.5)
+  })
+})
+
+describe('the dev shim travel windows (seam 2 TRAVEL)', () => {
+  const tops = [
+    { id: 'top', top: 0 },
+    { id: 'about', top: 2000 },
+    { id: 'link-layer', top: 3000 },
+    { id: 'cybot', top: 6000 },
+    { id: 'contact', top: 8000 },
+  ] as const
+  it('dwells, then travels while the next top moves 100% → 30% of the viewport', () => {
+    expect(travelAt(0, 1000, tops)).toEqual({ from: 'top', to: 'top', t: 0 })
+    expect(travelAt(1000, 1000, tops)).toEqual({ from: 'top', to: 'about', t: 0 })
+    expect(travelAt(1350, 1000, tops).t).toBeCloseTo(0.5)
+    expect(travelAt(1700, 1000, tops)).toEqual({ from: 'about', to: 'about', t: 0 })
+  })
+  it('runs cybot>contact over [top − 0.6vh, top + 0.4vh]', () => {
+    expect(travelAt(7400, 1000, tops)).toEqual({ from: 'cybot', to: 'contact', t: 0 })
+    expect(travelAt(7900, 1000, tops).t).toBeCloseTo(0.5)
+    expect(travelAt(8400, 1000, tops)).toEqual({ from: 'contact', to: 'contact', t: 0 })
+  })
+  it('ends a window at the last scroll position, so the last stop is reached', () => {
+    // the page ends at y 8100: the cybot>contact rise completes there
+    expect(travelAt(8100, 1000, tops, 8100)).toEqual({ from: 'contact', to: 'contact', t: 0 })
+    expect(travelAt(7750, 1000, tops, 8100).t).toBeCloseTo(0.5)
   })
 })
 

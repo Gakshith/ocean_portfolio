@@ -53,6 +53,19 @@ html[data-gl='live'] .s1-stage {
   visibility: hidden;
 }
 
+/* Past the hero the canvas shows through the sections whose camera stops exist (S2 C0, S6 C4,
+   S7 C5; S3–S5 join in step 9). Their Still SVGs stay as invisible hit layers: C0 and C5 fit those
+   viewBoxes exactly, so a block or pad link sits on its 3D twin. Only once live: while loading the
+   poster (the hero's first frame) is behind them. */
+html[data-gl='live'] :is(.s2, .s6, .s7),
+html[data-gl='live'] .diemap-frame {
+  background: transparent;
+}
+html[data-gl='live'] .diemap,
+html[data-gl='live'] .s7-atoll .atoll {
+  opacity: 0;
+}
+
 /* Text never sits on live caustics: the scroll cue gets an ink chip. */
 html[data-gl] .scroll-cue {
   background: var(--floor-0);

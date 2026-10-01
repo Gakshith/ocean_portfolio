@@ -16,7 +16,7 @@
 //   skirt RT  |p|∞ ≤ 3.25   ring 1 + the lagoon rim + the ring-2 rim (only while lagoon ≠ sea)
 //   sea RT    one tile ± 0.25, folded periodically everywhere else
 // The floor crossfades die → skirt over |p|∞ 1.15 → 1.25 and skirt → sea over 3.15 → 3.25.
-import { MeshBasicNodeMaterial, type Texture, type Color, type Vector4 } from 'three/webgpu'
+import { MeshBasicNodeMaterial, Vector2, Vector4, type Texture, type Color } from 'three/webgpu'
 import {
   Fn,
   abs,
@@ -90,6 +90,11 @@ export function makeUniforms() {
     sandAmt: uniform(1),
     /** Slope lookup at the mesh vertices: 0 nearest texel, 1 bilinear between texel centres. */
     slopeBilinear: uniform(1),
+    /** Past the hero the die shows only inside its stop's frame (CSS px, viewport, y down); the
+     *  floor paints --floor-0 outside, so section text keeps its Still contrast. winOn 0 = full bleed. */
+    win: uniform(new Vector4(0, 0, 1, 1)),
+    winOn: uniform(0),
+    vp: uniform(new Vector2(1, 1)),
   }
 }
 export type Uniforms = ReturnType<typeof makeUniforms>
@@ -393,7 +398,12 @@ export function floorMaterial(U: Uniforms, o: FloorOpts) {
     col.assign(mix(col, C.floor, smoothstep(5, 9, length(p))))
     const v = length(screenUV.sub(0.5)).mul(1.4)
     col.assign(col.mul(float(1).sub(smoothstep(0.35, 1, v).mul(0.08))))
-    return vec4(min(col, vec3(1, 1, 1)), 1)
+    // the stop's frame: exactly --floor-0 outside it, a 1 px antialiased edge
+    const sp = screenUV.mul(U.vp)
+    const span = (a: N, b: N, x: N) => smoothstep(a.sub(0.5), a.add(0.5), x).mul(float(1).sub(smoothstep(b.sub(0.5), b.add(0.5), x)))
+    const inWin = span(U.win.x, U.win.z, sp.x).mul(span(U.win.y, U.win.w, sp.y))
+    col.assign(mix(C.floor, min(col, vec3(1, 1, 1)), mix(float(1), inWin, U.winOn)))
+    return vec4(col, 1)
   })()
   return m
 }

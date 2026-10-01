@@ -7,13 +7,15 @@ import { SECTIONS, type SectionId } from '../state/sections'
 import type { Tick } from './engine/input'
 import type { Driver } from './driver'
 
-/** seam 2 TRAVEL: [top(to) − vh, top(to) − 0.3vh]; cybot>contact [top − 0.6vh, top + 0.4vh]. */
-export function travelAt(y: number, vh: number, tops: readonly { id: SectionId; top: number }[]): Pick<Tick, 'from' | 'to' | 't'> {
+/** seam 2 TRAVEL: [top(to) − vh, top(to) − 0.3vh]; cybot>contact [top − 0.6vh, top + 0.4vh]. A
+ *  window never ends past the last scroll position, or its stop could never be reached. */
+export function travelAt(y: number, vh: number, tops: readonly { id: SectionId; top: number }[], maxY = Infinity): Pick<Tick, 'from' | 'to' | 't'> {
   let at: SectionId = 'top'
   for (let i = 1; i < tops.length; i++) {
     const a = tops[i - 1]
     const b = tops[i]
-    const [w0, w1] = b.id === 'contact' && a.id === 'cybot' ? [b.top - 0.6 * vh, b.top + 0.4 * vh] : [b.top - vh, b.top - 0.3 * vh]
+    const [w0, e1] = b.id === 'contact' && a.id === 'cybot' ? [b.top - 0.6 * vh, b.top + 0.4 * vh] : [b.top - vh, b.top - 0.3 * vh]
+    const w1 = Math.max(w0 + 1, Math.min(e1, maxY))
     if (y < w0) break
     if (y < w1) return { from: a.id, to: b.id, t: (y - w0) / (w1 - w0) }
     at = b.id
@@ -29,11 +31,14 @@ export function devDriver(): Driver {
   let last = 0
   let forced: number | null = null
   let tops: { id: SectionId; top: number }[] | null = null
-  const measureTops = () =>
-    (tops = SECTIONS.flatMap(({ id }) => {
+  let maxY = Infinity
+  const measureTops = () => {
+    maxY = document.documentElement.scrollHeight - innerHeight
+    return (tops = SECTIONS.flatMap(({ id }) => {
       const el = document.getElementById(id)
       return el ? [{ id, top: el.getBoundingClientRect().top + scrollY }] : []
     }))
+  }
   new ResizeObserver(() => (tops = null)).observe(document.body)
   const tick = (now: number) => {
     raf = 0
@@ -71,7 +76,8 @@ export function devDriver(): Driver {
     tick: () => {
       const y = scrollY
       const heroP = forced ?? Math.min(1, Math.max(0, y / (innerHeight * (innerWidth < 768 ? 1 : 1.2))))
-      return { y, heroP, ...travelAt(y, innerHeight, tops ?? measureTops()) }
+      const tt = tops ?? measureTops()
+      return { y, heroP, ...travelAt(y, innerHeight, tt, maxY) }
     },
   }
 }

@@ -31,10 +31,13 @@ import {
 } from 'three/webgpu'
 import { uniform } from 'three/tsl'
 import type { Box } from '../../bake/meta'
-import { FpsCut, easeFocus, focusTarget, lerp, s1Camera, s1Light } from '../choreo'
-import { DIE_MARGIN, LETTERS_MARGIN, applyPose, fitS1, fits, freeRegions, makeCamera, project, sealGap, sealOk, type Rect, type S1Framing, type WBox } from '../framing'
+import { FpsCut, ease2, ease3, easeFocus, focusTarget, lerp, s1Camera, s1Light } from '../choreo'
+import { DIE_MARGIN, LETTERS_MARGIN, applyPose, center, fitS1, fits, freeRegions, makeCamera, project, sealGap, sealOk, type Pose, type Rect, type S1Framing, type WBox } from '../framing'
+import { reefFromMeta } from '../reef'
+import { JUMP_MS, MARGIN_OF, STOP_OF, defaultRect, jumpPose, stopBoxes, stopPose, travelPose } from '../stops'
+import type { SectionId } from '../../state/sections'
 import { loadMasks, loadSlope, loadTraces, meta } from './data'
-import type { Layout, Tick } from './input'
+import { toViewport, type Jump, type Layout, type Tick } from './input'
 import { EXT, SKIRT_EXT, blurMaterial, causticMaterial, floorMaterial, makeUniforms, readbackMaterial, sandMaterial } from './shaders'
 
 // Module evaluated (three.js included): the first stage of the R-P2-16 long-task window.
@@ -564,6 +567,41 @@ export async function createEngine(o: EngineOptions) {
     return L
   }
 
+  // ---------- camera path after the hero (C0–C5): a world box fitted into its rect ----------
+  const reef = reefFromMeta(meta)
+  const boxes = stopBoxes(meta, reef)
+  // A plan-view fit is translation-invariant under the lens shift, so the distance depends only
+  // on the rect's size: dwells pan 1:1 with the page by moving the lens centre, no search.
+  const distCache = new Map<string, number>()
+  const stopRect = (id: Exclude<SectionId, 'top'>, y: number): Rect => {
+    const st = id === 'about' || id === 'contact' ? L.stages[id] : undefined
+    return st ? toViewport(st, y) : defaultRect(L.vw, L.top, L.bottom)
+  }
+  /** A stop's camera pose and its frame (the hero's frame is the whole viewport). */
+  type View = { pose: Pose; win: Rect }
+  const viewOf = (id: SectionId, P: number, y: number): View => {
+    if (id === 'top') return { pose: poseAt(P, comp!), win: { x0: 0, y0: 0, x1: L.vw, y1: L.vh } }
+    const stop = STOP_OF[id]
+    const r = stopRect(id, y)
+    const box = boxes[stop]
+    const key = `${stop} ${Math.round(r.x1 - r.x0)} ${Math.round(r.y1 - r.y0)} ${L.vw} ${L.vh}`
+    let dist = distCache.get(key)
+    if (dist === undefined) distCache.set(key, (dist = stopPose(cam, box, r, L.vw, L.vh, MARGIN_OF[stop]).dist))
+    const c = center(box)
+    return { pose: { tx: c.x, ty: c.y, dist, tilt: 0, cx: (r.x0 + r.x1) / 2, cy: (r.y0 + r.y1) / 2 }, win: r }
+  }
+  const lerpRect = (a: Rect, b: Rect, e: number): Rect => ({ x0: lerp(a.x0, b.x0, e), y0: lerp(a.y0, b.y0, e), x1: lerp(a.x1, b.x1, e), y1: lerp(a.y1, b.y1, e) })
+  let jumping: { from: View; to: SectionId; t0: number } | null = null
+  let lastPose: Pose | null = null
+  let lastWin: Rect | null = null
+  const samePose = (a: Pose, b: Pose) => a.tx === b.tx && a.ty === b.ty && a.dist === b.dist && a.tilt === b.tilt && a.cx === b.cx && a.cy === b.cy
+  /** A jump flies from wherever the camera is (≤ 900 ms, power2.inOut), or cuts when instant. */
+  const jump = (j: Jump) => {
+    jumping = j.instant || !lastPose ? null : { from: { pose: { ...lastPose }, win: { ...(lastWin ?? { x0: 0, y0: 0, x1: L.vw, y1: L.vh }) } }, to: j.to, t0: -1 }
+    dirty = true
+    invalidate()
+  }
+
   // ---------- frame loop (the one clock) ----------
   function resize() {
     const T = TIERS[tierName]
@@ -624,10 +662,34 @@ export async function createEngine(o: EngineOptions) {
     if (moving) t += dt * L.speed
     U.time.value = t
     const easing = fShown !== fT
-    const changed = dirty || P !== lastP || easing || compMoving || moving || causticsStale
+    // The hero owns the camera until its pin ends; then the dwell / travel / jump poses.
+    let pose: Pose
+    let win: Rect | null = null
+    if (jumping) {
+      if (jumping.t0 < 0) jumping.t0 = now
+      const u = Math.min(1, (now - jumping.t0) / JUMP_MS)
+      const to = viewOf(jumping.to, P, tk.y)
+      pose = jumpPose(jumping.from.pose, to.pose, u)
+      win = jumping.to === 'top' && u >= 1 ? null : lerpRect(jumping.from.win, to.win, ease2(u))
+      if (u >= 1) jumping = null
+    } else if (forcedP !== null || tk.heroP < 1 || (tk.from === 'top' && tk.to === 'top')) pose = poseAt(P, comp)
+    else {
+      const a = viewOf(tk.from, P, tk.y)
+      const b = viewOf(tk.to, P, tk.y)
+      pose = travelPose(a.pose, b.pose, tk.t)
+      win = lerpRect(a.win, b.win, ease3(Math.min(1, Math.max(0, tk.t))))
+    }
+    U.winOn.value = win ? 1 : 0
+    if (win) U.win.value.set(win.x0, win.y0, win.x1, win.y1)
+    U.vp.value.set(W.w, W.h)
+    const winMoved = (win === null) !== (lastWin === null) || (win !== null && lastWin !== null && (win.x0 !== lastWin.x0 || win.y0 !== lastWin.y0 || win.x1 !== lastWin.x1 || win.y1 !== lastWin.y1))
+    lastWin = win
+    const posed = !lastPose || !samePose(pose, lastPose) || winMoved
+    const changed = dirty || P !== lastP || easing || compMoving || moving || causticsStale || posed
     if (!changed) return false
     beginFrame()
-    applyPose(cam, poseAt(P, comp), W.w, W.h)
+    applyPose(cam, pose, W.w, W.h)
+    lastPose = pose
     // Low tier: caustics at 30 Hz, the floor at 60 (phone cut 2).
     const skipCaustics = tierName === 'low' && moving && !causticsStale && frames % 2 === 1
     if ((moving || causticsStale || easing) && !frozen && !skipCaustics) {
@@ -648,7 +710,7 @@ export async function createEngine(o: EngineOptions) {
       if (fpsCut.push(now - lastNow)) freeze()
     } else if (!moving) fpsCut.reset()
     lastNow = moving ? now : 0
-    return moving || easing || compMoving
+    return moving || easing || compMoving || jumping !== null
   }
 
   function freeze() {
@@ -691,7 +753,7 @@ export async function createEngine(o: EngineOptions) {
       return causticUpdates
     },
     get state() {
-      return { P: forcedP ?? tk.heroP, f: fShown, frozen, comp }
+      return { P: forcedP ?? tk.heroP, f: fShown, frozen, comp, tick: tk, pose: lastPose, jumping: jumping !== null }
     },
     setP(v: number | null) {
       forcedP = v
@@ -883,6 +945,7 @@ export async function createEngine(o: EngineOptions) {
     backend: backendName,
     frame,
     setLayout,
+    jump,
     dispose() {
       renderer.dispose()
     },

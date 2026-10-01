@@ -3,7 +3,9 @@
 // CSS ships with it (R-P2-01).
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { setHas3D } from '../state/motion'
+import { motionStore, setHas3D } from '../state/motion'
+import { onJump } from '../state/jump'
+import type { SectionId } from '../state/sections'
 import { ADV_LINES, ADV_PHONE, CONNECT_SHORT, GAVE_UP, connectLine } from './adv'
 import type { Engine, EngineOptions } from './engine/engine'
 import type { Driver } from './driver'
@@ -79,9 +81,14 @@ export function Stage({ t0, driver, load = loadEngine }: { t0: number; driver: D
     const attach = (e: Engine) => {
       const unFrame = driver.add((now, dt) => e.frame(now, dt, driver.tick()))
       const unWatch = watchLayout(() => e.setLayout(measureLayout(driver.tick().heroP)))
+      // Phase 1 passes the id only; seam 2 adds { from, instant } (instant = calm || still).
+      const unJump = onJump((to: SectionId, info?: { from: SectionId; instant: boolean }) =>
+        e.jump({ from: info?.from ?? to, to, instant: info?.instant ?? motionStore.get().calm }),
+      )
       detach = () => {
         unFrame()
         unWatch()
+        unJump()
         detach = () => {}
       }
     }

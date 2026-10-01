@@ -5,7 +5,7 @@ import type { Engine, EngineOptions } from './engine/engine'
 import type { Driver } from './driver'
 
 const setHas3D = vi.fn()
-vi.mock('../state/motion', () => ({ setHas3D: (ready: boolean) => setHas3D(ready) }))
+vi.mock('../state/motion', () => ({ setHas3D: (ready: boolean) => setHas3D(ready), motionStore: { get: () => ({ calm: false }) } }))
 
 let init: (opts: EngineOptions) => Promise<unknown>
 const load = async () => ({ createEngine: (opts: EngineOptions) => init(opts) as Promise<Engine> })
@@ -32,7 +32,7 @@ describe('Stage lifecycle (R-P2-10)', () => {
   it('StrictMode mount never reports 3D as failed, and reports it ready on the first frame', async () => {
     init = async (opts) => {
       setTimeout(() => opts.hooks.firstFrame(42), 0)
-      return { api: {}, frame: () => false, setLayout: () => {}, dispose: () => {} }
+      return { api: {}, frame: () => false, setLayout: () => {}, jump: () => {}, dispose: () => {} }
     }
     render(
       <StrictMode>

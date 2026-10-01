@@ -6,7 +6,8 @@ import type { BakeMeta } from '../bake/meta'
 import type { SectionId } from '../state/sections'
 import { ease2, ease3, lerp } from './choreo'
 import { applyPose, center, fitDist, type Pose, type Rect, type WBox } from './framing'
-import { LEADS, type Reef } from './reef'
+import { dieToWorld, type Reef } from './reef'
+import { ATOLL_VIEW } from '../svg/geometry'
 import type { PerspectiveCamera } from 'three/webgpu'
 
 export type StopId = 'C0' | 'C1' | 'C2' | 'C3' | 'C4' | 'C5'
@@ -21,25 +22,45 @@ export const STOP_OF: Record<Exclude<SectionId, 'top'>, StopId> = {
   contact: 'C5',
 }
 
-/** Margin of the box inside its stage rect. */
+/** Margin of the box inside its rect. C0 and C5 fit their Still SVG's viewBox exactly (margin 0)
+ *  into that SVG's box, so the invisible SVG links and the CSS-placed lead chips sit on the 3D. */
 export const STOP_MARGIN = 0.04
+export const MARGIN_OF: Record<StopId, number> = { C0: 0, C1: STOP_MARGIN, C2: STOP_MARGIN, C3: STOP_MARGIN, C4: STOP_MARGIN, C5: 0 }
+
+/** src/svg/DieMap.tsx's viewBox (die units): the die plus the UART bond-out to the east. */
+export const DIEMAP_VIEW = { x: -3, y: -3, w: 118, h: 106 } as const
+
+/** A die-unit viewBox as a world box. */
+const viewToBox = (die: BakeMeta['die']['box'], v: { x: number; y: number; w: number; h: number }): WBox => {
+  const w = dieToWorld(die)
+  const a = w(v.x, v.y)
+  const b = w(v.x + v.w, v.y + v.h)
+  return { x0: a.x, y0: b.y, x1: b.x, y1: a.y }
+}
+
+/** Where a stop lands when its section has no stage hook yet (C1–C4 until step 9 adds the S3–S5
+ *  surfaces): the right half between the bars on desktop, the upper band on phone. */
+export function defaultRect(vw: number, top: number, bottom: number): Rect {
+  if (vw >= 768) return { x0: vw * 0.5, y0: top + 24, x1: vw - 24, y1: bottom - 24 }
+  return { x0: 16, y0: top + 16, x1: vw - 16, y1: top + 0.42 * (bottom - top) }
+}
 
 export function stopBoxes(meta: Pick<BakeMeta, 'die' | 'blocks' | 'letters'>, reef: Reef): Record<StopId, WBox> {
   const block = (section: SectionId) => meta.blocks.find((b) => b.section === section)!.box
   const uart = reef.pads.find((p) => p.uart)!
   const die = meta.die.box
   return {
-    // C0: the whole die, plan view
-    C0: die,
+    // C0: the whole die, plan view, exactly where the S2 die map draws it
+    C0: viewToBox(die, DIEMAP_VIEW),
     // C1–C3: the radio, CPU and memory blocks
     C1: block('link-layer'),
     C2: block('risc-v'),
     C3: block('wisard'),
     // C4: the open sea past the SE reef, with the UART pad at the frame's west edge
     C4: { x0: uart.x - 0.08, x1: uart.x + 0.92, y0: uart.y - 0.5, y1: uart.y + 0.5 },
-    // C5: the south half: reef, contact pads, bond wires, leads and the chip band below them;
-    // the name's lower line shows only as a cropped glow at the top (C-10)
-    C5: { x0: die.x0, x1: die.x1, y0: LEADS.y - LEADS.h - 0.12, y1: meta.letters.box.y0 + 0.13 },
+    // C5: the south half: reef, contact pads, bond wires and lead chips, exactly the Still atoll's
+    // framing; the name's lower line shows only as a cropped glow at the top (C-10)
+    C5: viewToBox(die, ATOLL_VIEW),
   }
 }
 
