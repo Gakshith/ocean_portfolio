@@ -34,6 +34,7 @@ import type { Box } from '../../bake/meta'
 import { FpsCut, easeFocus, focusTarget, lerp, s1Camera, s1Light } from '../choreo'
 import { DIE_MARGIN, LETTERS_MARGIN, applyPose, fitS1, fits, freeRegions, makeCamera, project, sealGap, sealOk, type Rect, type S1Framing, type WBox } from '../framing'
 import { loadMasks, loadSlope, loadTraces, meta } from './data'
+import type { Layout, Tick } from './input'
 import { EXT, SKIRT_EXT, blurMaterial, causticMaterial, floorMaterial, makeUniforms, readbackMaterial, sandMaterial } from './shaders'
 
 // Module evaluated (three.js included): the first stage of the R-P2-16 long-task window.
@@ -43,13 +44,6 @@ export type TierName = 'high' | 'low'
 export const TIERS = {
   high: { lagoon: 512, sea: 256, skirt: 192, dieRT: 1280, seaRT: 640, skirtRT: 832, disp: 1, bloom: 2, dpr: 2, slope: 512 as const },
   low: { lagoon: 256, sea: 128, skirt: 128, dieRT: 640, seaRT: 320, skirtRT: 416, disp: 0, bloom: 1, dpr: 1.5, slope: 256 as const },
-}
-
-/** The clock seam, narrowed to what the engine needs (src/scroll in production, a rAF shim in dev). */
-export interface Driver {
-  add(fn: (timeMs: number, dtMs: number) => boolean | void): () => void
-  invalidate(): void
-  heroP(): number
 }
 
 export interface Hooks {
@@ -65,7 +59,11 @@ export interface Hooks {
 
 export interface EngineOptions {
   canvas: HTMLCanvasElement
-  driver: Driver
+  /** The page as measured on the main thread, and the scroll state at creation. */
+  layout: Layout
+  tick: Tick
+  /** Ask the clock for a tick (the engine draws only inside frame()). */
+  invalidate(): void
   hooks: Hooks
   /** 'auto' runs the warm-up on fine pointers and picks low on coarse ones. */
   tier?: TierName | 'auto'
@@ -158,7 +156,9 @@ const quantile = (a: number[], q: number) => {
 const median = (a: number[]) => quantile(a, 0.5)
 
 export async function createEngine(o: EngineOptions) {
-  const { canvas, driver, hooks } = o
+  const { canvas, hooks, invalidate } = o
+  let L = o.layout
+  let tk = o.tick
   o.hooks.milestone(1)
 
   // ---------- renderer: WebGPU, else the WebGL2 backend of the same renderer ----------
@@ -457,13 +457,12 @@ export async function createEngine(o: EngineOptions) {
   }
   await prime()
 
-  const W = { w: innerWidth, h: innerHeight }
+  const W = { w: L.vw, h: L.vh }
   let started = false
   let dirty = true
   let causticsStale = true
 
   // ---------- composition (C-02): measured from the real DOM, fitted, eased ----------
-  let plateEl: HTMLElement | null = null
   let plateRect: Rect | null = null
   let comp: S1Framing | null = null
   let compT: S1Framing | null = null
@@ -471,25 +470,10 @@ export async function createEngine(o: EngineOptions) {
   const dieBox: WBox = meta.die.box
   const dieBoxM: WBox = { x0: dieBox.x0 - 0.016, y0: dieBox.y0 - 0.016, x1: dieBox.x1 + 0.016, y1: dieBox.y1 + 0.016 }
   const measure = () => {
-    const vw = innerWidth
-    const vh = innerHeight
-    let top = 0
-    let bottom = vh
-    let plate: Rect | null = null
-    for (const el of document.querySelectorAll<HTMLElement>('[data-gl-avoid]')) {
-      const r = el.getBoundingClientRect()
-      if (r.width < 1 || r.height < 1) continue
-      const full = r.width >= vw * 0.9
-      if (full && r.top <= 1) top = Math.max(top, r.bottom)
-      else if (full && r.bottom >= vh - 1) bottom = Math.min(bottom, r.top)
-      else {
-        plateEl = el
-        plate = { x0: r.left, y0: r.top, x1: r.right, y1: r.bottom }
-      }
-    }
+    const { vw, vh, top, bottom, plate } = L
     // The plate's pinned rect is only meaningful inside the pin; elsewhere keep the last one.
-    if (plate && driver.heroP() < 1) plateRect = plate
-    else if (plate && !plateRect) plateRect = { ...plate, y0: plate.y0 + scrollY, y1: plate.y1 + scrollY }
+    if (plate && L.plateHeroP < 1) plateRect = plate
+    else if (plate && !plateRect) plateRect = plate
     const regions = freeRegions(vw, vh, top, bottom, plateRect)
     compT = fitS1(cam, letters, dieBoxM, regions, s1Camera(0).tilt, vw, vh, meta.seal.outer, plateRect) ?? compT
     if (!comp && compT) comp = { ...compT }
@@ -559,10 +543,6 @@ export async function createEngine(o: EngineOptions) {
   U.dispersion.value = TIERS[tierName].disp
   U.bloomLv.value = TIERS[tierName].bloom
   hooks.milestone(5)
-  const ro = new ResizeObserver(() => {
-    measure()
-    driver.invalidate()
-  })
 
   // ---------- camera + light as functions of P ----------
   function poseAt(P: number, c: S1Framing) {
@@ -587,16 +567,16 @@ export async function createEngine(o: EngineOptions) {
   // ---------- frame loop (the one clock) ----------
   function resize() {
     const T = TIERS[tierName]
-    renderer.setPixelRatio(Math.min(devicePixelRatio, T.dpr))
-    renderer.setSize(innerWidth, innerHeight, false)
-    W.w = innerWidth
-    W.h = innerHeight
+    renderer.setPixelRatio(Math.min(L.dpr, T.dpr))
+    renderer.setSize(L.vw, L.vh, false)
+    W.w = L.vw
+    W.h = L.vh
     measure()
     if (compT) comp = { ...compT }
     dirty = true
   }
   let t = 0
-  let fShown = focusTarget(driver.heroP()) >= 0.999 ? 1 : 0
+  let fShown = focusTarget(tk.heroP) >= 0.999 ? 1 : 0
   let lastP = -1
   let frames = 0
   let first = true
@@ -607,24 +587,25 @@ export async function createEngine(o: EngineOptions) {
   const watchFps = o.coarse
   let lastNow = 0
 
-  const onResize = () => {
-    resize()
-    driver.invalidate()
+  /** New measurements from the main thread: refit and redraw. */
+  const setLayout = (l: Layout) => {
+    const sized = l.vw !== L.vw || l.vh !== L.vh || l.dpr !== L.dpr
+    L = l
+    if (sized) resize()
+    else {
+      measure()
+      dirty = true
+    }
+    invalidate()
   }
-  addEventListener('resize', onResize)
-  document.fonts?.ready.then(() => {
-    measure()
-    if (compT) comp = { ...compT }
-    driver.invalidate()
-  })
   started = true
   resize()
-  if (plateEl) ro.observe(plateEl)
 
-  const frame = (now: number, dtMs: number) => {
+  const frame = (now: number, dtMs: number, tick: Tick) => {
+    tk = tick
     if (lost || !comp || !compT) return false
     const dt = Math.min(0.05, Math.max(0, dtMs) / 1000)
-    const P = forcedP ?? driver.heroP()
+    const P = forcedP ?? tk.heroP
     const fT = focusTarget(P)
     fShown = easeFocus(fShown, fT, dt)
     if (Math.abs(fShown - fT) < 1e-4) fShown = fT
@@ -669,7 +650,6 @@ export async function createEngine(o: EngineOptions) {
     lastNow = moving ? now : 0
     return moving || easing || compMoving
   }
-  const unsub = driver.add(frame)
 
   function freeze() {
     if (frozen) return
@@ -692,8 +672,8 @@ export async function createEngine(o: EngineOptions) {
     U.time.value = keep.t
     causticsStale = false
   }
-  if (focusTarget(driver.heroP()) >= 0.999 && s1Light(driver.heroP(), 1).moving === false) renderStatic()
-  driver.invalidate()
+  if (focusTarget(tk.heroP) >= 0.999 && s1Light(tk.heroP, 1).moving === false) renderStatic()
+  invalidate()
 
   // ---------- acceptance tests (C-02 framing, C-03 contrast) ----------
   const api = {
@@ -711,19 +691,19 @@ export async function createEngine(o: EngineOptions) {
       return causticUpdates
     },
     get state() {
-      return { P: forcedP ?? driver.heroP(), f: fShown, frozen, comp }
+      return { P: forcedP ?? tk.heroP, f: fShown, frozen, comp }
     },
     setP(v: number | null) {
       forcedP = v
       dirty = true
-      driver.invalidate()
+      invalidate()
     },
     setTier: async (n: TierName) => {
       await setTier(n)
       U.dispersion.value = TIERS[n].disp
       U.bloomLv.value = TIERS[n].bloom
       causticsStale = true
-      driver.invalidate()
+      invalidate()
     },
     framingTest() {
       if (!compT) return { error: 'no composition' }
@@ -747,7 +727,7 @@ export async function createEngine(o: EngineOptions) {
         checks.push({ P, what: `seal gap ${Number.isFinite(gap) ? Math.round(gap) : '∞'} px`, bbox: [s2.x0, s2.y0, s2.x1, s2.y1].map(Math.round), inside: sealOk(gap) })
       }
       dirty = true
-      driver.invalidate()
+      invalidate()
       return {
         viewport: `${W.w}×${W.h}`,
         region: `${g.name} [${Math.round(g.x0)},${Math.round(g.y0)}]–[${Math.round(g.x1)},${Math.round(g.y1)}]`,
@@ -798,7 +778,7 @@ export async function createEngine(o: EngineOptions) {
       const dC = mean(I, 4, disp)
       dirty = true
       causticsStale = true
-      driver.invalidate()
+      invalidate()
       return {
         backend: backendName,
         I_letters: +L.toFixed(2),
@@ -826,13 +806,13 @@ export async function createEngine(o: EngineOptions) {
         }
       }
       dirty = causticsStale = true
-      driver.invalidate()
+      invalidate()
     },
     /** Test hook: flatten the sand albedo so a screenshot profile measures the light alone. */
     flatSand(on: boolean) {
       U.sandAmt.value = on ? 0 : 1
       dirty = true
-      driver.invalidate()
+      invalidate()
     },
     /** Test hooks: the phone cut and a GPU loss, through the same paths the real events take. */
     freeze,
@@ -849,7 +829,7 @@ export async function createEngine(o: EngineOptions) {
     warmUp: async () => {
       const r = await warmUp()
       dirty = causticsStale = true
-      driver.invalidate()
+      invalidate()
       return r
     },
     /** GPU ms per pass (WebGPU timestamps), median of n. */
@@ -901,10 +881,9 @@ export async function createEngine(o: EngineOptions) {
   return {
     api,
     backend: backendName,
+    frame,
+    setLayout,
     dispose() {
-      unsub()
-      removeEventListener('resize', onResize)
-      ro.disconnect()
       renderer.dispose()
     },
   }

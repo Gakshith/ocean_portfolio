@@ -152,20 +152,15 @@ describe('camera stops C0–C5 (fit a world box into a rect)', () => {
   })
 })
 
-// The worker-ready boundary (step 8): src/gl/engine/** must not read the DOM. Everything
-// DOM-side is measured on the main thread into one serialisable frame input. The step 7 engine
-// still measures the DOM itself; those references are pinned here and the step 8 integration
-// takes this allowlist to zero. Any NEW reference fails.
+// The worker-ready boundary (R-P2-16): src/gl/engine/** never reads the DOM. Everything DOM-side
+// is measured on the main thread (src/gl/layout.ts) into a serialisable Layout + Tick, so the
+// engine can move to a Worker on an OffscreenCanvas. Any reference fails.
 describe('src/gl/engine never touches the DOM', () => {
-  const DOM = /\b(document|window|getBoundingClientRect|matchMedia|innerWidth|innerHeight|scrollY|devicePixelRatio|ResizeObserver|addEventListener|removeEventListener)\b/g
-  const ALLOW: Record<string, number> = { 'engine.ts': 17 }
+  const DOM = /\b(document|window|getBoundingClientRect|matchMedia|innerWidth|innerHeight|scrollY|devicePixelRatio|ResizeObserver|addEventListener|removeEventListener|location|localStorage|requestAnimationFrame)\b/g
   const dir = join(__dirname, 'engine')
   for (const f of readdirSync(dir).filter((x) => /\.tsx?$/.test(x)))
-    it(`${f} has no DOM references beyond its pinned step 7 allowance`, () => {
+    it(`${f} has no DOM references`, () => {
       const src = readFileSync(join(dir, f), 'utf8').replace(/\/\/.*$|\/\*[\s\S]*?\*\//gm, '')
-      const n = (src.match(DOM) ?? []).length
-      expect(n).toBeLessThanOrEqual(ALLOW[f] ?? 0)
-      // when the integration removes some, lower the pin so it can't creep back
-      expect(ALLOW[f] ?? 0).toBeLessThanOrEqual(n)
+      expect(src.match(DOM) ?? []).toEqual([])
     })
 })

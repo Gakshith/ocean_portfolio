@@ -3,7 +3,7 @@
 // chunk after first paint (requestIdleCallback, 300ms timeout); the stage requests three.js.
 import { useEffect, useState, type ComponentType } from 'react'
 import { useMotion } from '../state/motion'
-import type { Driver } from './engine/engine'
+import type { Driver } from './driver'
 
 type StageProps = { t0: number; driver: Driver }
 type Loaded = { Stage: ComponentType<StageProps>; driver: Driver; t0: number }

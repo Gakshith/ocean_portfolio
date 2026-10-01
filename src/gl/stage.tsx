@@ -5,7 +5,9 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { setHas3D } from '../state/motion'
 import { ADV_LINES, ADV_PHONE, CONNECT_SHORT, GAVE_UP, connectLine } from './adv'
-import type { Driver, Engine, EngineOptions } from './engine/engine'
+import type { Engine, EngineOptions } from './engine/engine'
+import type { Driver } from './driver'
+import { measureLayout, watchLayout } from './layout'
 import bake from '../bake/bake.json'
 import './gl.css'
 
@@ -72,20 +74,38 @@ export function Stage({ t0, driver, load = loadEngine }: { t0: number; driver: D
     let firstSeen = false
     let lostAt = 0
     const qs = new URLSearchParams(location.search)
+    // The engine sees the page only through these: a tick per clock frame, a layout on change.
+    let detach = () => {}
+    const attach = (e: Engine) => {
+      const unFrame = driver.add((now, dt) => e.frame(now, dt, driver.tick()))
+      const unWatch = watchLayout(() => e.setLayout(measureLayout(driver.tick().heroP)))
+      detach = () => {
+        unFrame()
+        unWatch()
+        detach = () => {}
+      }
+    }
+    const drop = () => {
+      detach()
+      engine?.dispose()
+      engine = null
+    }
     const giveUp = setTimeout(() => {
       if (firstSeen || !alive) return
       setGaveUp(true)
       setPhase('failed')
-      engine?.dispose()
-      engine = null
+      drop()
     }, Math.max(0, GIVE_UP_MS - (performance.now() - t0)))
 
     const start = async (): Promise<void> => {
       const { createEngine } = await load()
       if (!alive || !canvas.current) return
+      const tick = driver.tick()
       const opts: EngineOptions = {
         canvas: canvas.current,
-        driver,
+        layout: measureLayout(tick.heroP),
+        tick,
+        invalidate: driver.invalidate,
         t0,
         coarse: matchMedia('(pointer: coarse)').matches,
         tier: (qs.get('tier') as EngineOptions['tier']) ?? 'auto',
@@ -108,8 +128,7 @@ export function Stage({ t0, driver, load = loadEngine }: { t0: number; driver: D
             // deterministically). Unrecoverable after 3s → the Still path.
             if (!alive) return
             lostAt ||= performance.now()
-            engine?.dispose()
-            engine = null
+            drop()
             const retry = () => {
               if (!alive) return
               if (performance.now() - lostAt > RESTORE_MS) {
@@ -128,6 +147,7 @@ export function Stage({ t0, driver, load = loadEngine }: { t0: number; driver: D
         engine.dispose()
         return
       }
+      attach(engine)
       if (import.meta.env.DEV || qs.has('gltest')) (window as unknown as { __gl: unknown }).__gl = engine.api
     }
     start().catch((e) => {
@@ -140,7 +160,7 @@ export function Stage({ t0, driver, load = loadEngine }: { t0: number; driver: D
     return () => {
       alive = false
       clearTimeout(giveUp)
-      engine?.dispose()
+      drop()
     }
   }, [t0, driver, load])
 

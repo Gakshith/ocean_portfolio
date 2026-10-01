@@ -1,8 +1,25 @@
 // DEV ONLY (`?gldev`, dynamically imported under import.meta.env.DEV, so it never ships).
 // Stands in for bake_agent's clock and scroll store until they merge: a rAF loop that sleeps
-// when every frame fn returns falsy, and P from scrollY over a 120vh / 100vh pin.
+// when every frame fn returns falsy, P from scrollY over a 120vh / 100vh pin, and the travel
+// state from section tops with the contract's TRAVEL windows (seam 2).
 import { pauseBus } from '../state/pause'
-import type { Driver } from './engine/engine'
+import { SECTIONS, type SectionId } from '../state/sections'
+import type { Tick } from './engine/input'
+import type { Driver } from './driver'
+
+/** seam 2 TRAVEL: [top(to) − vh, top(to) − 0.3vh]; cybot>contact [top − 0.6vh, top + 0.4vh]. */
+export function travelAt(y: number, vh: number, tops: readonly { id: SectionId; top: number }[]): Pick<Tick, 'from' | 'to' | 't'> {
+  let at: SectionId = 'top'
+  for (let i = 1; i < tops.length; i++) {
+    const a = tops[i - 1]
+    const b = tops[i]
+    const [w0, w1] = b.id === 'contact' && a.id === 'cybot' ? [b.top - 0.6 * vh, b.top + 0.4 * vh] : [b.top - vh, b.top - 0.3 * vh]
+    if (y < w0) break
+    if (y < w1) return { from: a.id, to: b.id, t: (y - w0) / (w1 - w0) }
+    at = b.id
+  }
+  return { from: at, to: at, t: 0 }
+}
 
 type Fn = (t: number, dt: number) => boolean | void
 
@@ -11,6 +28,13 @@ export function devDriver(): Driver {
   let raf = 0
   let last = 0
   let forced: number | null = null
+  let tops: { id: SectionId; top: number }[] | null = null
+  const measureTops = () =>
+    (tops = SECTIONS.flatMap(({ id }) => {
+      const el = document.getElementById(id)
+      return el ? [{ id, top: el.getBoundingClientRect().top + scrollY }] : []
+    }))
+  new ResizeObserver(() => (tops = null)).observe(document.body)
   const tick = (now: number) => {
     raf = 0
     // Like the real clock: frame fns never run while the Interrupt (or a hidden tab) pauses.
@@ -44,6 +68,10 @@ export function devDriver(): Driver {
       return () => fns.delete(fn)
     },
     invalidate: wake,
-    heroP: () => forced ?? Math.min(1, Math.max(0, scrollY / (innerHeight * (innerWidth < 768 ? 1 : 1.2)))),
+    tick: () => {
+      const y = scrollY
+      const heroP = forced ?? Math.min(1, Math.max(0, y / (innerHeight * (innerWidth < 768 ? 1 : 1.2))))
+      return { y, heroP, ...travelAt(y, innerHeight, tops ?? measureTops()) }
+    },
   }
 }
