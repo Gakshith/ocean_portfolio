@@ -31,7 +31,7 @@ import {
 } from 'three/webgpu'
 import { uniform } from 'three/tsl'
 import type { Box } from '../../bake/meta'
-import { FpsCut, ease2, ease3, easeFocus, focusTarget, lerp, s1Camera, s1Light } from '../choreo'
+import { FpsCut, easeFocus, focusTarget, lerp, s1Camera, s1Light } from '../choreo'
 import { DIE_MARGIN, LETTERS_MARGIN, applyPose, center, fitS1, fits, freeRegions, makeCamera, project, sealGap, sealOk, type Pose, type Rect, type S1Framing, type WBox } from '../framing'
 import { reefFromMeta } from '../reef'
 import { packet, reefState } from '../ringwave'
@@ -582,33 +582,31 @@ export async function createEngine(o: EngineOptions) {
   // A plan-view fit is translation-invariant under the lens shift, so the distance depends only
   // on the rect's size: dwells pan 1:1 with the page by moving the lens centre, no search.
   const distCache = new Map<string, number>()
-  const stopRect = (id: Exclude<SectionId, 'top'>, y: number): Rect => {
-    const st = id === 'about' || id === 'contact' || id === 'cybot' ? L.stages[id] : undefined
-    return st ? toViewport(st, y) : defaultRect(L.vw, L.top, L.bottom)
-  }
-  /** A stop's camera pose and its frame (the hero's frame is the whole viewport). */
-  type View = { pose: Pose; win: Rect; feather: number }
+  /** A stop's camera pose and its frame: the stage the page reserved for it (null until a hook
+   *  exists, C1–C3 before step 9), so the die never shows where text is. The hero's frame is S1. */
+  type View = { pose: Pose; win: Rect | null; feather: number }
   const viewOf = (id: SectionId, P: number, y: number): View => {
-    if (id === 'top') return { pose: poseAt(P, comp!), win: { x0: 0, y0: 0, x1: L.vw, y1: L.vh }, feather: 1 }
+    if (id === 'top') return { pose: poseAt(P, comp!), win: { x0: 0, y0: (L.sections.top ?? 0) - y, x1: L.vw, y1: (L.sections.about ?? L.vh) - y }, feather: 1 }
     const stop = STOP_OF[id]
-    const r = stopRect(id, y)
+    const st = id === 'about' || id === 'contact' || id === 'cybot' ? L.stages[id] : undefined
+    const r = st ? toViewport(st, y) : defaultRect(L.vw, L.top, L.bottom)
     const box = boxes[stop]
     const key = `${stop} ${Math.round(r.x1 - r.x0)} ${Math.round(r.y1 - r.y0)} ${L.vw} ${L.vh}`
     let dist = distCache.get(key)
     if (dist === undefined) distCache.set(key, (dist = stopPose(cam, box, r, L.vw, L.vh, MARGIN_OF[stop]).dist))
     const c = center(box)
     // S2 draws its own frame (.diemap-frame): align to it crisply; elsewhere feather (R-P2-20)
-    return { pose: { tx: c.x, ty: c.y, dist, tilt: 0, cx: (r.x0 + r.x1) / 2, cy: (r.y0 + r.y1) / 2 }, win: r, feather: stop === 'C0' ? 1 : FEATHER }
+    return { pose: { tx: c.x, ty: c.y, dist, tilt: 0, cx: (r.x0 + r.x1) / 2, cy: (r.y0 + r.y1) / 2 }, win: st ? r : null, feather: stop === 'C0' ? 1 : FEATHER }
   }
   const FEATHER = 40
-  const lerpRect = (a: Rect, b: Rect, e: number): Rect => ({ x0: lerp(a.x0, b.x0, e), y0: lerp(a.y0, b.y0, e), x1: lerp(a.x1, b.x1, e), y1: lerp(a.y1, b.y1, e) })
-  let jumping: { from: View; to: SectionId; t0: number } | null = null
+  let jumping: { from: Pose; to: SectionId; t0: number } | null = null
   let lastPose: Pose | null = null
-  let lastWin: Rect | null = null
+  let lastWins = ''
+  let lastFrames: Rect[] | null = null
   const samePose = (a: Pose, b: Pose) => a.tx === b.tx && a.ty === b.ty && a.dist === b.dist && a.tilt === b.tilt && a.cx === b.cx && a.cy === b.cy
   /** A jump flies from wherever the camera is (≤ 900 ms, power2.inOut), or cuts when instant. */
   const jump = (j: Jump) => {
-    jumping = j.instant || !lastPose ? null : { from: { pose: { ...lastPose }, win: { ...(lastWin ?? { x0: 0, y0: 0, x1: L.vw, y1: L.vh }) }, feather: U.winFeather.value }, to: j.to, t0: -1 }
+    jumping = j.instant || !lastPose ? null : { from: { ...lastPose }, to: j.to, t0: -1 }
     dirty = true
     invalidate()
   }
@@ -637,7 +635,7 @@ export async function createEngine(o: EngineOptions) {
     invalidate()
   }
   /** One frame of reef state; true while it's animating. */
-  const stepReef = (now: number, dtMs: number, P: number, pose: Pose, win: Rect | null) => {
+  const stepReef = (now: number, dtMs: number, P: number, pose: Pose, frames: Rect[] | null) => {
     const s7 = L.sections.contact
     if (powerAt === null && s7 !== undefined && tk.heroP >= 1 && s7 - tk.y <= 0.7 * L.vh) powerAt = now
     const rs = reefState(powerAt === null ? null : now - powerAt, contactRing, calm)
@@ -662,7 +660,7 @@ export async function createEngine(o: EngineOptions) {
       const at = projectPoints(chipCam, dwell, leads, W.w, W.h)
       const cur = projectPoints(chipCam, pose, leads, W.w, W.h)
       const chips = reef.contacts.map((_, k) => {
-        const inside = !!win && cur[k].x >= win.x0 - 8 && cur[k].x <= win.x1 + 8 && cur[k].y >= win.y0 - 8 && cur[k].y <= win.y1 + 8
+        const inside = !!frames && frames.some((f) => cur[k].x >= f.x0 - 8 && cur[k].x <= f.x1 + 8 && cur[k].y >= f.y0 - 8 && cur[k].y <= f.y1 + 8)
         // a hidden chip goes home: an offset it can't show would still widen the page
         if (!inside || rs.chip[k].opacity === 0) return { dx: 0, dy: 0, o: 0 }
         return { dx: +(cur[k].x - at[k].x).toFixed(1), dy: +(cur[k].y - at[k].y + rs.chip[k].dy).toFixed(1), o: +rs.chip[k].opacity.toFixed(3) }
@@ -738,30 +736,37 @@ export async function createEngine(o: EngineOptions) {
     const easing = fShown !== fT
     // The hero owns the camera until its pin ends; then the dwell / travel / jump poses.
     let pose: Pose
-    let win: Rect | null = null
+    // frames: the hero is full bleed; then the current and destination stages (a jump: the target's)
+    let wins: [View | null, View | null] | null = null
     if (jumping) {
       if (jumping.t0 < 0) jumping.t0 = now
       const u = Math.min(1, (now - jumping.t0) / JUMP_MS)
       const to = viewOf(jumping.to, P, tk.y)
-      pose = jumpPose(jumping.from.pose, to.pose, u)
-      win = jumping.to === 'top' && u >= 1 ? null : lerpRect(jumping.from.win, to.win, ease2(u))
-      U.winFeather.value = lerp(jumping.from.feather, to.feather, ease2(u))
+      pose = jumpPose(jumping.from, to.pose, u)
+      wins = jumping.to === 'top' && u >= 1 ? null : [to, to]
       if (u >= 1) jumping = null
     } else if (forcedP !== null || tk.heroP < 1 || (tk.from === 'top' && tk.to === 'top')) pose = poseAt(P, comp)
     else {
       const a = viewOf(tk.from, P, tk.y)
       const b = viewOf(tk.to, P, tk.y)
       pose = travelPose(a.pose, b.pose, tk.t)
-      const e = ease3(Math.min(1, Math.max(0, tk.t)))
-      win = lerpRect(a.win, b.win, e)
-      U.winFeather.value = lerp(a.feather, b.feather, e)
+      wins = [a, b]
     }
-    U.winOn.value = win ? 1 : 0
-    if (win) U.win.value.set(win.x0, win.y0, win.x1, win.y1)
+    const NONE = { x0: 0, y0: 0, x1: 0, y1: 0 }
+    const wa = wins?.[0]?.win ?? NONE
+    const wb = wins?.[1]?.win ?? NONE
+    U.winOn.value = wins ? 1 : 0
+    U.win.value.set(wa.x0, wa.y0, wa.x1, wa.y1)
+    U.winB.value.set(wb.x0, wb.y0, wb.x1, wb.y1)
+    U.winFeather.value = wins?.[0]?.feather ?? 1
+    U.winFeatherB.value = wins?.[1]?.feather ?? 1
     U.vp.value.set(W.w, W.h)
-    const winMoved = (win === null) !== (lastWin === null) || (win !== null && lastWin !== null && (win.x0 !== lastWin.x0 || win.y0 !== lastWin.y0 || win.x1 !== lastWin.x1 || win.y1 !== lastWin.y1))
-    lastWin = win
-    const reefOn = stepReef(now, dtMs, P, pose, win)
+    const winKey = wins ? `${wa.x0} ${wa.y0} ${wa.x1} ${wa.y1} ${wb.x0} ${wb.y0} ${wb.x1} ${wb.y1}` : ''
+    const winMoved = winKey !== lastWins
+    lastWins = winKey
+    const shown = wins ? [wa, wb] : null
+    lastFrames = shown
+    const reefOn = stepReef(now, dtMs, P, pose, shown)
     const reefDraw = reefOn || reefWas
     reefWas = reefOn
     const posed = !lastPose || !samePose(pose, lastPose) || winMoved || reefDraw
@@ -833,7 +838,7 @@ export async function createEngine(o: EngineOptions) {
       return causticUpdates
     },
     get state() {
-      return { P: forcedP ?? tk.heroP, f: fShown, frozen, comp, tick: tk, pose: lastPose, jumping: jumping !== null, reef: { powerAt, twinK, twin: [...twin], calm } }
+      return { P: forcedP ?? tk.heroP, f: fShown, frozen, comp, tick: tk, pose: lastPose, jumping: jumping !== null, reef: { powerAt, twinK, twin: [...twin], calm }, frames: lastFrames }
     },
     setP(v: number | null) {
       forcedP = v

@@ -93,9 +93,12 @@ export function makeUniforms() {
     /** Past the hero the die shows only inside its stop's frame (CSS px, viewport, y down); the
      *  floor paints --floor-0 outside, so section text keeps its Still contrast. winOn 0 = full bleed. */
     win: uniform(new Vector4(0, 0, 1, 1)),
+    /** During travel the destination's frame too: the die shows in both stages, never between. */
+    winB: uniform(new Vector4(0, 0, 0, 0)),
     winOn: uniform(0),
-    /** Falloff into --floor-0 inside the frame's edge, px (R-P2-20); 1 = a crisp antialiased edge. */
+    /** Falloff into --floor-0 inside a frame's edge, px (R-P2-20); 1 = a crisp antialiased edge. */
     winFeather: uniform(1),
+    winFeatherB: uniform(1),
     vp: uniform(new Vector2(1, 1)),
   }
 }
@@ -406,15 +409,18 @@ export function floorMaterial(U: Uniforms, o: FloorOpts) {
   return m
 }
 
-/** The stop's frame (R-P2-20): 1 inside, 0 outside, feathered in from its edge (a rounded
- *  falloff, so the die reads as lit in its place, not a box cut into the page). Floor and reef
- *  share it, so nothing lights outside the frame. */
+/** The stops' frames (R-P2-20): 1 inside, 0 outside, feathered in from the edge (a rounded
+ *  falloff, so the die reads as lit in its place, not a box cut into the page). Each frame is a
+ *  stage the page reserved, so no text is ever inside one. Floor and reef share the mask. */
 export function windowMask(U: Uniforms): N {
   const sp = screenUV.mul(U.vp)
-  const half = U.win.zw.sub(U.win.xy).mul(0.5)
-  const q = abs(sp.sub(U.win.xy.add(half))).sub(half)
-  const d = length(max(q, vec2(0, 0))).add(min(max(q.x, q.y), 0))
-  return mix(float(1), smoothstep(float(0), U.winFeather, d.negate()), U.winOn)
+  const inRect = (r: N, f: N) => {
+    const half = r.zw.sub(r.xy).mul(0.5)
+    const q = abs(sp.sub(r.xy.add(half))).sub(half)
+    const d = length(max(q, vec2(0, 0))).add(min(max(q.x, q.y), 0))
+    return smoothstep(float(0), f, d.negate())
+  }
+  return mix(float(1), max(inRect(U.win, U.winFeather), inRect(U.winB, U.winFeatherB)), U.winOn)
 }
 
 /** Test-only: the raw die RT over the tile [-1,1]² into a float target, for contrastTest. */
