@@ -20,7 +20,10 @@ const RESTORE_MS = 3000
 // die-map (1280×720: 77 px). Mirrors the media queries in gl.css.
 const ONE_LINE = '(max-width: 767px), (max-height: 799px)'
 
-export function Stage({ t0, driver }: { t0: number; driver: Driver }) {
+const loadEngine = () => import('./engine/engine')
+
+/** `load` is the engine chunk; tests pass a fake one. */
+export function Stage({ t0, driver, load = loadEngine }: { t0: number; driver: Driver; load?: () => Promise<{ createEngine: (o: EngineOptions) => Promise<Engine> }> }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const [phase, setPhase] = useState<Phase>('loading')
   const [milestone, setMilestone] = useState(0)
@@ -42,10 +45,12 @@ export function Stage({ t0, driver }: { t0: number; driver: Driver }) {
   useEffect(() => {
     document.documentElement.dataset.gl = phase
   }, [phase])
+  // Unmount only clears the scope. It must not report setHas3D(false): StrictMode runs this
+  // cleanup once on mount, and false means unrecoverable failure (R-P2-10). The motion store
+  // resets has3D itself when the path stops; failure is reported only below.
   useEffect(
     () => () => {
       delete document.documentElement.dataset.gl
-      setHas3D(false)
     },
     [],
   )
@@ -76,7 +81,7 @@ export function Stage({ t0, driver }: { t0: number; driver: Driver }) {
     }, Math.max(0, GIVE_UP_MS - (performance.now() - t0)))
 
     const start = async (): Promise<void> => {
-      const { createEngine } = await import('./engine/engine')
+      const { createEngine } = await load()
       if (!alive || !canvas.current) return
       const opts: EngineOptions = {
         canvas: canvas.current,
@@ -137,7 +142,7 @@ export function Stage({ t0, driver }: { t0: number; driver: Driver }) {
       clearTimeout(giveUp)
       engine?.dispose()
     }
-  }, [t0, driver])
+  }, [t0, driver, load])
 
   const lines: string[] = oneLine ? [ADV_PHONE[Math.max(0, milestone - 1)]] : ADV_LINES.slice(0, Math.max(1, milestone))
   const adv: string[] = gaveUp
