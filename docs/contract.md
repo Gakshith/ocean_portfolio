@@ -326,6 +326,11 @@ Typed stubs: `src/scroll/{clock,scroll,windows,index}.ts` and the phase 2 fields
   variant of "How the light works", even though `has3D` stays true (R-P2-10).
 - **R-P2-18 · `?gltest`** (`window.__gl`: freeze, loseContext, setTier) is a named test hook until
   step 10, then DEV-only.
+- **R-P2-19 · The rise stays vertical on phones.** At P 1 on a phone the die keeps 32 px of
+  clearance from the plate (113 px wide at 375×667). It doesn't tuck under, because that would
+  need the lens to drift sideways during the rise (D-06: one straight vertical rise). The S1
+  fit checks the letters at a 6% margin over every focus tilt; it never uses margin 0. Revisit
+  on Akash's real phones.
 
 ## Phase 2 gates (in addition to phase 1's)
 
