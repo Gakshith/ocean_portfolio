@@ -197,6 +197,6 @@ export const footer = {
     before:
       'The light in the opening image is refraction through a water surface solved in advance so that it focuses sunlight into the layout, using the goal-based caustics method (',
     after:
-      '). This page shows that result as a still image, rendered offline from the same surface; with 3D on, your browser refracts it live, every frame. Lithography does the same job with a mask and optics: shape the light, and the pattern prints. The die itself is illustrative, not a chip that was fabricated.',
+      '). This page shows that result as a still image, rendered offline from a surface solved the same way; with 3D on, your browser refracts it live, every frame. Lithography does the same job with a mask and optics: shape the light, and the pattern prints. The die itself is illustrative, not a chip that was fabricated.',
   },
 } as const

@@ -6,7 +6,7 @@ import { useNav } from '../state/nav'
 import { SECTIONS } from '../state/sections'
 import { closeOverlay, openSheet, useUi } from '../state/ui'
 import { Floorplan } from './Floorplan'
-import { ContactTrigger, ResumeLink, SectionLinks, StillToggle } from './parts'
+import { ContactTrigger, ResumeLink, SectionLinks, StillToggle, ThreeDControl } from './parts'
 
 export function TopBar() {
   const { current } = useNav()
@@ -43,8 +43,17 @@ export function DieMap() {
   )
 }
 
+/** Desktop: Still at the bottom right, and Turn on 3D in its own slot above it. The 3D control
+ *  appears after hydration, so it must never share a box with Still (no layout shift). */
 export function DeskStill() {
-  return <StillToggle className="c-btn c-still c-still--desk" />
+  return (
+    <>
+      <StillToggle className="c-btn c-still c-still--desk" />
+      <div className="c-motion c-motion--desk">
+        <ThreeDControl className="c-btn" />
+      </div>
+    </>
+  )
 }
 
 export function BottomBar() {
@@ -72,7 +81,10 @@ export function BottomBar() {
           <Floorplan className="c-sheet__plan" current={current} visited={visited} />
           <SectionLinks className="c-sheet__links" current={current} />
         </nav>
-        <StillToggle className="c-btn c-still c-still--row" />
+        <div className="c-motion c-motion--row">
+          <StillToggle className="c-btn c-still c-still--row" />
+          <ThreeDControl className="c-btn" />
+        </div>
       </div>
       <div className="c-bbar" data-gl-avoid>
         <button
