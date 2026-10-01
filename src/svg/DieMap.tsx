@@ -4,9 +4,11 @@
 // controls. The name stays in top metal at 12%, all three layers at 35%.
 import { blocks, lagoon, uartPad } from './floorplan'
 import { DensityFill, PadRing, RectList, SealRing } from './DieParts'
-import { nameOnDie } from './glyphs'
+import { nameWidthDieUnits } from '../bake/die'
+import { nameOnDie, wordLayout } from './glyphs'
 
-const name = nameOnDie(50, 50, 66)
+// One name geometry (R-P2-14): the same ~82-die-unit width the bake prints in light.
+const name = nameOnDie(50, 50, nameWidthDieUnits(wordLayout().W))
 const TAG: Record<string, string> = { Radio: 'RADIO · LL', CPU: 'CPU · 5-STAGE', Memory: 'MEM · WISARD' }
 
 export function DieMap() {

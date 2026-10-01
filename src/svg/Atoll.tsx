@@ -5,7 +5,8 @@
 import { blocks, pads } from './floorplan'
 import { DensityFill, PadRing, RectList, SealRing } from './DieParts'
 import { ATOLL_VIEW, LEAD_Y, leadX, padRect } from './geometry'
-import { nameOnDie } from './glyphs'
+import { nameWidthDieUnits } from '../bake/die'
+import { nameOnDie, wordLayout } from './glyphs'
 
 export interface AtollTarget {
   n: number
@@ -14,7 +15,8 @@ export interface AtollTarget {
   external: boolean
 }
 
-const name = nameOnDie(50, 50, 66)
+// One name geometry (R-P2-14): the same ~82-die-unit width the bake prints in light.
+const name = nameOnDie(50, 50, nameWidthDieUnits(wordLayout().W))
 const contacts = pads.filter((p) => p.contact).sort((a, b) => a.contact! - b.contact!)
 
 export function Atoll({ targets }: { targets: readonly AtollTarget[] }) {

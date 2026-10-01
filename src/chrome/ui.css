@@ -2,8 +2,8 @@
    Nothing here hides, fades or moves on scroll; only the Surface Interrupt covers it. */
 
 /* Own box model, so chrome sizes (96px map, 44px targets, 144/88/96 bar) hold without base.css. */
-:where(.c-skip, .c-bar, .c-diemap, .c-still, .c-phone, .c-keys, .c-irq),
-:where(.c-skip, .c-bar, .c-diemap, .c-still, .c-phone, .c-keys, .c-irq) * {
+:where(.c-skip, .c-bar, .c-diemap, .c-still, .c-motion, .c-phone, .c-keys, .c-irq),
+:where(.c-skip, .c-bar, .c-diemap, .c-still, .c-motion, .c-phone, .c-keys, .c-irq) * {
   box-sizing: border-box;
 }
 
@@ -19,7 +19,7 @@
   border: 0;
 }
 
-:where(.c-skip, .c-bar, .c-diemap, .c-still, .c-phone, .c-keys, .c-irq) :is(a, button, input):focus-visible,
+:where(.c-skip, .c-bar, .c-diemap, .c-still, .c-motion, .c-phone, .c-keys, .c-irq) :is(a, button, input):focus-visible,
 .c-skip:focus-visible,
 .c-irq [tabindex='-1']:focus-visible,
 .c-keys [tabindex='-1']:focus-visible {
@@ -260,11 +260,34 @@
 .c-still {
   background: var(--floor-1);
 }
+/* Still + Turn on 3D (R-P2-13). Desktop: one fixed cluster at the bottom right. */
+.c-motion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
 .c-still--desk {
   position: fixed;
   right: var(--margin);
   bottom: var(--s-4);
   z-index: 40;
+}
+.c-motion--desk {
+  position: fixed;
+  right: var(--margin);
+  bottom: calc(var(--s-4) + 44px + var(--s-2));
+  z-index: 40;
+}
+.c-3d {
+  background: var(--floor-1);
+}
+.c-3d--line {
+  margin: 0;
+  font: 400 var(--t-tag) / 1 var(--f-mono);
+  letter-spacing: var(--track-tag);
+  text-transform: uppercase;
+  color: var(--dim);
 }
 .c-state {
   font: 400 var(--t-tag) / 1 var(--f-mono);
@@ -286,6 +309,7 @@
   .c-where,
   .c-diemap,
   .c-still--desk,
+  .c-motion--desk,
   .c-desk {
     display: none;
   }

@@ -3,14 +3,50 @@
   gap: var(--s-4);
 }
 .sim-cy__stage {
+  position: relative;
+  overflow: hidden;
   border: var(--b-hair);
   background: var(--floor-deep);
 }
+/* The SE-reef backdrop (R-P2-11): placed in % of the stage from the bake's pad position. */
+.sim-cy__reef {
+  position: absolute;
+  max-width: none;
+  pointer-events: none;
+}
 .sim-cy__svg {
+  position: relative; /* paints over the backdrop */
   display: block;
   width: 100%;
   height: auto;
   font-family: var(--f-mono);
+}
+
+/* The scrub (C-14), only while motion is live: the stage sticks while its track scrolls past,
+   160lvh on desktop and 110lvh on phone (large-viewport units: the URL bar never moves it). The
+   run is a real element, not padding: a sticky box can only travel inside its parent's content box. */
+.sim-cy__run {
+  display: none;
+}
+.sim-cy--scrub .sim-cy__run {
+  display: block;
+  height: 160lvh;
+}
+.sim-cy--scrub .sim-cy__stage {
+  position: sticky;
+  top: 72px;
+}
+.s6-stage:has(.sim-cy--scrub) {
+  position: static;
+  max-height: none;
+}
+@media (max-width: 767px) {
+  .sim-cy--scrub .sim-cy__run {
+    height: 110lvh;
+  }
+  .sim-cy--scrub .sim-cy__stage {
+    top: calc(var(--bar) + var(--s-2));
+  }
 }
 .sim-cy__caption {
   font-size: var(--t-small);

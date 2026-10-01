@@ -1,8 +1,15 @@
 // S1-hero, Still path: the ink plate (name, role, grad-term slot, 4-line project index) over the
 // focused-die still. The plate never animates; there is no CTA in it (the pill is the CTA).
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { hero, identity, projects } from '../content/content'
 import { stills } from '../bake/stills'
+import { pinCompensation, stickyBlockers } from '../scroll/pin'
+import { invalidateLayout } from '../scroll/scroll'
+import { syncScroller } from '../state/jump'
+import { useMotion } from '../state/motion'
+
+// useLayoutEffect warns during SSR; the prerender never runs effects anyway.
+const useIsoLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect
 
 const base = import.meta.env.BASE_URL
 const { s1 } = stills
@@ -50,33 +57,68 @@ function HeroStill() {
   )
 }
 
+/** The S1 pin (R-P2-12): the track is always rendered (SSR too) so toggling never remounts S1;
+ *  while load3D it gets the pin length and S1 sticks through it. The scroll is compensated in the
+ *  same frame the pin mounts or unmounts, and focus never moves. */
+function usePin() {
+  const { load3D } = useMotion()
+  const track = useRef<HTMLDivElement>(null)
+  const section = useRef<HTMLElement>(null)
+  const last = useRef({ pinned: false, pinLen: 0 })
+  useIsoLayoutEffect(() => {
+    const t = track.current
+    const s = section.current
+    if (!t || !s) return
+    const pinLen = Math.max(0, t.offsetHeight - s.offsetHeight)
+    const was = last.current
+    if (was.pinned !== load3D) {
+      const len = load3D ? pinLen : was.pinLen
+      const s1Bottom = t.offsetTop + s.offsetHeight
+      const y = window.scrollY
+      const next = pinCompensation(y, len, s1Bottom, load3D)
+      if (next !== y) window.scrollTo({ top: next, behavior: 'instant' })
+      invalidateLayout()
+      syncScroller()
+      if (load3D && import.meta.env.DEV) {
+        const bad = stickyBlockers(s)
+        if (bad.length) console.warn('S1 pin: an ancestor clips overflow, so sticky will not stick', bad)
+      }
+    }
+    last.current = { pinned: load3D, pinLen }
+  }, [load3D])
+  return { track, section, pinned: load3D }
+}
+
 export function S1Hero() {
+  const { track, section, pinned } = usePin()
   return (
-    <section id="top" data-section="top" aria-labelledby="top-title" className="s1">
-      <div className="plate" data-gl-avoid>
-        <h1 id="top-title" tabIndex={-1} className="t-display-xl plate-name">
-          {identity.name}
-        </h1>
-        <p className="t-lede plate-role">{identity.role}</p>
-        {identity.gradTerm && <p className="t-small plate-grad">{identity.gradTerm}</p>}
-        <ul className="plate-index" aria-label="Projects">
-          {projects.map((p) => (
-            <li key={p.key}>
-              <a href={`#${p.section}`} className="t-data">
-                {p.index}
-              </a>
-            </li>
-          ))}
-        </ul>
-        <div data-adv-slot aria-hidden="true" />
-      </div>
-      <div className="s1-stage">
-        <HeroStill />
-        <p className="sr-only">{hero.imageDescription}</p>
-      </div>
-      <p className="scroll-cue t-small" aria-hidden="true">
-        {hero.scrollCue}
-      </p>
-    </section>
+    <div ref={track} className={pinned ? 's1-track s1-track--pin' : 's1-track'}>
+      <section ref={section} id="top" data-section="top" aria-labelledby="top-title" className="s1">
+        <div className="plate" data-gl-avoid>
+          <h1 id="top-title" tabIndex={-1} className="t-display-xl plate-name">
+            {identity.name}
+          </h1>
+          <p className="t-lede plate-role">{identity.role}</p>
+          {identity.gradTerm && <p className="t-small plate-grad">{identity.gradTerm}</p>}
+          <ul className="plate-index" aria-label="Projects">
+            {projects.map((p) => (
+              <li key={p.key}>
+                <a href={`#${p.section}`} className="t-data">
+                  {p.index}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <div data-adv-slot aria-hidden="true" />
+        </div>
+        <div className="s1-stage">
+          <HeroStill />
+          <p className="sr-only">{hero.imageDescription}</p>
+        </div>
+        <p className="scroll-cue t-small" aria-hidden="true">
+          {hero.scrollCue}
+        </p>
+      </section>
+    </div>
   )
 }
