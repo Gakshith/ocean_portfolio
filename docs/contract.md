@@ -317,7 +317,11 @@ Typed stubs: `src/scroll/{clock,scroll,windows,index}.ts` and the phase 2 fields
   in a prod build with a longtask observer from chunk start to live: 0 tasks > 50 ms, 3 runs per
   backend. (At #9 review: up to 324 ms on WebGL2, 51–93 ms on WebGPU.) WebGL2 without
   `KHR_parallel_shader_compile` starts on the low tier or stays Still. Not a merge gate while
-  `DEFAULT_3D = false`.
+  `DEFAULT_3D = false`. Measured with a COLD GPU shader cache (a fresh user-data-dir or
+  `--disable-gpu-shader-disk-cache`), per backend: a first-time visitor gets the cold path (at
+  #9 round 2: a 765 ms WebGL2 task cold, versus warm runs near 0). The planned fix is the renderer in
+  a Worker on an OffscreenCanvas; step 8 is written worker-ready (one serialisable FrameInput per
+  tick, no DOM access inside `src/gl/engine/**`).
 - **R-P2-17 · Honest footer after a freeze.** `html[data-gl="frozen"|"failed"]` shows the Still
   variant of "How the light works", even though `has3D` stays true (R-P2-10).
 - **R-P2-18 · `?gltest`** (`window.__gl`: freeze, loseContext, setTier) is a named test hook until
