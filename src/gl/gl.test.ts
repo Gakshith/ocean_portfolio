@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { ADV_LINES, advData, crc, crc24, header, pdu } from './adv'
 import { FpsCut, TILT, ease3, easeFocus, focusTarget, range, s1Camera, s1Light } from './choreo'
-import { applyPose, fitS1, fits, freeRegions, makeCamera, project, sealGap, sealOk } from './framing'
+import { DIE_MARGIN, LETTERS_MARGIN, applyPose, fitS1, fits, freeRegions, makeCamera, project, sealGap, sealOk } from './framing'
 import { FOV_DEG, OPENING_POSE } from './pose'
 
 describe('ADV_IND packet', () => {
@@ -95,13 +95,16 @@ describe('fitted framing (C-02)', () => {
       for (const P of [0.3, 0.45, 0.5, 0.55]) {
         const { tilt } = s1Camera(P)
         applyPose(cam, { tx: c.target.x, ty: c.target.y, dist: c.near, tilt, cx: c.cx, cy: c.cy }, vw, vh)
-        expect(fits(project(cam, letters, vw, vh), c.region, 0)).toBe(true)
+        expect(fits(project(cam, letters, vw, vh), c.region, LETTERS_MARGIN), `letters 6% at P ${P}`).toBe(true)
       }
       applyPose(cam, { tx: c.target.x, ty: c.target.y, dist: c.near, tilt: 0, cx: c.cx, cy: c.cy }, vw, vh)
       expect(sealOk(sealGap(cam, seal, c.region, plate, vw, vh))).toBe(true)
       applyPose(cam, { tx: c.target.x, ty: c.target.y, dist: c.far, tilt: 0, cx: c.cx, cy: c.cy }, vw, vh)
-      expect(fits(project(cam, die, vw, vh), c.region, 0)).toBe(true)
-      expect(sealOk(sealGap(cam, seal, c.region, plate, vw, vh))).toBe(true)
+      const gap1 = sealGap(cam, seal, c.region, plate, vw, vh)
+      const r1 = project(cam, die, vw, vh)
+      expect(sealOk(gap1)).toBe(true)
+      expect(gap1).toBeGreaterThanOrEqual(31.5)
+      expect(fits(r1, c.region, DIE_MARGIN)).toBe(true)
       expect(c.far).toBeGreaterThanOrEqual(c.near)
     })
 })

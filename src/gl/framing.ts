@@ -147,9 +147,11 @@ export function sealGap(cam: PerspectiveCamera, seal: WBox, region: { name: stri
 }
 export const sealOk = (gap: number) => gap >= SEAL_CLEAR - 0.5 || gap <= -SEAL_UNDER + 0.5
 
-/** The S1 composition: the letters (+6%) fit at tilts 0° and 14° for the near pose; the lens shift
- *  is nudged if the seal ring would sit tangent to the plate; the die (+4%) fits for the far pose
- *  with the seal clear of the plate. The region that gives the largest die wins. */
+/** The S1 composition: the letters (+6%) fit at tilts 0° and 14° for the near pose; if the seal
+ *  ring would sit tangent to the plate, the lens shift tucks it under (or failing that clears it),
+ *  re-fitting the letters at the new centre when needed, never giving up their 6%; the die (+4%)
+ *  fits for the far pose with the seal clear of the plate. The region that gives the largest die
+ *  wins. */
 export function fitS1(
   cam: PerspectiveCamera,
   letters: WBox,
@@ -164,33 +166,52 @@ export function fitS1(
   let best: S1Framing | null = null
   const t = center(letters)
   const pose = (dist: number, tl: number, cx: number, cy: number) => applyPose(cam, { tx: t.x, ty: t.y, dist, tilt: tl, cx, cy }, vw, vh)
+  // every tilt the focus passes through while the letters are framed (P .3–.55 reaches 0–14°)
+  const tilts = [0, 0.1, 0.2, 0.3, 0.4, 0.5].map((k) => tilt * k)
   const lettersIn = (g: Rect, dist: number, cx: number, cy: number) =>
-    [0, tilt * 0.5].every((tl) => {
+    tilts.every((tl) => {
       pose(dist, tl, cx, cy)
-      return fits(project(cam, letters, vw, vh), g, 0)
+      return fits(project(cam, letters, vw, vh), g, LETTERS_MARGIN)
     })
   for (const g of regions) {
     // The lens shift centres on the letters; the die is looked at from the same target, so
     // the rise stays vertical. Fit the die around that same target.
     let cx = (g.x0 + g.x1) / 2
     let cy = (g.y0 + g.y1) / 2
-    const near = fitDist(cam, letters, g, 0.06, [0, tilt * 0.5], vw, vh)
-    // Seal tangency at the hold: shift the lens by the smaller move that keeps the letters in.
-    if (seal && plate) {
+    let near = fitDist(cam, letters, g, LETTERS_MARGIN, tilts, vw, vh)
+    const sealOn = !!(seal && plate)
+    const horiz = g.name === 'right of plate'
+    // right of plate: +m moves the seal away (right); above plate: −m moves it away (up)
+    const shift = (m: number) => (horiz ? [cx + m, cy] : [cx, cy - m])
+    if (sealOn) {
+      // Seal tangency at the hold. Tuck it under first, else clear it, at the same letter size.
       pose(near, 0, cx, cy)
-      const gap = sealGap(cam, seal, g, plate, vw, vh)
+      const gap = sealGap(cam, seal!, g, plate, vw, vh)
       if (!sealOk(gap)) {
-        const horiz = g.name === 'right of plate'
-        // right of plate: +m moves the seal away (right); above plate: −m moves it away (up)
-        const moves = [SEAL_CLEAR - gap, -(SEAL_UNDER + gap)].sort((a, b) => Math.abs(a) - Math.abs(b))
-        for (const m of moves) {
-          const ncx = horiz ? cx + m : cx
-          const ncy = horiz ? cy : cy - m
-          if (lettersIn(g, near, ncx, ncy)) {
-            cx = ncx
-            cy = ncy
-            break
+        const free = [-(SEAL_UNDER + gap), SEAL_CLEAR - gap].find((m) => {
+          const [ncx, ncy] = shift(m)
+          return lettersIn(g, near, ncx, ncy)
+        })
+        if (free !== undefined) [cx, cy] = shift(free)
+        else {
+          // Neither keeps the letters' 6% at this size: settle each direction by re-fitting the
+          // letters at the new centre until the seal rule holds, and keep the bigger name.
+          const settle = (dir: 'under' | 'clear') => {
+            let [scx, scy] = [cx, cy]
+            let d = near
+            for (let it = 0; it < 12; it++) {
+              pose(d, 0, scx, scy)
+              const g2 = sealGap(cam, seal!, g, plate, vw, vh)
+              if (sealOk(g2)) return { cx: scx, cy: scy, near: d }
+              const m = dir === 'under' ? -(SEAL_UNDER + g2) : SEAL_CLEAR - g2
+              ;[scx, scy] = horiz ? [scx + m, scy] : [scx, scy - m]
+              d = fitDist(cam, letters, g, LETTERS_MARGIN, tilts, vw, vh, scx, scy)
+            }
+            return null
           }
+          const opts = [settle('under'), settle('clear')].filter((o) => o !== null)
+          const pick = opts.sort((a, b) => a.near - b.near)[0]
+          if (pick) ({ cx, cy, near } = pick)
         }
       }
     }
@@ -200,15 +221,19 @@ export function fitS1(
       y0: Math.min(die.y0, 2 * t.y - die.y1),
       y1: Math.max(die.y1, 2 * t.y - die.y0),
     }
-    const far = Math.max(
-      near,
-      searchDist((dist) => {
-        pose(dist, 0, cx, cy)
-        if (!fits(project(cam, dieAround, vw, vh), g, 0.04)) return false
-        return !seal || !plate || sealGap(cam, seal, g, plate, vw, vh) >= SEAL_CLEAR - 0.5
-      }),
-    )
+    // Far pose: the die (+4%) in the region with the seal ≥ 32 px clear of the plate. (It can't
+    // tuck under on phones: the lens centre is shared with the hold so the rise stays vertical.)
+    let far = searchDist((dist) => {
+      pose(dist, 0, cx, cy)
+      if (!fits(project(cam, dieAround, vw, vh), g, DIE_MARGIN)) return false
+      return !sealOn || sealGap(cam, seal!, g, plate, vw, vh) >= SEAL_CLEAR - 0.5
+    })
+    far = Math.max(near, far)
     if (!best || far < best.far) best = { region: g, cx, cy, near, far, target: t }
   }
   return best
 }
+
+/** Fit margins: the letters at the hold, the die at the rise end (C-02). */
+export const LETTERS_MARGIN = 0.06
+export const DIE_MARGIN = 0.04

@@ -16,8 +16,8 @@ export const OPENING_TILT_DEG = 28
 export const OPENING_POSE = (() => {
   const vw = 1440
   const vh = 900
-  const dist = 2.972455111319505
-  const cx = 1055.615739875926 // shifted 29.3 px right so the seal ring clears the plate by 32 px
+  const dist = 3.2254756781167093 // the letters re-fit at 6% after the seal clears the plate
+  const cx = 1055.615739875926 // 29.3 px right of the region centre: the seal ring clears the plate by 32 px
   const cy = 478
   const t = (OPENING_TILT_DEG * Math.PI) / 180
   return {

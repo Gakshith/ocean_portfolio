@@ -32,7 +32,7 @@ import {
 import { uniform } from 'three/tsl'
 import type { Box } from '../../bake/meta'
 import { FpsCut, easeFocus, focusTarget, lerp, s1Camera, s1Light } from '../choreo'
-import { applyPose, fitS1, freeRegions, makeCamera, project, fits, sealGap, sealOk, type Rect, type S1Framing, type WBox } from '../framing'
+import { DIE_MARGIN, LETTERS_MARGIN, applyPose, fitS1, fits, freeRegions, makeCamera, project, sealGap, sealOk, type Rect, type S1Framing, type WBox } from '../framing'
 import { loadMasks, loadSlope, loadTraces, meta } from './data'
 import { EXT, SKIRT_EXT, blurMaterial, causticMaterial, floorMaterial, makeUniforms, readbackMaterial, sandMaterial } from './shaders'
 
@@ -733,18 +733,18 @@ export async function createEngine(o: EngineOptions) {
       for (const P of [0.3, 0.45, 0.5, 0.55]) {
         applyPose(cam, poseAt(P, comp), W.w, W.h)
         const r = project(cam, letters, W.w, W.h)
-        checks.push({ P, what: 'letters', bbox: [r.x0, r.y0, r.x1, r.y1].map(Math.round), inside: fits(r, g, 0) })
+        checks.push({ P, what: 'letters (6%)', bbox: [r.x0, r.y0, r.x1, r.y1].map(Math.round), inside: fits(r, g, LETTERS_MARGIN) })
       }
       applyPose(cam, poseAt(1, comp), W.w, W.h)
       const r = project(cam, dieBoxM, W.w, W.h)
-      checks.push({ P: 1, what: 'die', bbox: [r.x0, r.y0, r.x1, r.y1].map(Math.round), inside: fits(r, g, 0) })
+      checks.push({ P: 1, what: 'die (4%)', bbox: [r.x0, r.y0, r.x1, r.y1].map(Math.round), inside: fits(r, g, DIE_MARGIN) })
       // The seal ring never sits tangent to the plate (≥ 32 px clear or ≥ 48 px under), at the
       // hold and at the rise end.
       for (const P of [0.5, 1]) {
         applyPose(cam, poseAt(P, comp), W.w, W.h)
         const gap = sealGap(cam, meta.seal.outer, g, plateRect, W.w, W.h)
-        const s = project(cam, meta.seal.outer, W.w, W.h)
-        checks.push({ P, what: `seal gap ${Number.isFinite(gap) ? Math.round(gap) : '∞'} px`, bbox: [s.x0, s.y0, s.x1, s.y1].map(Math.round), inside: sealOk(gap) })
+        const s2 = project(cam, meta.seal.outer, W.w, W.h)
+        checks.push({ P, what: `seal gap ${Number.isFinite(gap) ? Math.round(gap) : '∞'} px`, bbox: [s2.x0, s2.y0, s2.x1, s2.y1].map(Math.round), inside: sealOk(gap) })
       }
       dirty = true
       driver.invalidate()
