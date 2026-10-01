@@ -78,6 +78,27 @@ html[data-gl] .gl-ch[data-on] {
   background: var(--line-strong);
   color: var(--light);
 }
+/* Short desktops (stage.tsx ONE_LINE): the same single line, set in the plate's bottom padding
+   so it adds no height. The plate is bottom-aligned and already at its top limit on a 1366×768
+   laptop (viewport ~1366×657), so any line in flow would push it under the fixed die-map. */
+@media (min-width: 768px) and (max-height: 799px) {
+  html[data-gl] .plate {
+    position: relative;
+  }
+  html[data-gl] .plate [data-adv-slot] {
+    position: absolute;
+    left: var(--s-6);
+    right: var(--s-6);
+    bottom: var(--s-2);
+  }
+  html[data-gl] .gl-adv {
+    margin: 0;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
 @media (max-width: 767px) {
   html[data-gl] .plate {
     display: flex;
