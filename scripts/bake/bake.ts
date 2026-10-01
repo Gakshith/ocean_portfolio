@@ -14,6 +14,7 @@ import G from '../../src/content/glyphs.json' with { type: 'json' }
 import * as fp from '../../src/svg/floorplan.ts'
 import { BAND_OF_DIE_MEAN, LUM, TEXELS_PER_TRACK, makeTarget, tracesMask } from '../../src/bake/target.ts'
 import type { BakeMeta, Box } from '../../src/bake/meta.ts'
+import { FOV_DEG, OPENING_POSE, UP } from '../../src/gl/pose.ts'
 import { DEPTH, ETA, FIELD_SCHEDULE, downsample2, downsampleField, packRG16F, solveField, toF32, unpackRG16F } from './field.ts'
 import { contrast, precision, seam, tileIntensity } from './metrics.ts'
 import { FOCUSED, HOLD, shade, swell, toBytes, type MetalBlock } from './shade.ts'
@@ -236,16 +237,14 @@ export async function bake(): Promise<Map<string, Uint8Array>> {
   return out
 }
 
-/** webgl's P = 0 camera at the 1440×900 reference (three.js conventions: up (0,0,−1), camera
- *  south of the die looking north, setViewOffset(1440, 900, −306.27, −28, 1440, 900)). Maps an
- *  output pixel to the floor point it sees, p = (x, −z); null above the horizon. */
+/** webgl's P = 0 camera at the 1440×900 reference, read from src/gl/pose.ts so the canvas fades
+ *  in over the poster without a jump (three.js conventions: camera south of the die looking
+ *  north, with its setViewOffset). Maps an output pixel to the floor point it sees, p = (x, −z);
+ *  null above the horizon. */
 function openingCamera(W: number, H: number) {
-  const fullW = 1440
-  const fullH = 900
-  const offX = -306.27
-  const offY = -28
-  const pos = [0, 2.6245, 1.3955]
-  const tanH = Math.tan(((35 / 2) * Math.PI) / 180)
+  const [fullW, fullH, offX, offY] = OPENING_POSE.viewOffset
+  const pos = [...OPENING_POSE.position]
+  const tanH = Math.tan(((FOV_DEG / 2) * Math.PI) / 180)
   const aspect = fullW / fullH
   const norm = (v: number[]) => {
     const l = Math.hypot(v[0], v[1], v[2])
@@ -253,7 +252,7 @@ function openingCamera(W: number, H: number) {
   }
   const cross = (a: number[], b: number[]) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
   const z = norm(pos)
-  const x = norm(cross([0, 0, -1], z))
+  const x = norm(cross([...UP], z))
   const y = cross(z, x)
   return (u: number, v: number): [number, number] | null => {
     const nx = (((u * fullW) / W + offX) / fullW) * 2 - 1
